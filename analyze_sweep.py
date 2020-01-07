@@ -107,7 +107,9 @@ for n in [1,2,4,5]:
     plt.text( sim_data[i][0]['alpha'][0]-0.02, sim_data[i][0]['phi'][0]-0.08, '%d' % (n+1), color='r' )
 
 
-#%% plot trajectories
+plt.show()
+
+# plot trajectories
     
 np.random.seed(15)
 
