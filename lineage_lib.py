@@ -181,6 +181,15 @@ class Lineage:
     def get_clone_size_distribution(self, min_time: float, max_time: float) -> List[int]:
         return self._get_sub_clone_size_distribution(self.lin_interval, min_time, max_time, "")
 
+    # gets the clone size distributions of the given duration for this lineage tree.
+    # If min_time is 0, max_time is 70, duration is 50 and increment is 5, then this will return the clone sizes for
+    # [0, 50], [5, 55], [10, 60], [15, 65] and [20, 70.
+    def get_clone_size_distributions_with_duration(self, min_time: float, max_time: float, duration: float, increment: int = 5) -> List[int]:
+        clone_sizes = []
+        for start_time in range(int(min_time), int(max_time - duration + 1), increment):
+            clone_sizes += self.get_clone_size_distribution(start_time, start_time + duration)
+        return clone_sizes
+
     # gets the clone size distribution for the given sub-lineage. For each cell that exists at min_time, the clone size
     # at max_time is returned.
     def _get_sub_clone_size_distribution(self, lin_interval: Union[float, List], min_time: float, max_time: float, indent: str) -> List[int]:

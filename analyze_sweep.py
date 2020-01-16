@@ -181,11 +181,19 @@ for n in range(0,len(plot_run_ind_list)):
 
     # plot clone sizes
     clone_sizes = []
+    min_time, max_time = t_lineage_range
+    clone_size_duration = 40
     for i in range(len(L_list)):
-        clone_sizes += L_list[i].get_clone_size_distribution(*t_lineage_range)
-    max_clone_size = max(clone_sizes)
+        clone_sizes += L_list[i].get_clone_size_distributions_with_duration(min_time, max_time, clone_size_duration)
+    max_clone_size = max(10, max(clone_sizes))  # Show at least 10 bins
     plt.subplot2grid((6,4),(n,3), rowspan=1)
     plt.hist(clone_sizes, bins=np.arange(max_clone_size + 1) - 0.5, color="black")
-    plt.xticks(range(0, max_clone_size + 2, 2))
+    if n == 5:
+        plt.xlabel(f'clone size for {clone_size_duration}h')
+        plt.xticks(range(0, max_clone_size + 2, 2))
+    else:
+        plt.xticks([])
+    if n == 3:
+        plt.ylabel("count")
 
 plt.show()
