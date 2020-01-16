@@ -1,3 +1,5 @@
+from typing import List, Union
+
 import matplotlib.pyplot as plt
 
 class Lineage:
@@ -173,3 +175,52 @@ class Lineage:
     # checks if a cell with id=cell_id is in this lineage        
     def is_cell_in_lineage(self, cell_id):
         return ( self.is_in_lineage(self.lin_id, cell_id) )
+
+    # gets the clone size distribution of this lineage tree. For each cell that exists at min_time, the clone size
+    # at max_time is returned.
+    def get_clone_size_distribution(self, min_time: float, max_time: float) -> List[int]:
+        return self._get_sub_clone_size_distribution(self.lin_interval, min_time, max_time, "")
+
+    # gets the clone size distribution for the given sub-lineage. For each cell that exists at min_time, the clone size
+    # at max_time is returned.
+    def _get_sub_clone_size_distribution(self, lin_interval: Union[float, List], min_time: float, max_time: float, indent: str) -> List[int]:
+        if type(lin_interval) == float:
+            # this is a non-dividing cell starting at lin_interval
+            time_start = lin_interval
+            division_time = None
+            daughter1, daughter2 = None, None
+        else:
+            # we have a division
+            time_start, next = lin_interval
+            daughter1, daughter2 = next
+            division_time = daughter1 if type(daughter1) == float else daughter1[0]
+
+        if time_start > max_time:
+            return []  # cell didn't exist yet at this time point - report no clone size
+
+        if division_time is None or division_time > min_time:
+            # cell continues to exist (without dividing) until min_time is reached
+            return [self._get_clone_size(lin_interval, max_time)]
+
+        # need to search deeper in the lineage
+        clone_sizes = []
+        clone_sizes += self._get_sub_clone_size_distribution(daughter1, min_time, max_time, indent + "│ ")
+        clone_sizes += self._get_sub_clone_size_distribution(daughter2, min_time, max_time, indent + "│ ")
+        return clone_sizes
+
+    # returns the clone size of the given sub-lineage, ignoring any divisions happening after max_time
+    def _get_clone_size(self, lin_interval: Union[float, List], max_time: float) -> int:
+        if type(lin_interval) == float:
+            return 1
+
+        # we have a division, lin_interval structure is [time_start, [daughter1, daughter2]]
+        time_start, next = lin_interval
+        daughter1, daughter2 = next
+
+        # calculate division time from time_start of an arbitrary daughter
+        division_time = daughter1 if type(daughter1) == float else daughter1[0]
+        if division_time > max_time:
+            # division happens after our time window, act as if this cell hasn't divided yet
+            return 1
+
+        return self._get_clone_size(daughter1, max_time) + self._get_clone_size(daughter2, max_time)
