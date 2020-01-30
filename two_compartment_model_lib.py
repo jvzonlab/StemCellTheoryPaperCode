@@ -164,16 +164,16 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                 cell.age += dt
         
             # get compartment of dividing cell
-            c=cell_list[0].comp
+            compartment=cell_list[0].comp
             
             ### get type of division
             
             # draw random number in (0,1)
             r = np.random.rand()
-            if r<=p[c]:
+            if r<=p[compartment]:
                 # if r in (0,p), then div -> div + div
                 div_type=0
-            elif r<=(p[c]+q[c]):
+            elif r<=(p[compartment]+q[compartment]):
                 # if r in (p,p+q), then div -> non-div + non-div
                 div_type=2
             else:
@@ -191,19 +191,19 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                 # generate two new dividing cells to compartment <c>
                 for i in [0,1]:
                     # add new cells to cell list
-                    cell_list.append( Cell(cell_id,c,0,params['T']) )
+                    cell_list.append( Cell(cell_id,compartment,0,params['T']) )
                     if tracking_lineage:
                         # if needed, remember daughter cell id
                         daughter_cell_id_list.append( cell_id )
                     # adjust cell id
                     cell_id += 1
                 # adjust number of dividing cells   
-                n[c] += 1
+                n[compartment] += 1
                     
             elif div_type==1:
                 # div -> div + non-div
                 # add a single dividing cell to compartment <c>
-                cell_list.append( Cell(cell_id,c,0,params['T']) )
+                cell_list.append( Cell(cell_id,compartment,0,params['T']) )
                 if tracking_lineage:
                     # rember id of this daughter, if tracking lineage
                     daughter_cell_id_list.append( cell_id )
@@ -213,7 +213,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                     daughter_cell_id_list.append( cell_id )
                 cell_id += 1
                 # adjust number of non-dividing differentiated cells
-                u[c] += 1
+                u[compartment] += 1
                 
             elif div_type==2:
                 # div -> non-div + non-div
@@ -224,23 +224,28 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                     # and increase cell id
                     cell_id += 1  
                 # adjust number of dividing cells   
-                n[c] -= 1
+                n[compartment] -= 1
                 # adjust number of non-dividing differentiated cells
-                u[c] += 2
+                u[compartment] += 2
                 
             # remove old cell after division
             del cell_list[0]
     
-            # if division was in compartment c=0
-            if c==0:
+            # if division was in compartment 0
+            if compartment==0:
                 # get list of cells in current compartment    
                 comp_cell_list = [x for x in cell_list if x.comp==0]
                 # draw random cell in compartment
                 n_move=int((params['S']+1)*np.random.rand())
                 # if cell is a dividing cell
                 if n_move<len(comp_cell_list):
+                    random_cell = comp_cell_list[n_move]
                     # move it to the next compartment
-                    comp_cell_list[n_move].comp = 1
+                    random_cell.comp = 1
+                    # implement cell moving in saved lineages
+                    if tracking_lineage:
+                        for L in L_list:
+                            L.move_cell(random_cell.id, t, random_cell.comp)
                     # adjust number of dividing stem cells
                     n[0] -= 1
                     n[1] += 1
@@ -268,8 +273,8 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
             if track_lineage:
                 if (t>track_lineage_time_interval[0]) and (t<track_lineage_time_interval[1]) and (not tracking_lineage):
                     tracking_lineage=True
-                    for c in cell_list:
-                        L_list.append( Lineage(c.id, track_lineage_time_interval[0], 1) )
+                    for compartment in cell_list:
+                        L_list.append( Lineage(compartment.id, track_lineage_time_interval[0], compartment.comp, 1) )
             
             # check if lineage tracking should stop
             if (tracking_lineage==True):

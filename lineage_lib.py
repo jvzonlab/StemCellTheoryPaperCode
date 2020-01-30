@@ -1,15 +1,22 @@
-from typing import List, Union
+from typing import List, Union, Tuple, Iterable
 
 import matplotlib.pyplot as plt
+import operator
 
 class Lineage:
-    
-    def __init__(self, lin_id, lin_interval, n_cell):
+
+    lin_id: Union[List, int]
+    lin_interval: Union[List, int]
+    lin_compartment: Union[List, "_CompartmentByTime"]
+    n_cell: int
+
+    def __init__(self, lin_id: int, lin_interval: int, lin_compartment: int, n_cell: int):
         self.lin_id=lin_id
         self.lin_interval=lin_interval
+        self.lin_compartment=_CompartmentByTime(lin_compartment)
         self.n_cell=n_cell
 
-    def lineage_divide_cell(self,lin_id, lin_interval, t_div, ind_mother, ind_daughter_list, n_cell):
+    def lineage_divide_cell(self,lin_id, lin_interval, lin_compartment, t_div, ind_mother, ind_daughter_list, n_cell):
         # if current branch is not a list
         if type(lin_id)!=list:
             # then it has not sublineage
@@ -20,6 +27,11 @@ class Lineage:
                 # replace the time of birth of cell <lin_id> with an interval
                 # [t_birth_<lin_id>, [t_birth_daughter0, t_birth_daughter1]]
                 lin_interval=[lin_interval,[t_div,t_div]]
+                # replace the compartment with copies of the same compartment
+                lin_compartment=[lin_compartment, [
+                    _CompartmentByTime(lin_compartment.last_compartment()),
+                    _CompartmentByTime(lin_compartment.last_compartment())
+                ]]
                 # and increase the cell count for the lineage
                 n_cell=n_cell+1
         else:
@@ -28,22 +40,26 @@ class Lineage:
                 # for each daughter sublineage, get the id and time interval data
                 sub_lin_id = lin_id[1][i]
                 sub_lin_interval = lin_interval[1][i]
+                sub_lin_compartment = lin_compartment[1][i]
                 # and search for cell (and implement division when found) in sublineage
-                (sub_lin_id,sub_lin_interval,n_cell) = self.lineage_divide_cell(sub_lin_id, sub_lin_interval, t_div, ind_mother, ind_daughter_list, n_cell)
+                (sub_lin_id,sub_lin_interval,sub_lin_compartment, n_cell) = self.lineage_divide_cell(
+                        sub_lin_id, sub_lin_interval, sub_lin_compartment, t_div, ind_mother, ind_daughter_list, n_cell)
                 # and update sublineages in lineage data
                 lin_id[1][i]=sub_lin_id
                 lin_interval[1][i]=sub_lin_interval
+                lin_compartment[1][i]=sub_lin_compartment
     
         # return updated lineage data        
-        return (lin_id,lin_interval,n_cell)
+        return (lin_id,lin_interval,lin_compartment,n_cell)
 
     def divide_cell(self, id_mother, id_daughter_list, t_divide):
         # id_mother: label of mother cell
         # id_daughter_cell_list: list of [daughter1_id, daughter2_id]
         # t_divide: time of division
-        (self.lin_id,self.lin_interval,self.n_cell)=self.lineage_divide_cell(self.lin_id,self.lin_interval,t_divide,id_mother,id_daughter_list,self.n_cell)
+        (self.lin_id,self.lin_interval,self.lin_compartment,self.n_cell)=\
+                self.lineage_divide_cell(self.lin_id,self.lin_interval,self.lin_compartment,t_divide,id_mother,id_daughter_list,self.n_cell)
 
-    def get_sublineage_draw_data(self,lin_id,lin_interval,t_end,x_curr_branch,x_end_branch,line_list):
+    def get_sublineage_draw_data(self,lin_id,lin_interval,lin_compartment,t_end,x_curr_branch,x_end_branch,line_list):
         # if current branch is not a list
         if type(lin_id)!=list:
             # then it has no sublineage, so we plot an end branch
@@ -54,7 +70,8 @@ class Lineage:
             X=[x_curr_branch]
             T=[lin_interval,t_end]
             CID=lin_id
-            line_list.append( [X,T,CID] )
+            for T, comp in lin_compartment.get_all_compartments_with_times(T):
+                line_list.append( [X,T,CID,comp] )
 #            plt.text(x_curr_branch, lin_interval, lin_id)
             # and increase the position of the next end branch 
             x_end_branch=x_end_branch+1
@@ -65,13 +82,16 @@ class Lineage:
                 # for each daughter sublineage, get the id and time interval data
                 sub_lin_id = lin_id[1][i]
                 sub_lin_interval = lin_interval[1][i]
+                sub_lin_compartment = lin_compartment[1][i]
                 # and draw sublineage sublineage
-                (x_curr_branch,x_end_branch,line_list) = self.get_sublineage_draw_data(sub_lin_id, sub_lin_interval,t_end,x_curr_branch,x_end_branch,line_list)
+                (x_curr_branch,x_end_branch,line_list) = self.get_sublineage_draw_data(sub_lin_id, sub_lin_interval,
+                         sub_lin_compartment, t_end,x_curr_branch,x_end_branch,line_list)
                 # for each sublineage, save the current branch x position
                 x.append(x_curr_branch)
             # get the start of the time interval
             t0=lin_interval[0]
             CID=lin_id[0]
+            compartments=lin_compartment[0]
             # and the end            
             if type(lin_interval[1][0])!=list:
                 t1=lin_interval[1][0]
@@ -82,7 +102,7 @@ class Lineage:
 #            plt.plot([x[0],x[1]], [ t1,t1 ], '-k')
             X=[x[0],x[1]]
             T=[t1]
-            line_list.append( [X,T,CID] )
+            line_list.append( [X,T,CID,compartments.last_compartment()] )
 
             # and plot the mother branch
             x_curr_branch=(x[0]+x[1])/2.
@@ -90,22 +110,25 @@ class Lineage:
 #            plt.text(x_curr_branch, t0, cell_id)
             X=[x_curr_branch]
             T=[t0,t1]
-            line_list.append( [X,T,CID] )
+            for T, comp in compartments.get_all_compartments_with_times(T):
+                line_list.append( [X,T,CID,comp] )
     
         # return updated lineage data        
         return (x_curr_branch,x_end_branch,line_list)
 
     def get_lineage_draw_data(self, t_end):
-        (x_curr,x_end,line_list)=self.get_sublineage_draw_data(self.lin_id,self.lin_interval,t_end,0,0,[])
+        (x_curr,x_end,line_list)=self.get_sublineage_draw_data(self.lin_id,self.lin_interval,self.lin_compartment,t_end,0,0,[])
         return( (x_end,line_list) )
         
-    def draw_lineage(self,T_end,x_offset,show_cell_id=False,col='k'):
+    def draw_lineage(self,T_end,x_offset,show_cell_id=False,col_comp_0='r', col_default='k'):
         (diagram_width, line_list)=self.get_lineage_draw_data(T_end)
     
         for l in line_list:
             X=l[0]
             T=l[1]
             CID=l[2]
+            comp=l[3]
+            col = col_comp_0 if comp == 0 else col_default
             if len(T)==2:
                 ## two timepoints T, so this is a vertical line
                 # plot line
@@ -233,3 +256,89 @@ class Lineage:
             return 1
 
         return self._get_clone_size(daughter1, max_time) + self._get_clone_size(daughter2, max_time)
+
+    def move_cell(self, cell_id: int, t: int, towards_component: int):
+        # moves the cell at the given time point to the given compartment
+        (self.lin_id, self.lin_interval, self.lin_compartment) = self._lineage_move_cell(
+                self.lin_id, self.lin_interval, self.lin_compartment, cell_id, t, towards_component)
+
+    def _lineage_move_cell(self, lin_id, lin_interval, lin_compartment, moving_cell_id, time_move, towards_compartment):
+        # if current branch is not a list
+        if type(lin_id) != list:
+            # then it has not sublineage
+            if lin_id == moving_cell_id:
+                # if the id of this branch is that of the moving cell, implement the movement
+                lin_compartment.add_move(time_move, towards_compartment)
+        else:
+            # if it is a list, it has a sublineage
+            daughter1 = lin_interval[1][1]
+            time_division = daughter1 if isinstance(daughter1, float) else daughter1[0]
+            if time_move < time_division:
+                if lin_id[0] == moving_cell_id:
+                    # implement move in parent
+                    lin_compartment[0].add_move(time_move, towards_compartment)
+            else:
+                # implement move in daughter
+                for i in range(0, 2):
+                    # for each daughter sublineage, get the id and time interval data
+                    sub_lin_id = lin_id[1][i]
+                    sub_lin_interval = lin_interval[1][i]
+                    sub_lin_compartment = lin_compartment[1][i]
+                    # and search for cell (and implement division when found) in sublineage
+                    (sub_lin_id, sub_lin_interval, sub_lin_compartment) = self._lineage_move_cell(
+                        sub_lin_id, sub_lin_interval, sub_lin_compartment, moving_cell_id, time_move, towards_compartment)
+                    # and update sublineages in lineage data
+                    lin_id[1][i] = sub_lin_id
+                    lin_interval[1][i] = sub_lin_interval
+                    lin_compartment[1][i] = sub_lin_compartment
+
+        # return updated lineage data
+        return (lin_id, lin_interval, lin_compartment)
+
+class _CompartmentByTime:
+    # we can only store one variable per track. To still keep track of at which time point the cell moved to another
+    # compartment, we use this class, which can store different compartments for different time points
+
+    _starting_compartment: int
+    _moves: List[Tuple[int, int]]  # list of (time point, new compartment)
+
+    def __init__(self, starting_compartment: int):
+        self._starting_compartment = starting_compartment
+        self._moves = []
+
+    def get_all_compartments_with_times(self, T: Tuple[int, int]) -> Iterable[Tuple[Tuple[int, int], int]]:
+        # yields pairs of (T, compartment) for all time frames with a different compartment. T is [min_time, max_time].
+        if len(self._moves) == 0:
+            # no moves, so the result is trivial
+            yield T, self._starting_compartment
+
+        start_time, end_time = T
+        current_time = start_time
+        current_compartment = self._starting_compartment
+
+        for switch_time, new_compartment in self._moves:
+            if switch_time > current_time:
+                yield [current_time, switch_time], current_compartment  # finish off current compartment
+                # and start new one
+                current_time = switch_time
+                current_compartment = new_compartment
+
+        # finish off last compartment
+        if end_time > current_time:
+            yield [current_time, end_time], current_compartment
+
+
+    def add_move(self, time: int, towards_compartment: int):
+        self._moves.append((time, towards_compartment))
+        self._moves.sort(key=operator.itemgetter(0))  # sort by the first element of the tuple, which is the time
+
+    def last_compartment(self) -> int:
+        # gets the compartment after all moves are done
+        if len(self._moves) == 0:
+            return self._starting_compartment
+        return self._moves[-1][1]
+
+    def __repr__(self) -> str:
+        if len(self._moves) > 0:
+            return f"<_CompartmentByTime({self._starting_compartment}) with moves>"
+        return f"_CompartmentByTime({self._starting_compartment})"
