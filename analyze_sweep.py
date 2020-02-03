@@ -111,8 +111,7 @@ for n in [1,2,4,5]:
     
 np.random.seed(15)
 
-t_lineage_range=[100,150]
-#t_lineage_range=[200,250]
+t_lineage_range=[100,200]
 
 for n in range(0,len(plot_run_ind_list)):
     i=plot_run_ind_list[n]
@@ -187,10 +186,10 @@ for n in range(0,len(plot_run_ind_list)):
         clone_sizes += L_list[i].get_clone_size_distributions_with_duration(min_time, max_time, clone_size_duration)
     max_clone_size = max(10, max(clone_sizes))  # Show at least 10 bins
     plt.subplot2grid((6,4),(n,3), rowspan=1)
-    plt.hist(clone_sizes, bins=np.arange(max_clone_size + 1) - 0.5, color="black")
+    plt.hist(clone_sizes, bins=np.arange(2, max_clone_size + 1) - 0.5, color="black")
     if n == 5:
         plt.xlabel(f'clone size for {clone_size_duration}h')
-        plt.xticks(range(0, max_clone_size + 2, 2))
+        plt.xticks(range(2, max_clone_size + 2, 2))
     else:
         plt.xticks([])
     if n == 3:
