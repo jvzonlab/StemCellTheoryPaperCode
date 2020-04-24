@@ -1,5 +1,6 @@
 # Ignore Python cache
 __pycache__/
 
-# Ignore IntelliJ files
+# Ignore IntelliJ and VSCode files
 .idea/
+.vscode/
