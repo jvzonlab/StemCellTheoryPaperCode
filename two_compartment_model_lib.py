@@ -71,7 +71,7 @@ def adjust_moment_data(dt,n, moment_data):
 # track_lineage_time_interval - list [t_start, t_end] during which lineage information 
 #        should be recorded. If empty, no lineage recorderd
 # track_n_vs_t - track cell number versus time. If <false> only calculate moments
-def run_sim( t_sim, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs_t=False):
+def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs_t=False):
     
     # if an interval to track lineages is defined
     if len(track_lineage_time_interval)==2:
@@ -103,9 +103,9 @@ def run_sim( t_sim, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs
     
     p=[]
     q=[]
-    for c in [0,1]:
-        p.append( (params['phi'][c] + params['alpha'][c])/2 )
-        q.append( (params['phi'][c] - params['alpha'][c])/2 )
+    for compartment in [0,1]:
+        p.append( (params['phi'][compartment] + params['alpha'][compartment])/2 )
+        q.append( (params['phi'][compartment] - params['alpha'][compartment])/2 )
 
     ### init for data collection
     
@@ -160,8 +160,8 @@ def run_sim( t_sim, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs
             moment_data=adjust_moment_data(dt,n,moment_data)
             
             # add dt to age
-            for c in cell_list:
-                c.age += dt
+            for cell in cell_list:
+                cell.age += dt
         
             # get compartment of dividing cell
             c=cell_list[0].comp
@@ -283,12 +283,23 @@ def run_sim( t_sim, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs
             # adjust moments
             moment_data=adjust_moment_data(t_sim-t,n,moment_data)
             run_ended_early=False
+            n_exploded=False
             t_end=t_sim
             
         if len(cell_list)==0:
             # if no dividing cells left, stop simulation
             cont=False
             run_ended_early=True
+            n_exploded=False
+            t_end=t
+#            # adjust moments
+#            moment_data=adjust_moment_data(t_sim-t,n,moment_data)
+        
+        if n[0] + n[1] >= n_max:
+            # if more than x dividing cells, stop simulation
+            cont=False
+            run_ended_early=False
+            n_exploded=True
             t_end=t
 #            # adjust moments
 #            moment_data=adjust_moment_data(t_sim-t,n,moment_data)
@@ -303,6 +314,6 @@ def run_sim( t_sim, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs
         output['u_vs_t']=np.array(u_vs_t)
     if track_lineage:
         output['Lineage']=L_list
-    output['RunStats']={'run_ended_early':run_ended_early,'t_end':t_end}
+    output['RunStats']={'run_ended_early':run_ended_early,'t_end':t_end,'n_exploded':n_exploded}
     # and return as output
     return (output)
