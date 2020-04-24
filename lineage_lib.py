@@ -1,5 +1,6 @@
 from typing import List, Union, Tuple, Iterable
 
+import numpy as np
 import matplotlib.pyplot as plt
 import operator
 
@@ -216,7 +217,7 @@ class Lineage:
     # gets the clone size distribution for the given sub-lineage. For each cell that exists at min_time, the clone size
     # at max_time is returned.
     def _get_sub_clone_size_distribution(self, lin_interval: Union[float, List], min_time: float, max_time: float, indent: str) -> List[int]:
-        if type(lin_interval) == float:
+        if _is_single_float(lin_interval):
             # this is a non-dividing cell starting at lin_interval
             time_start = lin_interval
             division_time = None
@@ -225,7 +226,7 @@ class Lineage:
             # we have a division
             time_start, next = lin_interval
             daughter1, daughter2 = next
-            division_time = daughter1 if type(daughter1) == float else daughter1[0]
+            division_time = daughter1 if _is_single_float(daughter1) else daughter1[0]
 
         if time_start > max_time:
             return []  # cell didn't exist yet at this time point - report no clone size
@@ -242,7 +243,7 @@ class Lineage:
 
     # returns the clone size of the given sub-lineage, ignoring any divisions happening after max_time
     def _get_clone_size(self, lin_interval: Union[float, List], max_time: float) -> int:
-        if type(lin_interval) == float:
+        if _is_single_float(lin_interval):
             return 1
 
         # we have a division, lin_interval structure is [time_start, [daughter1, daughter2]]
@@ -250,7 +251,7 @@ class Lineage:
         daughter1, daughter2 = next
 
         # calculate division time from time_start of an arbitrary daughter
-        division_time = daughter1 if type(daughter1) == float else daughter1[0]
+        division_time = daughter1 if _is_single_float(daughter1) else daughter1[0]
         if division_time > max_time:
             # division happens after our time window, act as if this cell hasn't divided yet
             return 1
@@ -342,3 +343,8 @@ class _CompartmentByTime:
         if len(self._moves) > 0:
             return f"<_CompartmentByTime({self._starting_compartment}) with moves>"
         return f"_CompartmentByTime({self._starting_compartment})"
+
+
+def _is_single_float(value):
+    value_type = type(value)
+    return value_type == float or value_type == np.float64

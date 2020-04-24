@@ -82,7 +82,6 @@ plt.plot([-1.05,0],[1.05,0],':r')
 
 plt.subplot2grid((30,4),(0,0), rowspan=1)
 ax = plt.gca()
-ax.set_position([0.163, 0.87, 0.153, 0.02])
 cbar = fig.colorbar(im,cax=ax,orientation="horizontal")
 cbar.set_ticks([0,.2,.4,.6,.8,1])
 plt.title('Coefficient of variation')
