@@ -1,12 +1,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import skewnorm
+import time
 
 from lineage_lib import Lineage
 
+#from skewed distribution
+ae = 6.104045529523038
+loce = 12.242161056111865
+scalee = 5.248997116207871
+
+ages_list = []
+
 # get cell age at the time of division
 def get_division_age(T):
-    # draw a random age from a guassian distribution with mean T[0] and standard deviation T[1]
-    a = T[0]+T[1]*np.random.randn()
+    global ages_list, ae, loce, scalee
+    
+    #generate a list of cell cycle durations by drawing numbers from skew normal distribution with parameters ae, loce, scalee from experimental data
+    if len(ages_list) == 0:
+        ages_list = skewnorm(ae, loce, scalee).rvs(1000000)
+    #assign the last number in ages list as the age of cell and remove number from list
+    a, ages_list = ages_list[-1], ages_list[:-1]
+
     return (a)
 
 # cell class
