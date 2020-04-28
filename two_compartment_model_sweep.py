@@ -1,19 +1,21 @@
 import numpy as np
 import pickle as pickle
+import sys
+import os
 
 from two_compartment_model_lib import run_sim
 
 def main():
     #%% set sweep parameters
     
-    # fix size of proliferative compartment
-    S = 30
+    # fix total number of dividing cells (measured values: anything from 10 to 50 dividing cells in a crypt)
+    D = 30
     
     # fix cell cycle parameters (based on measured values)
     T=[16.153070175438597,3.2357834505600382]
     
     # number of steps in sweep
-    Np=1
+    Np=40
     start = 25
     end = 1000
     
@@ -31,15 +33,15 @@ def main():
     
     n_max = 10000000 #if counting overgrowth of dividing cells
     
-    sweep_params, sweep_n0 =  get_param_list(alpha_n,alpha_m,phi_r,T,S)    
+    sweep_params, sweep_n0 =  get_param_list(alpha_n,alpha_m,phi_r,T,D)    
     
-#    sweep_params_split, sweep_n0_split = break_list(sweep_params, sweep_n0, 72)
-#    it = int(sys.argv[1])
-#    print(f'iteration {it}')
-#    perform_sweep(sweep_params_split[it],sweep_n0_split[it],
-#                  t_sim,n_max,f'sweep_fixed_S30_Np40_i{it}.p')
+    sweep_params_split, sweep_n0_split = break_list(sweep_params, sweep_n0, 72)
+    for it in range(len(sweep_params_split)):
+        print(f'iteration {it}')
+        perform_sweep(sweep_params_split[it],sweep_n0_split[it],
+                        t_sim,n_max,f'two_comp_sweep_data_fixed_D/sweep_fixed_D30_Np40_i{it}.p')
 
-    perform_sweep(sweep_params,sweep_n0,t_sim,n_max,'two_comp_sweep_data.p')
+    #perform_sweep(sweep_params,sweep_n0,t_sim,n_max,'two_comp_sweep_data.p')
    
 def break_list(sweep_params, sweep_n0, c):
     sweep_params_split = split_list(sweep_params,c)
@@ -50,7 +52,7 @@ def split_list(alist,parts):
     return a
 #%% calculate simulation parameters for each simulation in sweep
 
-def get_param_list(alpha_n,alpha_m,phi_r,T,S):
+def get_param_list(alpha_n,alpha_m,phi_r,T,D):
     sweep_params=[]
     sweep_n0=[]
     
@@ -66,8 +68,8 @@ def get_param_list(alpha_n,alpha_m,phi_r,T,S):
                 
                 # check if division probabilities exist for this alpha_n, alpha_m and phi combination
                 if (p_n>=0) and (q_n>=0) and (p_m>=0) and (q_m>=0):
-                    # calculate number of dividing cells
-                    D = S*np.log(1+a_n)*(a_m-a_n)/a_m
+                    # calculate compartment size S
+                    S = D/np.log(1+a_n)*a_m/(a_m-a_n)
                     # calculate the average number of dividing cells in stem cell compartment
                     N_avg = a_n*S
                     # calculate the average number of dividing cells in transit amplifying compartment
