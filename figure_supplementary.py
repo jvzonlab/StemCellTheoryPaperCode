@@ -11,7 +11,7 @@ import tools
 def load_data():
     sim_data = []
     for i in range(0,72):
-        filename = f"two_comp_sweep_data/sweep_fixed_S30_Np40_i{i}.p"
+        filename = f"two_comp_sweep_data_fixed_D/sweep_fixed_D30_Np40_i{i}.p"
         sim_data.extend(pickle.load( open( filename, "rb" ) ))
     return sim_data
 sim_data = load_data()
@@ -111,7 +111,7 @@ for n in [1,2,4,5]:
 
 plt.subplot2grid((30,2),(4,1), rowspan=11)
 min_val = -.1
-max_val = 15
+max_val = 2
 phi = 1
 N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
 im = plt.imshow(C,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step, 
@@ -136,7 +136,7 @@ plt.subplot2grid((30,2),(0,1), rowspan=1)
 ax = plt.gca()
 cbar = fig.colorbar(im,cax=ax,orientation="horizontal")
 ax.set_position([0.585, 0.87, 0.278, 0.02])
-cbar.set_ticks([0,5,10,15])
+cbar.set_ticks([0,1,2])
 plt.title('Depletion rate (events/1,000h)')
 
 plt.subplot2grid((30,2),(19,1), rowspan=11)
@@ -156,3 +156,4 @@ for n in [1,2,4,5]:
     plt.plot( sim_data[i][0]['alpha'][0], sim_data[i][0]['phi'][0], '.r')
     plt.text( sim_data[i][0]['alpha'][0]-0.02, sim_data[i][0]['phi'][0]-0.08, '%d' % (n+1), color='r' )
 
+plt.show()

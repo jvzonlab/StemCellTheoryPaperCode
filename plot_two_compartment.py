@@ -11,7 +11,7 @@ import tools
 def load_data():
     sim_data = []
     for i in range(0,72):
-        filename = f"two_comp_sweep_data/sweep_fixed_S30_Np40_i{i}.p"
+        filename = f"two_comp_sweep_data_fixed_D/sweep_fixed_D30_Np40_i{i}.p"
         sim_data.extend(pickle.load( open( filename, "rb" ) ))
     return sim_data
 sim_data = load_data()
@@ -109,8 +109,8 @@ for n in [1,2,4,5]:
 # plot trajectories
     
 np.random.seed(15)
-
-t_lineage_range=[100,200]
+D = 30
+t_lineage_range=[100,160]
 
 for n in range(0,len(plot_run_ind_list)):
     i=plot_run_ind_list[n]
@@ -121,7 +121,6 @@ for n in range(0,len(plot_run_ind_list)):
     alpha=sim_data[i][0]['alpha']
     phi=sim_data[i][0]['phi'][0]
     N_0=int( alpha[0]*S )
-    D = S*np.log(1+alpha[0])*(alpha[1]-alpha[0])/alpha[1]
     M_0 = int(np.round(D-N_0))
     
     params = {'S':S, 'alpha':alpha, 'phi':[phi,phi], 'T':[16.375159506031768,3.2357834505600382] }
@@ -139,16 +138,16 @@ for n in range(0,len(plot_run_ind_list)):
     # plot total number of dividing cells in black
     plt.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2],'-k',lw=1)
     # plot number of dividing cells in stem cell compartment
-    plt.plot(n_vs_t[:,0],n_vs_t[:,1],'-g',lw=1)
+    plt.plot(n_vs_t[:,0],n_vs_t[:,1],color="#7FB840", lw=1)
 #    # plot number of dividing cells in transit amplifying compartment
-    plt.plot(n_vs_t[:,0],n_vs_t[:,2],'-b',lw=1)
+    plt.plot(n_vs_t[:,0],n_vs_t[:,2],color="#009CB5",lw=1)
     plt.xlim([0,t_sim])
-    plt.ylim([0,3*D])
+    plt.ylim([0,2*D])
     
-    plt.yticks([0,round(D),round(2*D)],['0','D', '2D'])
+    plt.yticks([0, D, 2*D])
     
     
-    plt.text(10,2.5*D,'%d' % (n+1))
+    plt.text(10,1.6*D,'%d' % (n+1))
     
     if n!=5:
         plt.xticks([])
@@ -167,7 +166,7 @@ for n in range(0,len(plot_run_ind_list)):
     random.seed(1)
     ra_L = random.choices(L_list, k = max_lin)
     for i in ra_L:
-        w = i.draw_lineage(t_lineage_range[1],x0,show_cell_id=False)
+        w = i.draw_lineage(t_lineage_range[1],x0,show_cell_id=False,col_default="#009CB5",col_comp_0="#7FB840")
         x0+=w+2
     plt.ylim([t_lineage_range[1],t_lineage_range[0]])
     plt.xlim([-2,x0])
