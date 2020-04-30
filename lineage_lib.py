@@ -133,14 +133,14 @@ class Lineage:
             if len(T)==2:
                 ## two timepoints T, so this is a vertical line
                 # plot line
-                plt.plot( [x_offset+X[0],x_offset+X[0]], T, '-'+col )
+                plt.plot( [x_offset+X[0],x_offset+X[0]], T, color=col )
                 if show_cell_id:
                     # print cell id
                     plt.text( x_offset+X[0], T[0], CID)
             if len(X)==2:
                 ## two x positions, so this a horizontal line indicating division
                 # plot line
-                plt.plot( [x_offset+X[0],x_offset+X[1]], [T[0],T[0]], '-'+col )
+                plt.plot( [x_offset+X[0],x_offset+X[1]], [T[0],T[0]], color=col )
         return(diagram_width)
         
 #    def draw_lineage(self,lin_id, lin_interval,t_end,x_curr_branch,x_end_branch):
