@@ -162,14 +162,14 @@ for n in range(0,len(plot_run_ind_list)):
     L_list=res['Lineage']
     plt.subplot2grid((6,4),(n,2), rowspan=1)
     x0=0
-    max_lin = min(10,len(L_list))
+    max_lin = min(30,len(L_list))
     random.seed(1)
     ra_L = random.choices(L_list, k = max_lin)
     for i in ra_L:
         w = i.draw_lineage(t_lineage_range[1],x0,show_cell_id=False,col_default="#009CB5",col_comp_0="#7FB840")
         x0+=w+2
     plt.ylim([t_lineage_range[1],t_lineage_range[0]])
-    plt.xlim([-2,x0])
+    plt.xlim([-2,x0/3])
     plt.xticks([])
     plt.yticks([])
 
