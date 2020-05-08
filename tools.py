@@ -50,6 +50,7 @@ def plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_ra
     N_CV = np.zeros((Np,Np))
     M_CV = np.zeros((Np,Np))
     D_CV = np.zeros((Np,Np))
+    S = np.zeros((Np,Np))
     
     for s in sim_data: 
         sweep_param = s[0]
@@ -70,8 +71,9 @@ def plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_ra
             N_CV[i,j] = n_cv
             M_CV[i,j] = m_cv
             D_CV[i,j] = d_cv
+            S[i,j] = sweep_param["S"]
     
-    return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV
+    return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S
 
 def plot_alpha_n_vs_phi(alpha_m,sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
     N = np.zeros((Np,Np))
@@ -120,6 +122,7 @@ def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
     N_CV = np.zeros((Np,Np))
     M_CV = np.zeros((Np,Np))
     D_CV = np.zeros((Np,Np))
+    S = np.zeros((Np,Np))
     
     for s in sim_data: 
         sweep_param = s[0]
@@ -147,5 +150,6 @@ def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
             D_CV[i,j] = d_cv
             N_CV[i,j] = n_cv
             M_CV[i,j] = m_cv
+            S[i,j] = sweep_param["S"]
     
-    return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV
+    return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S
