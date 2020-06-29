@@ -9,15 +9,17 @@ class Lineage:
     lin_id: Union[List, int]
     lin_interval: Union[List, int]
     lin_compartment: Union[List, "_CompartmentByTime"]
+    lin_is_dividing: Union[List, bool]  # Stores whether the cells is going to divide. This is only useful for cells that have not yet divided
     n_cell: int
 
-    def __init__(self, lin_id: int, lin_interval: int, lin_compartment: int, n_cell: int):
+    def __init__(self, lin_id: int, lin_interval: int, lin_compartment: int, lin_is_dividing: bool, n_cell: int):
         self.lin_id=lin_id
         self.lin_interval=lin_interval
         self.lin_compartment=_CompartmentByTime(lin_compartment)
+        self.lin_is_dividing=lin_is_dividing
         self.n_cell=n_cell
 
-    def lineage_divide_cell(self,lin_id, lin_interval, lin_compartment, t_div, ind_mother, ind_daughter_list, n_cell):
+    def lineage_divide_cell(self,lin_id, lin_interval, lin_compartment, lin_is_dividing, t_div, ind_mother, ind_daughter_list, daughter_is_dividing_list, n_cell):
         # if current branch is not a list
         if type(lin_id)!=list:
             # then it has not sublineage
@@ -33,6 +35,8 @@ class Lineage:
                     _CompartmentByTime(lin_compartment.last_compartment()),
                     _CompartmentByTime(lin_compartment.last_compartment())
                 ]]
+                # replace the lin_is
+                lin_is_dividing=[lin_is_dividing, daughter_is_dividing_list]
                 # and increase the cell count for the lineage
                 n_cell=n_cell+1
         else:
@@ -42,23 +46,26 @@ class Lineage:
                 sub_lin_id = lin_id[1][i]
                 sub_lin_interval = lin_interval[1][i]
                 sub_lin_compartment = lin_compartment[1][i]
+                sub_lin_is_dividing = lin_is_dividing[1][i]
                 # and search for cell (and implement division when found) in sublineage
-                (sub_lin_id,sub_lin_interval,sub_lin_compartment, n_cell) = self.lineage_divide_cell(
-                        sub_lin_id, sub_lin_interval, sub_lin_compartment, t_div, ind_mother, ind_daughter_list, n_cell)
+                (sub_lin_id,sub_lin_interval,sub_lin_compartment,sub_lin_is_dividing,n_cell) = self.lineage_divide_cell(
+                        sub_lin_id, sub_lin_interval, sub_lin_compartment, sub_lin_is_dividing, t_div, ind_mother, ind_daughter_list, daughter_is_dividing_list, n_cell)
                 # and update sublineages in lineage data
                 lin_id[1][i]=sub_lin_id
                 lin_interval[1][i]=sub_lin_interval
                 lin_compartment[1][i]=sub_lin_compartment
+                lin_is_dividing[1][i]=sub_lin_is_dividing
     
         # return updated lineage data        
-        return (lin_id,lin_interval,lin_compartment,n_cell)
+        return (lin_id,lin_interval,lin_compartment,lin_is_dividing,n_cell)
 
-    def divide_cell(self, id_mother, id_daughter_list, t_divide):
+    def divide_cell(self, id_mother, id_daughter_list, daughter_is_dividing_list, t_divide):
         # id_mother: label of mother cell
         # id_daughter_cell_list: list of [daughter1_id, daughter2_id]
+        # daughter_is_dividing_list: List of [bool, bool], indicating whether a daughter continues dividing.
         # t_divide: time of division
-        (self.lin_id,self.lin_interval,self.lin_compartment,self.n_cell)=\
-                self.lineage_divide_cell(self.lin_id,self.lin_interval,self.lin_compartment,t_divide,id_mother,id_daughter_list,self.n_cell)
+        (self.lin_id,self.lin_interval,self.lin_compartment,self.lin_is_dividing,self.n_cell)=\
+                self.lineage_divide_cell(self.lin_id,self.lin_interval,self.lin_compartment,self.lin_is_dividing,t_divide,id_mother,id_daughter_list,daughter_is_dividing_list,self.n_cell)
 
     def get_sublineage_draw_data(self,lin_id,lin_interval,lin_compartment,t_end,x_curr_branch,x_end_branch,line_list):
         # if current branch is not a list
@@ -133,14 +140,14 @@ class Lineage:
             if len(T)==2:
                 ## two timepoints T, so this is a vertical line
                 # plot line
-                plt.plot( [x_offset+X[0],x_offset+X[0]], T, color=col )
+                plt.plot( [x_offset+X[0],x_offset+X[0]], T, linestyle='-', color=col )
                 if show_cell_id:
                     # print cell id
                     plt.text( x_offset+X[0], T[0], CID)
             if len(X)==2:
                 ## two x positions, so this a horizontal line indicating division
                 # plot line
-                plt.plot( [x_offset+X[0],x_offset+X[1]], [T[0],T[0]], color=col )
+                plt.plot( [x_offset+X[0],x_offset+X[1]], [T[0],T[0]], linestyle='-', color=col )
         return(diagram_width)
         
 #    def draw_lineage(self,lin_id, lin_interval,t_end,x_curr_branch,x_end_branch):
@@ -296,6 +303,81 @@ class Lineage:
         # return updated lineage data
         return (lin_id, lin_interval, lin_compartment)
 
+    def count_divisions(self) -> "DivisionCounts":
+        counter = DivisionCounts()
+        self._count_divisions_0(self.lin_is_dividing, counter)
+        return counter
+
+    def _count_divisions_0(self, lin_is_dividing, counter: "DivisionCounts"):
+        if _is_single_boolean(lin_is_dividing):
+            # End of line
+            return
+        else:
+            # Found a division
+            sister1, sister2 = lin_is_dividing[1]
+            sister1_dividing = bool(sister1) if _is_single_boolean(sister1) else sister1[0]
+            sister2_dividing = bool(sister2) if _is_single_boolean(sister2) else sister2[0]
+            counter.add_sister_entry(sister1_dividing, sister2_dividing)
+
+            # Look at granddaughters for cousin analysis
+            if not _is_single_boolean(sister1) and not _is_single_boolean(sister2):
+                # We can look at the granddaughters
+                for cousin1 in sister1[1]:
+                    for cousin2 in sister2[1]:
+                        cousin1_dividing = bool(cousin1) if _is_single_boolean(cousin1) else cousin1[0]
+                        cousin2_dividing = bool(cousin2) if _is_single_boolean(cousin2) else cousin2[0]
+                        counter.add_cousin_entry(cousin1_dividing, cousin2_dividing)
+            
+            # Continue the search down this rabbit hole
+            self._count_divisions_0(sister1, counter)
+            self._count_divisions_0(sister2, counter)
+
+
+class DivisionCounts:
+    sisters_symmetric_dividing: int
+    sisters_symmetric_non_dividing: int
+    sisters_asymmetric: int
+
+    cousins_symmetric_dividing: int
+    cousins_symmetric_non_dividing: int
+    cousins_asymmetric: int
+
+    def __init__(self):
+        self.sisters_symmetric_dividing, self.sisters_symmetric_non_dividing, self.sisters_asymmetric = 0, 0, 0
+        self.cousins_symmetric_dividing, self.cousins_symmetric_non_dividing, self.cousins_asymmetric = 0, 0, 0
+
+    def add_sister_entry(self, sister1_dividing: bool, sister2_dividing: bool):
+        if sister1_dividing and sister2_dividing:
+            self.sisters_symmetric_dividing += 1
+        elif not sister1_dividing and not sister2_dividing:
+            self.sisters_symmetric_non_dividing += 1
+        else:
+            self.sisters_asymmetric += 1
+
+    def add_cousin_entry(self, cousin1_dividing: bool, cousin2_dividing: bool):
+        if cousin1_dividing and cousin2_dividing:
+            self.cousins_symmetric_dividing += 1
+        elif not cousin1_dividing and not cousin2_dividing:
+            self.cousins_symmetric_non_dividing += 1
+        else:
+            self.cousins_asymmetric += 1
+
+    def __str__(self):
+        return repr(self.__dict__.values())
+
+    def __add__(self, other):
+        if not isinstance(other, DivisionCounts):
+            return NotImplemented
+        the_sum = DivisionCounts()
+        the_sum.sisters_symmetric_dividing = self.sisters_symmetric_dividing + other.sisters_symmetric_dividing
+        the_sum.sisters_symmetric_non_dividing = self.sisters_symmetric_non_dividing + other.sisters_symmetric_non_dividing
+        the_sum.sisters_asymmetric = self.sisters_asymmetric + other.sisters_asymmetric
+        the_sum.cousins_symmetric_dividing = self.cousins_symmetric_dividing + other.cousins_symmetric_dividing
+        the_sum.cousins_symmetric_non_dividing = self.cousins_symmetric_non_dividing + other.cousins_symmetric_non_dividing
+        the_sum.cousins_asymmetric = self.cousins_asymmetric + other.cousins_asymmetric
+        return the_sum
+
+
 class _CompartmentByTime:
     # we can only store one variable per track. To still keep track of at which time point the cell moved to another
     # compartment, we use this class, which can store different compartments for different time points
@@ -348,3 +430,7 @@ class _CompartmentByTime:
 def _is_single_float(value):
     value_type = type(value)
     return value_type == float or value_type == np.float64
+
+
+def _is_single_boolean(value):
+    return value is True or value is False

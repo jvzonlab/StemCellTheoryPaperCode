@@ -1,7 +1,5 @@
 import numpy as np
 import pickle as pickle
-import sys
-import os
 
 from two_compartment_model_lib import run_sim
 
@@ -9,13 +7,13 @@ def main():
     #%% set sweep parameters
     
     # fix total number of dividing cells (measured values: anything from 10 to 50 dividing cells in a crypt)
-    D = 30
+    D=30
     
     # fix cell cycle parameters (based on measured values)
     T=[16.153070175438597,3.2357834505600382]
     
     # number of steps in sweep
-    Np=40
+    Np=1
     start = 25
     end = 1000
     
@@ -35,13 +33,13 @@ def main():
     
     sweep_params, sweep_n0 =  get_param_list(alpha_n,alpha_m,phi_r,T,D)    
     
-    sweep_params_split, sweep_n0_split = break_list(sweep_params, sweep_n0, 72)
-    for it in range(len(sweep_params_split)):
-        print(f'iteration {it}')
-        perform_sweep(sweep_params_split[it],sweep_n0_split[it],
-                        t_sim,n_max,f'two_comp_sweep_data_fixed_D/sweep_fixed_D30_Np40_i{it}.p')
+#    sweep_params_split, sweep_n0_split = break_list(sweep_params, sweep_n0, 72)
+#    it = int(sys.argv[1])
+#    print(f'iteration {it}')
+#    perform_sweep(sweep_params_split[it],sweep_n0_split[it],
+#                  t_sim,n_max,f'sweep_fixed_S30_Np40_i{it}.p')
 
-    #perform_sweep(sweep_params,sweep_n0,t_sim,n_max,'two_comp_sweep_data.p')
+    perform_sweep(sweep_params,sweep_n0,t_sim,n_max,'two_comp_sweep_data.p')
    
 def break_list(sweep_params, sweep_n0, c):
     sweep_params_split = split_list(sweep_params,c)

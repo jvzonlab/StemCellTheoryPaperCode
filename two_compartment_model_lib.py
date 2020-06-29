@@ -183,6 +183,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
             if tracking_lineage:
                 # if tracking lineage, get ids for mother and daughters
                 daughter_cell_id_list=[]
+                daughter_is_dividing_list=[]
                 mother_cell_id = cell_list[0].id
     
             ### execute division
@@ -195,6 +196,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                     if tracking_lineage:
                         # if needed, remember daughter cell id
                         daughter_cell_id_list.append( cell_id )
+                        daughter_is_dividing_list.append( True )
                     # adjust cell id
                     cell_id += 1
                 # adjust number of dividing cells   
@@ -207,10 +209,12 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                 if tracking_lineage:
                     # rember id of this daughter, if tracking lineage
                     daughter_cell_id_list.append( cell_id )
+                    daughter_is_dividing_list.append( True )
                 cell_id += 1  
                 if tracking_lineage:
                     # and remember id of the non-dividing daughter
                     daughter_cell_id_list.append( cell_id )
+                    daughter_is_dividing_list.append( False )
                 cell_id += 1
                 # adjust number of non-dividing differentiated cells
                 u[compartment] += 1
@@ -221,6 +225,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                     if tracking_lineage:
                         # remember daughter cell ids
                         daughter_cell_id_list.append( cell_id )
+                        daughter_is_dividing_list.append( False )
                     # and increase cell id
                     cell_id += 1  
                 # adjust number of dividing cells   
@@ -267,14 +272,14 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
             # implement cell division in saved lineages
             if tracking_lineage:
                 for L in L_list:
-                    L.divide_cell(mother_cell_id,daughter_cell_id_list,t)
+                    L.divide_cell(mother_cell_id,daughter_cell_id_list,daughter_is_dividing_list,t)
         
             # check if lineage needs to start being tracked
             if track_lineage:
                 if (t>track_lineage_time_interval[0]) and (t<track_lineage_time_interval[1]) and (not tracking_lineage):
                     tracking_lineage=True
-                    for compartment in cell_list:
-                        L_list.append( Lineage(compartment.id, track_lineage_time_interval[0], compartment.comp, 1) )
+                    for cell in cell_list:
+                        L_list.append( Lineage(cell.id, track_lineage_time_interval[0], cell.comp, True, 1) )
             
             # check if lineage tracking should stop
             if (tracking_lineage==True):
