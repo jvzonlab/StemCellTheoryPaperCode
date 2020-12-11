@@ -363,7 +363,7 @@ class DivisionCounts:
             self.cousins_asymmetric += 1
 
     def __str__(self):
-        return repr(self.__dict__.values())
+        return repr(self.__dict__)
 
     def __add__(self, other):
         if not isinstance(other, DivisionCounts):

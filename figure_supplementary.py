@@ -64,8 +64,8 @@ plt.subplot2grid((30,2),(4,0), rowspan=11)
 min_val = 0
 max_val = 400
 phi = 1
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
-im = plt.imshow(S,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step,
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+im = plt.imshow(MEAN,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step, 
                                                      alpha_n_range[-1]+half_step,alpha_n_range[0]-half_step), 
                                                      cmap=cmap,vmin=min_val, vmax=max_val)
 plt.title('phi=%.01f' % phi)
@@ -87,11 +87,11 @@ ax = plt.gca()
 ax.set_position([0.163, 0.87, 0.278, 0.02])
 cbar = fig.colorbar(im,cax=ax,orientation="horizontal")
 cbar.set_ticks([0,100,200,300,400])
-plt.title('Number of cells in proliferation compartment')
+plt.title('Average number of dividing cells')
 
 plt.subplot2grid((30,2),(19,0), rowspan=11)
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
-plt.imshow(S,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+plt.imshow(MEAN,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
                                                 phi_range[-1]+half_step,phi_range[0]-half_step), 
                                                 cmap=cmap,vmin=min_val, vmax=max_val)
 plt.xlabel('alpha_n, -alpha_m')
@@ -113,7 +113,7 @@ plt.subplot2grid((30,2),(4,1), rowspan=11)
 min_val = -.1
 max_val = 2
 phi = 1
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
 im = plt.imshow(C,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step, 
                                                   alpha_n_range[-1]+half_step,alpha_n_range[0]-half_step), 
                                                   cmap=cmap,vmin=min_val, vmax=max_val)
@@ -140,7 +140,7 @@ cbar.set_ticks([0,1,2])
 plt.title('Depletion rate (events/1,000h)')
 
 plt.subplot2grid((30,2),(19,1), rowspan=11)
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
 plt.imshow(C,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
                                                 phi_range[-1]+half_step,phi_range[0]-half_step), 
                                                 cmap=cmap,vmin=min_val, vmax=max_val)

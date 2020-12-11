@@ -1,0 +1,43 @@
+import numpy as np
+import scipy.special
+import matplotlib.pyplot as plt
+
+S = 10
+
+T = 5
+dt = 1e-2
+
+a = 0.3
+P = a*dt
+
+N = int(T/dt)
+
+N_sim=1000
+data=[]
+for n in range(0,N_sim):
+    n_event  = 0
+    for i in range(0,N):
+        p = np.random.rand(S)
+        r = np.where(p < P)
+        if len(r[0])>0:
+            n_event += 1
+            # print ("event at t:%f"%(dt*i))
+    data.append( n_event )
+data = np.array( data )
+
+print( data.mean()/T, a*S)
+
+plt.subplot(121)
+(h,x) = np.histogram(data, bins=26, range=(-0.5,25.5))
+plt.bar( (x[1:]+x[:-1])/2, h/N_sim)
+
+x = np.linspace(0,25, dtype=int)
+plt.plot( x, (a*S*T)**x*np.exp(-a*S*T)/scipy.special.factorial(x), '-k' )
+
+plt.subplot(122)
+n = np.random.poisson(a*S*T, N_sim)
+(h,x) = np.histogram(n, bins=26, range=(-0.5,25.5))
+plt.bar( (x[1:]+x[:-1])/2, h/N_sim)
+
+x = np.linspace(0,25, dtype=int)
+plt.plot( x, (a*S*T)**x*np.exp(-a*S*T)/scipy.special.factorial(x), '-k' )
