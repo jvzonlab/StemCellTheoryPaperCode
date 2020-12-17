@@ -1,13 +1,16 @@
 import numpy as np
 import pickle as pickle
 
-from two_compartment_model_lib import run_sim
+from two_compartment_model_lib import run_sim_niche
 
 def main():
     #%% set sweep parameters
     
     # fix total number of dividing cells (measured values: anything from 10 to 50 dividing cells in a crypt)
     D=30
+
+    # Fix swapping parameter
+    a=0.1
     
     # fix cell cycle parameters (based on measured values)
     T=[16.153070175438597,3.2357834505600382]
@@ -31,15 +34,15 @@ def main():
     
     n_max = 10000000 #if counting overgrowth of dividing cells
     
-    sweep_params, sweep_n0 =  get_param_list(alpha_n,alpha_m,phi_r,T,D)    
-
+    sweep_params, sweep_n0 =  get_param_list(alpha_n,alpha_m,phi_r,T,D,a)    
+    
     sweep_params_split, sweep_n0_split = break_list(sweep_params, sweep_n0, 72)
     for it in range(len(sweep_params_split)):
         print(f'iteration {it}')
         perform_sweep(sweep_params_split[it],sweep_n0_split[it],
-                        t_sim,n_max,f'two_comp_sweep_data_fixed_D/sweep_fixed_D30_Np40_i{it}.p')
+                        t_sim,n_max,f'two_comp_sweep_data_fixed_D_a{a}/sweep_fixed_D30_Np40_a{a}_i{it}.p')
 
-    #perform_sweep(sweep_params,sweep_n0,t_sim,n_max,'two_comp_sweep_data.p')
+    # perform_sweep(sweep_params,sweep_n0,t_sim,n_max,'two_comp_sweep_data.p')
    
 def break_list(sweep_params, sweep_n0, c):
     sweep_params_split = split_list(sweep_params,c)
@@ -50,7 +53,7 @@ def split_list(alist,parts):
     return a
 #%% calculate simulation parameters for each simulation in sweep
 
-def get_param_list(alpha_n,alpha_m,phi_r,T,D):
+def get_param_list(alpha_n,alpha_m,phi_r,T,D,a):
     sweep_params=[]
     sweep_n0=[]
     
@@ -74,7 +77,7 @@ def get_param_list(alpha_n,alpha_m,phi_r,T,D):
                     M_avg = D - N_avg
                     
                     # save parameters
-                    sweep_params.append( {'S':int(np.round(S)), 'alpha':[a_n, a_m], 'phi':[phi,phi], 'T':T } )
+                    sweep_params.append( {'S':int(np.round(S)), 'alpha':[a_n, a_m], 'phi':[phi,phi], 'T':T, 'a':a } )
                     # and initial conditions
                     sweep_n0.append( [ int(np.round(N_avg)), int(np.round(D-N_avg)) ] )
     return sweep_params, sweep_n0
@@ -114,7 +117,7 @@ def perform_sweep(sweep_params,sweep_n0,t_sim,n_max,filename):
         cont=True
         while cont:
             # do simulation for a time (t_sim - t_tot)
-            res = run_sim( t_sim-t_tot,n_max, sweep_params[i], n0=sweep_n0[i], track_n_vs_t=False)
+            res = run_sim_niche( t_sim-t_tot,n_max, sweep_params[i], n0=sweep_n0[i], track_n_vs_t=False)
             
             # add simulated time to total time
             t_tot += res['RunStats']['t_end']

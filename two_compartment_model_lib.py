@@ -67,6 +67,8 @@ def adjust_moment_data(dt,n, moment_data):
 def reorder_niche(niche,a,t):
     # get niche size <S>
     S = len(niche)
+    if S <= 1:
+        return(niche)  # nothing to reorder
     # get the number of reorderings N in time interval <t>
     # this is given by a possion distribution with reordering rate a*S
     N = np.random.poisson(a*S*t)
