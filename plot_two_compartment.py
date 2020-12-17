@@ -5,13 +5,13 @@ import matplotlib as mpl
 import random
 mpl.rcParams['pdf.fonttype'] = 42
 
-from two_compartment_model_lib import run_sim
+from two_compartment_model_lib import run_sim_niche
 import tools
 
 def load_data():
     sim_data = []
     for i in range(0,72):
-        filename = f"two_comp_sweep_data_fixed_D/sweep_fixed_D30_Np40_i{i}.p"
+        filename = f"two_comp_sweep_data_fixed_D_a0.1/sweep_fixed_D30_Np40_a0.1_i{i}.p"
         sim_data.extend(pickle.load( open( filename, "rb" ) ))
     return sim_data
 sim_data = load_data()
@@ -119,17 +119,18 @@ for n in range(0,len(plot_run_ind_list)):
     S=int( np.round(sim_data[i][0]['S']) )
     
     alpha=sim_data[i][0]['alpha']
+    a=sim_data[i][0]['a']
     phi=sim_data[i][0]['phi'][0]
     N_0=int( alpha[0]*S )
     M_0 = int(np.round(D-N_0))
     
-    params = {'S':S, 'alpha':alpha, 'phi':[phi,phi], 'T':[16.375159506031768,3.2357834505600382] }
+    params = {'S':S, 'alpha':alpha, 'phi':[phi,phi], 'T':[16.375159506031768,3.2357834505600382], 'a':a}
     
     print("%d/%d, a_n:%1.1f, a_m:%1.1f, phi:%1.1f, S:%1.1f, N:%1.1f" % (i,len(sweep_param),alpha[0],alpha[1],phi,S,N_0) )
     
     # run simulations
     t_sim=1e3
-    res = run_sim( t_sim,100000, params, n0=[N_0,M_0], track_n_vs_t=True, track_lineage_time_interval=t_lineage_range )
+    res = run_sim_niche( t_sim,100000, params, n0=[N_0,M_0], track_n_vs_t=True, track_lineage_time_interval=t_lineage_range )
 
     # plot cellnumber dynamics vs time
     plt.subplot2grid((6,4),(n,1), rowspan=1)
