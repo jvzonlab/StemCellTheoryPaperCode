@@ -60,7 +60,7 @@ plt.subplot2grid((30,4),(4,0), rowspan=11)
 min_val = 0
 max_val = 1
 phi = 1
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
 half_step = (alpha_m_range[1]-alpha_m_range[0])/2
 im = plt.imshow(D_CV,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step, 
                                                      alpha_n_range[-1]+half_step,alpha_n_range[0]-half_step), 
@@ -87,7 +87,7 @@ cbar.set_ticks([0,.2,.4,.6,.8,1])
 plt.title('Coefficient of variation')
 
 plt.subplot2grid((30,4),(19,0), rowspan=11)
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
 plt.imshow(D_CV,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
                                                 phi_range[-1]+half_step,phi_range[0]-half_step), 
            cmap=cmap,vmin=min_val, vmax=max_val)

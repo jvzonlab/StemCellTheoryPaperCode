@@ -11,7 +11,7 @@ import tools
 def load_data():
     sim_data = []
     for i in range(0,72):
-        filename = f"two_comp_sweep_data_fixed_D/sweep_fixed_D30_Np40_i{i}.p"
+        filename = f"two_comp_sweep_data_fixed_D_a0.1/sweep_fixed_D30_Np40_a0.1_i{i}.p"
         sim_data.extend(pickle.load( open( filename, "rb" ) ))
     return sim_data
 sim_data = load_data()
@@ -24,9 +24,10 @@ alpha_m_range = np.linspace(-end,-start,Np)
 phi_range = np.linspace(start,end,Np)
 
 cmap = plt.cm.jet
-cmaplist = [cmap(i) for i in range(cmap.N)]
+cmaplist_len = 512  # Must be higher than the actual max value, otherwise the value 1 will be gray too, instead of only 0
+cmaplist = [cmap(i / cmaplist_len) for i in range(cmaplist_len)]
 cmaplist[0] = (.7, .7, .7, 1.0) # force the first color entry to be grey
-cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, cmap.N)
+cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, cmaplist_len)
 
 #%%
 # parameters (alpha_n, alpha_m and phi) for which trajectories will be plotted
@@ -64,8 +65,8 @@ plt.subplot2grid((30,2),(4,0), rowspan=11)
 min_val = 0
 max_val = 400
 phi = 1
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
-im = plt.imshow(MEAN,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step, 
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+im = plt.imshow(S,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step,
                                                      alpha_n_range[-1]+half_step,alpha_n_range[0]-half_step), 
                                                      cmap=cmap,vmin=min_val, vmax=max_val)
 plt.title('phi=%.01f' % phi)
@@ -87,11 +88,11 @@ ax = plt.gca()
 ax.set_position([0.163, 0.87, 0.278, 0.02])
 cbar = fig.colorbar(im,cax=ax,orientation="horizontal")
 cbar.set_ticks([0,100,200,300,400])
-plt.title('Average number of dividing cells')
+plt.title('Number of cells in proliferation compartment')
 
 plt.subplot2grid((30,2),(19,0), rowspan=11)
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
-plt.imshow(MEAN,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+plt.imshow(S,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
                                                 phi_range[-1]+half_step,phi_range[0]-half_step), 
                                                 cmap=cmap,vmin=min_val, vmax=max_val)
 plt.xlabel('alpha_n, -alpha_m')
@@ -113,7 +114,7 @@ plt.subplot2grid((30,2),(4,1), rowspan=11)
 min_val = -.1
 max_val = 2
 phi = 1
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
 im = plt.imshow(C,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step, 
                                                   alpha_n_range[-1]+half_step,alpha_n_range[0]-half_step), 
                                                   cmap=cmap,vmin=min_val, vmax=max_val)
@@ -140,7 +141,7 @@ cbar.set_ticks([0,1,2])
 plt.title('Depletion rate (events/1,000h)')
 
 plt.subplot2grid((30,2),(19,1), rowspan=11)
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
 plt.imshow(C,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
                                                 phi_range[-1]+half_step,phi_range[0]-half_step), 
                                                 cmap=cmap,vmin=min_val, vmax=max_val)
