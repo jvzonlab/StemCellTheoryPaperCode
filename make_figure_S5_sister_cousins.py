@@ -138,14 +138,14 @@ for m in range(0,3):
     for l in L_ids[m]:
     
         L = data['Lineage'][l]
-        W = L.draw_lineage(t_sim,x0)  
+        W = L.draw_lineage(t_sim,x0,col_default="#009CB5",col_comp_0="#7FB840")  
         x0 += W
 
     ax_C[m].set_ylim([100,0])
 
     ax_C[m].tick_params(direction='in',labelsize=8)
     ax_C[m].set_xticks([])
-    ax_C[m].set_title('a=%1.1f' % a_list[m])
+    ax_C[m].set_title('rT=%1.1f' % (a_list[m]*T[0]) )
     
 ax_C[0].set_ylabel('Time (h)')
     
@@ -161,7 +161,7 @@ for m in range(0,3):
     C = np.zeros( (2,2), dtype=float)
     
     n0 = ( int(N_avg), int(M_avg) )
-    for n in range(0,1): #50):
+    for n in range(0,50):
         data = model.run_sim_niche( t_sim,n_max, params, n0=n0, track_lineage_time_interval=[100,t_sim], track_n_vs_t=False)
         
         # x_avg = data['Moments']['mean']/t_sim
@@ -204,7 +204,7 @@ for m in range(0,3):
     else:
         sns.heatmap(C, vmin = 0.03, vmax=0.5, ax=ax_B[m], annot=True, mask=mask, cmap=cmap, cbar=True, cbar_ax = ax_B_cb, xticklabels = states_lbl, yticklabels = [])
 
-    ax_B[m].set_title('a=%1.1f' % a_list[m])
+    ax_B[m].set_title('rT=%1.1f' % (a_list[m]*T[0]) )
 
     
 for a in ax_B:
