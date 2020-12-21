@@ -130,6 +130,8 @@ for n in range(0,len(plot_run_ind_list)):
     
     # run simulations
     t_sim=1e3
+    for _ in range(30):  # Switch to a different seed, so that we have a simulation where no runs end prematurely
+        np.random.rand()
     res = run_sim_niche( t_sim,100000, params, n0=[N_0,M_0], track_n_vs_t=True, track_lineage_time_interval=t_lineage_range )
 
     # plot cellnumber dynamics vs time
