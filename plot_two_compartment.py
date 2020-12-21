@@ -56,7 +56,7 @@ cmaplist = [cmap(i) for i in range(cmap.N)]
 cmaplist[0] = (.7, .7, .7, 1.0) # force the first color entry to be grey
 cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, cmap.N)
 
-plt.subplot2grid((30,4),(4,0), rowspan=11)
+plt.subplot2grid((30,3),(4,0), rowspan=11)
 min_val = 0
 max_val = 1
 phi = 1
@@ -80,13 +80,13 @@ for n in range(0,4):
 plt.plot([-1.05,0],[1.05,0],':r')    
 
 
-plt.subplot2grid((30,4),(0,0), rowspan=1)
+plt.subplot2grid((30,3),(0,0), rowspan=1)
 ax = plt.gca()
 cbar = fig.colorbar(im,cax=ax,orientation="horizontal")
 cbar.set_ticks([0,.2,.4,.6,.8,1])
 plt.title('Coefficient of variation')
 
-plt.subplot2grid((30,4),(19,0), rowspan=11)
+plt.subplot2grid((30,3),(19,0), rowspan=11)
 N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
 plt.imshow(D_CV,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
                                                 phi_range[-1]+half_step,phi_range[0]-half_step), 
@@ -135,7 +135,7 @@ for n in range(0,len(plot_run_ind_list)):
     res = run_sim_niche( t_sim,100000, params, n0=[N_0,M_0], track_n_vs_t=True, track_lineage_time_interval=t_lineage_range )
 
     # plot cellnumber dynamics vs time
-    plt.subplot2grid((6,4),(n,1), rowspan=1)
+    plt.subplot2grid((6,3),(n,1), rowspan=1)
     plt.plot([0,t_sim],[D,D],'--', color='grey')
     n_vs_t=res['n_vs_t']
     # plot total number of dividing cells in black
@@ -163,7 +163,7 @@ for n in range(0,len(plot_run_ind_list)):
     # plot cell lineage
     
     L_list=res['Lineage']
-    plt.subplot2grid((6,4),(n,2), rowspan=1)
+    plt.subplot2grid((6,3),(n,2), rowspan=1)
     x0=0
     max_lin = min(30,len(L_list))
     random.seed(1)
@@ -178,32 +178,5 @@ for n in range(0,len(plot_run_ind_list)):
 
     if n==3:
         plt.ylabel('time')
-
-    # plot clone sizes
-    clone_sizes = []
-    min_time, max_time = t_lineage_range
-    clone_size_duration = 40
-    for i in range(len(L_list)):
-        clone_sizes += L_list[i].get_clone_size_distributions_with_duration(min_time, max_time, clone_size_duration)
-    max_clone_size = max(10, max(clone_sizes))  # Show at least 10 bins
-    plt.subplot2grid((6,4),(n,3), rowspan=1)
-    plt.hist(clone_sizes, bins=np.arange(2, max_clone_size + 1) - 0.5, color="black")
-    if n == 5:
-        plt.xlabel(f'clone size for {clone_size_duration}h')
-        plt.xticks(range(2, max_clone_size + 2, 2))
-    else:
-        plt.xticks([])
-    if n == 3:
-        plt.ylabel("count")
-
-    # print sister and cousin statistics
-    stats = None
-    for i in range(len(L_list)):
-        lineage = L_list[i]
-        if stats is None:
-            stats = lineage.count_divisions()
-        else:
-            stats += lineage.count_divisions()
-    print(f"STATS FOR PARAMETER SET {n}: {stats}")
 
 plt.show()
