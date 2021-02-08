@@ -462,6 +462,9 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
             # add dt to age
             for cell in cell_list:
                 cell.age += dt
+
+            # implement cell reorderings for the intervening time dt
+            niche = reorder_niche(niche,params['a'],dt)
         
             # get compartment of dividing cell
             compartment=cell_list[0].comp
@@ -535,9 +538,9 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
         
             # if division was in niche/compartment 0
             if compartment==0:
-                # implement cell reorderings for the intervening time dt
-                niche = reorder_niche(niche,params['a'],dt)
-                # print( mother_cell_id, niche )
+                # # implement cell reorderings for the intervening time dt
+                # niche = reorder_niche(niche,params['a'],dt)
+                # # print( mother_cell_id, niche )
                 # get position <x> in niche of mother cell
                 x = [x for (x,y) in enumerate(niche) if y == mother_cell_id][0]
                 # at that position insert two daughter cells
