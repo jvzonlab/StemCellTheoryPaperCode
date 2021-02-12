@@ -29,21 +29,21 @@ fig = plt.figure(1,figsize=(inch2cm*19,inch2cm*19))
 plt.clf()
 
 ax_A=[]
-W=0.13
+W=0.095
 x_sp = 0.02
 for i in [0,1]:
     ax_A.append( plt.axes([0.08+i*(W+x_sp),0.8,W,W]) )
 ax_A_cb = plt.axes( [0.08+W+x_sp+0.01+W,0.8,0.015,W] )
 
 ax_B=[]
-for i in [0,1,2]:
+for i in [0,1,2,3]:
     ax_B.append( plt.axes([0.51+i*(W+x_sp),0.8,W,W]) )
-ax_B_cb = plt.axes( [0.51+2*(W+x_sp)+0.01+W,0.8,0.015,W] )
+ax_B_cb = plt.axes( [0.51+3*(W+x_sp)+0.01+W,0.8,0.015,W] )
 
 ax_C=[]
-W=0.27
+W=0.19
 x_sp = 0.05
-for n in [0,1,2]:
+for n in [0,1,2,3]:
     ax_C.append( plt.axes([0.08+n*(W+x_sp),0.4,W,0.25]) )
 
 #%% First, get experimental data for sister/cousin correlations
@@ -52,7 +52,7 @@ states = ['divided', 'did not divide']
 states_lbl = ['divides', 'never divides']
 
 # load and plot sister data
-DF = pd.read_excel(r"..\\..\\Figures\\Figure_2\\SisterCousinDivisionBehavior_organoids.xlsx",sheet_name='Sisters')
+DF = pd.read_excel(r"Experimental data/SisterCousinDivisionBehavior_organoids.xlsx",sheet_name='Sisters',engine='openpyxl')
 df = DF[0:3]
 m = { i:n for (i,n) in enumerate( df['s2\s1'] )}
 df = df.rename(index=m)
@@ -71,7 +71,7 @@ mask[ np.where(S_expt==0) ] = True
 sns.heatmap(S_expt, ax=ax_A[0], annot=True, vmin = 0.03, vmax=0.41, mask=mask, cmap=cmap, cbar=False, xticklabels = states_lbl, yticklabels = states_lbl)
 
 # load and plot cousin data
-DF = pd.read_excel(r"..\\..\\Figures\\Figure_2\\SisterCousinDivisionBehavior_organoids.xlsx",sheet_name='Cousins')
+DF = pd.read_excel(r"Experimental data/SisterCousinDivisionBehavior_organoids.xlsx",sheet_name='Cousins',engine='openpyxl')
 df1 = DF[0:3]
 df2 = DF[7:10]
 m = { i:n for (i,n) in enumerate( DF['c3(c4)\c1(c2)'] )}
@@ -121,9 +121,9 @@ np.random.seed(0)
 
 t_sim=100
 
-a_list=[0.1, 1, 10]
-L_ids = [ [2,6], [8,20], [0,10] ]
-for m in range(0,3):
+a_list=[0.1 / T[0], 1 / T[0], 10 / T[0], 100 / T[0]]
+L_ids = [ [2,6], [8,20], [0,1], [2,6] ]
+for m in range(0,4):
 
     params['a']=a_list[m]
     
@@ -145,15 +145,15 @@ for m in range(0,3):
 
     ax_C[m].tick_params(direction='in',labelsize=8)
     ax_C[m].set_xticks([])
-    ax_C[m].set_title('a=%1.1f' % a_list[m])
+    ax_C[m].set_title('aT=%1.1f' % (a_list[m] * T[0]))
     
 ax_C[0].set_ylabel('Time (h)')
     
 #%% simulation for non-mixed niche
 
 t_sim=200
-a_list=[0.1, 1, 10]
-for m in range(0,3):
+a_list=[0.1 / T[0], 1 / T[0], 10 / T[0], 100 / T[0]]
+for m in range(0,4):
 
     params['a']=a_list[m]
     
@@ -199,12 +199,12 @@ for m in range(0,3):
     mask[ np.where(C==0) ] = True
     if m==0:
         sns.heatmap(C, vmin = 0.03, vmax=0.5, ax=ax_B[m], annot=True, mask=mask, cmap=cmap, cbar=False, xticklabels = states_lbl, yticklabels = states_lbl)
-    elif m==1:
+    elif m==1 or m==2:
         sns.heatmap(C, vmin = 0.03, vmax=0.5, ax=ax_B[m], annot=True, mask=mask, cmap=cmap, cbar=False, xticklabels = states_lbl, yticklabels = [])
     else:
         sns.heatmap(C, vmin = 0.03, vmax=0.5, ax=ax_B[m], annot=True, mask=mask, cmap=cmap, cbar=True, cbar_ax = ax_B_cb, xticklabels = states_lbl, yticklabels = [])
 
-    ax_B[m].set_title('a=%1.1f' % a_list[m])
+    ax_B[m].set_title('aT=%1.1f' % (a_list[m] * T[0]))
 
     
 for a in ax_B:
@@ -222,4 +222,4 @@ ax_B[0].set_ylabel('C1', fontsize=10)
 
 
 print(C_expt)
-
+plt.show()
