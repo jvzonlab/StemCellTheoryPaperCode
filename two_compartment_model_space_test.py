@@ -122,7 +122,7 @@ np.random.seed(0)
 t_sim=100
 
 a_list=[0.1 / T[0], 1 / T[0], 10 / T[0], 100 / T[0]]
-L_ids = [ [2,6], [8,20], [0,1], [2,6] ]
+L_ids = [ [2,6], [8,20], [0,8], [5,6] ]
 for m in range(0,4):
 
     params['a']=a_list[m]
