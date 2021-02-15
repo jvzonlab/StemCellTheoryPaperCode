@@ -8,12 +8,12 @@ def main():
     
     # fix total number of dividing cells (measured values: anything from 10 to 50 dividing cells in a crypt)
     D=30
-
-    # Fix swapping parameter
-    a=0.1
     
     # fix cell cycle parameters (based on measured values)
     T=[16.153070175438597,3.2357834505600382]
+
+    # Fix swapping parameter
+    a=1 / T[0]
     
     # number of steps in sweep
     Np=40
@@ -40,7 +40,7 @@ def main():
     for it in range(len(sweep_params_split)):
         print(f'iteration {it}')
         perform_sweep(sweep_params_split[it],sweep_n0_split[it],
-                        t_sim,n_max,f'two_comp_sweep_data_fixed_D_a{a}/sweep_fixed_D30_Np40_a{a}_i{it}.p')
+                        t_sim,n_max,f'two_comp_sweep_data_fixed_D_aT1/sweep_fixed_D30_Np40_aT1_i{it}.p')
 
     # perform_sweep(sweep_params,sweep_n0,t_sim,n_max,'two_comp_sweep_data.p')
    
