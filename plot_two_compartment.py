@@ -11,7 +11,7 @@ import tools
 def load_data():
     sim_data = []
     for i in range(0,72):
-        filename = f"two_comp_sweep_data_fixed_D_a0.1/sweep_fixed_D30_Np40_a0.1_i{i}.p"
+        filename = f"two_comp_sweep_data_fixed_D_aT1/sweep_fixed_D30_Np40_aT1_i{i}.p"
         sim_data.extend(pickle.load( open( filename, "rb" ) ))
     return sim_data
 sim_data = load_data()
@@ -108,7 +108,7 @@ for n in [1,2,4,5]:
 
 # plot trajectories
     
-np.random.seed(15)
+np.random.seed(16)
 D = 30
 t_lineage_range=[100,160]
 
@@ -130,8 +130,6 @@ for n in range(0,len(plot_run_ind_list)):
     
     # run simulations
     t_sim=1e3
-    for _ in range(30):  # Switch to a different seed, so that we have a simulation where no runs end prematurely
-        np.random.rand()
     res = run_sim_niche( t_sim,100000, params, n0=[N_0,M_0], track_n_vs_t=True, track_lineage_time_interval=t_lineage_range )
 
     # plot cellnumber dynamics vs time
