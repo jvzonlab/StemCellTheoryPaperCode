@@ -10,6 +10,7 @@ import two_compartment_model_lib as model
 
 import matplotlib as mpl
 mpl.rcParams['pdf.fonttype'] = 42
+mpl.rcParams['svg.fonttype'] = 'none'  # export text as text in SVG, not as paths
 
 import matplotlib.colors as mcolors
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=-1):
