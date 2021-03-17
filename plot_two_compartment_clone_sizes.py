@@ -2,11 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pickle
 import matplotlib as mpl
-import random
-mpl.rcParams['pdf.fonttype'] = 42
-
 from two_compartment_model_lib import run_sim_niche
-import tools
+
+mpl.rcParams['pdf.fonttype'] = 42
 
 def load_data():
     sim_data = []

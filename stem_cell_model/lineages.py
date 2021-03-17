@@ -4,7 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import operator
 
-class Lineage:
+from stem_cell_model.division_counts import DivisionCounts
+
+
+class Lineages:
 
     lin_id: Union[List, int]
     lin_interval: Union[List, int]
@@ -224,7 +227,7 @@ class Lineage:
     # gets the clone size distribution for the given sub-lineage. For each cell that exists at min_time, the clone size
     # at max_time is returned.
     def _get_sub_clone_size_distribution(self, lin_interval: Union[float, List], min_time: float, max_time: float, indent: str) -> List[int]:
-        if _is_single_float(lin_interval):
+        if _is_single_number(lin_interval):
             # this is a non-dividing cell starting at lin_interval
             time_start = lin_interval
             division_time = None
@@ -233,7 +236,7 @@ class Lineage:
             # we have a division
             time_start, next = lin_interval
             daughter1, daughter2 = next
-            division_time = daughter1 if _is_single_float(daughter1) else daughter1[0]
+            division_time = daughter1 if _is_single_number(daughter1) else daughter1[0]
 
         if time_start > max_time:
             return []  # cell didn't exist yet at this time point - report no clone size
@@ -250,7 +253,7 @@ class Lineage:
 
     # returns the clone size of the given sub-lineage, ignoring any divisions happening after max_time
     def _get_clone_size(self, lin_interval: Union[float, List], max_time: float) -> int:
-        if _is_single_float(lin_interval):
+        if _is_single_number(lin_interval):
             return 1
 
         # we have a division, lin_interval structure is [time_start, [daughter1, daughter2]]
@@ -258,7 +261,7 @@ class Lineage:
         daughter1, daughter2 = next
 
         # calculate division time from time_start of an arbitrary daughter
-        division_time = daughter1 if _is_single_float(daughter1) else daughter1[0]
+        division_time = daughter1 if _is_single_number(daughter1) else daughter1[0]
         if division_time > max_time:
             # division happens after our time window, act as if this cell hasn't divided yet
             return 1
@@ -303,12 +306,12 @@ class Lineage:
         # return updated lineage data
         return (lin_id, lin_interval, lin_compartment)
 
-    def count_divisions(self) -> "DivisionCounts":
+    def count_divisions(self) -> DivisionCounts:
         counter = DivisionCounts()
         self._count_divisions_0(self.lin_is_dividing, counter)
         return counter
 
-    def _count_divisions_0(self, lin_is_dividing, counter: "DivisionCounts"):
+    def _count_divisions_0(self, lin_is_dividing, counter: DivisionCounts):
         if _is_single_boolean(lin_is_dividing):
             # End of line
             return
@@ -331,51 +334,6 @@ class Lineage:
             # Continue the search down this rabbit hole
             self._count_divisions_0(sister1, counter)
             self._count_divisions_0(sister2, counter)
-
-
-class DivisionCounts:
-    sisters_symmetric_dividing: int
-    sisters_symmetric_non_dividing: int
-    sisters_asymmetric: int
-
-    cousins_symmetric_dividing: int
-    cousins_symmetric_non_dividing: int
-    cousins_asymmetric: int
-
-    def __init__(self):
-        self.sisters_symmetric_dividing, self.sisters_symmetric_non_dividing, self.sisters_asymmetric = 0, 0, 0
-        self.cousins_symmetric_dividing, self.cousins_symmetric_non_dividing, self.cousins_asymmetric = 0, 0, 0
-
-    def add_sister_entry(self, sister1_dividing: bool, sister2_dividing: bool):
-        if sister1_dividing and sister2_dividing:
-            self.sisters_symmetric_dividing += 1
-        elif not sister1_dividing and not sister2_dividing:
-            self.sisters_symmetric_non_dividing += 1
-        else:
-            self.sisters_asymmetric += 1
-
-    def add_cousin_entry(self, cousin1_dividing: bool, cousin2_dividing: bool):
-        if cousin1_dividing and cousin2_dividing:
-            self.cousins_symmetric_dividing += 1
-        elif not cousin1_dividing and not cousin2_dividing:
-            self.cousins_symmetric_non_dividing += 1
-        else:
-            self.cousins_asymmetric += 1
-
-    def __str__(self):
-        return repr(self.__dict__)
-
-    def __add__(self, other):
-        if not isinstance(other, DivisionCounts):
-            return NotImplemented
-        the_sum = DivisionCounts()
-        the_sum.sisters_symmetric_dividing = self.sisters_symmetric_dividing + other.sisters_symmetric_dividing
-        the_sum.sisters_symmetric_non_dividing = self.sisters_symmetric_non_dividing + other.sisters_symmetric_non_dividing
-        the_sum.sisters_asymmetric = self.sisters_asymmetric + other.sisters_asymmetric
-        the_sum.cousins_symmetric_dividing = self.cousins_symmetric_dividing + other.cousins_symmetric_dividing
-        the_sum.cousins_symmetric_non_dividing = self.cousins_symmetric_non_dividing + other.cousins_symmetric_non_dividing
-        the_sum.cousins_asymmetric = self.cousins_asymmetric + other.cousins_asymmetric
-        return the_sum
 
 
 class _CompartmentByTime:
@@ -427,9 +385,9 @@ class _CompartmentByTime:
         return f"_CompartmentByTime({self._starting_compartment})"
 
 
-def _is_single_float(value):
+def _is_single_number(value):
     value_type = type(value)
-    return value_type == float or value_type == np.float64
+    return value_type == float or value_type == np.float64 or value_type == int or value_type == np.int
 
 
 def _is_single_boolean(value):

@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pickle
-import tools
+from stem_cell_model import tools
 
 sim_data = pickle.load( open( "one_comp_sweep_data.p", "rb" ) )
 

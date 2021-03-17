@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import skewnorm
 import time
 
-from lineage_lib import Lineage
+from stem_cell_model.lineage_lib import Lineages
 
 #from skewed distribution
 ae = 6.104045529523038
@@ -300,7 +300,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                 if (t>track_lineage_time_interval[0]) and (t<track_lineage_time_interval[1]) and (not tracking_lineage):
                     tracking_lineage=True
                     for cell in cell_list:
-                        L_list.append( Lineage(cell.id, track_lineage_time_interval[0], cell.comp, True, 1) )
+                        L_list.append(Lineages(cell.id, track_lineage_time_interval[0], cell.comp, True, 1))
             
             # check if lineage tracking should stop
             if (tracking_lineage==True):
@@ -595,7 +595,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
                 if (t>track_lineage_time_interval[0]) and (t<track_lineage_time_interval[1]) and (not tracking_lineage):
                     tracking_lineage=True
                     for cell in cell_list:
-                        L_list.append( Lineage(cell.id, track_lineage_time_interval[0], cell.comp, True, 1) )
+                        L_list.append(Lineages(cell.id, track_lineage_time_interval[0], cell.comp, True, 1))
             
             # check if lineage tracking should stop
             if (tracking_lineage==True):

@@ -2,12 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pickle
 import matplotlib as mpl
-import random
+
 mpl.rcParams['pdf.fonttype'] = 42
 mpl.rcParams['svg.fonttype'] = 'none'  # export text as text in SVG, not as paths
 
-from two_compartment_model_lib import run_sim
-import tools
+from stem_cell_model import tools
+
 
 def load_data():
     sim_data = []
@@ -66,7 +66,7 @@ plt.subplot2grid((30,2),(4,0), rowspan=11)
 min_val = 0
 max_val = 400
 phi = 1
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_alphas_for_constant_phi(phi, sim_data, alpha_n_range, alpha_m_range, phi_range, Np)
 im = plt.imshow(S,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step,
                                                      alpha_n_range[-1]+half_step,alpha_n_range[0]-half_step), 
                                                      cmap=cmap,vmin=min_val, vmax=max_val)
@@ -92,7 +92,7 @@ cbar.set_ticks([0,100,200,300,400])
 plt.title('Number of cells in proliferation compartment')
 
 plt.subplot2grid((30,2),(19,0), rowspan=11)
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data, alpha_n_range, alpha_m_range, phi_range, Np)
 plt.imshow(S,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
                                                 phi_range[-1]+half_step,phi_range[0]-half_step), 
                                                 cmap=cmap,vmin=min_val, vmax=max_val)
@@ -115,7 +115,7 @@ plt.subplot2grid((30,2),(4,1), rowspan=11)
 min_val = -.1
 max_val = 2
 phi = 1
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_alphas_for_constant_phi(phi, sim_data, alpha_n_range, alpha_m_range, phi_range, Np)
 im = plt.imshow(C,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step, 
                                                   alpha_n_range[-1]+half_step,alpha_n_range[0]-half_step), 
                                                   cmap=cmap,vmin=min_val, vmax=max_val)
@@ -142,7 +142,7 @@ cbar.set_ticks([0,1,2])
 plt.title('Depletion rate (events/1,000h)')
 
 plt.subplot2grid((30,2),(19,1), rowspan=11)
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np)
+N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data, alpha_n_range, alpha_m_range, phi_range, Np)
 plt.imshow(C,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
                                                 phi_range[-1]+half_step,phi_range[0]-half_step), 
                                                 cmap=cmap,vmin=min_val, vmax=max_val)
