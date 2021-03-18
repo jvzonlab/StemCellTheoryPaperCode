@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pickle
 import matplotlib as mpl
-from two_compartment_model_lib import run_sim_niche
+from stem_cell_model.two_compartment_model_space import run_sim_niche
 
 mpl.rcParams['pdf.fonttype'] = 42
 

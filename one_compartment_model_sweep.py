@@ -1,8 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pickle as pickle
 
-from two_compartment_model_lib import run_sim
+from stem_cell_model.two_compartment_model import run_sim
 
 #%% set sweep parameters
 
@@ -11,7 +10,7 @@ S = 10
 N_avg = 10
 D = 30
 # fix cell cycle parameters (based on measured values)
-T=[16.153070175438597,,3.2357834505600382]
+T=[16.153070175438597,3.2357834505600382]
 
 # total simulation time
 t_sim=1e1

@@ -1,7 +1,7 @@
 import numpy as np
 import pickle as pickle
 
-from two_compartment_model_lib import run_sim
+from stem_cell_model.two_compartment_model import run_sim
 
 def main():
     #%% set sweep parameters
