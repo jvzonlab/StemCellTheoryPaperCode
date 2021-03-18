@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 import numpy as np
 from scipy.stats import skewnorm
 
@@ -50,6 +52,7 @@ def init_moment_data():
     moment_data={'mean':np.zeros(2), 'sq':np.zeros(2), 'prod':0}
     return (moment_data)
 
+
 def adjust_moment_data(dt,n, moment_data):
     # <N>,<M>
     moment_data['mean'] += dt*n
@@ -60,6 +63,18 @@ def adjust_moment_data(dt,n, moment_data):
     
     return (moment_data)
 
+
+def get_next_dividing(cell_list: List[Cell]) -> Tuple[int, int]:
+    """Gets the next dividing cell from the list, by scanning the entire list.
+    Returns the index of the cell in the list, as well as the time until that cell divides."""
+    dt = np.inf
+    mother_cell_index = None
+    for cell_index, cell in enumerate(cell_list):
+        time_to_division = cell.get_time_to_division()
+        if time_to_division < dt:
+            dt = time_to_division
+            mother_cell_index = cell_index
+    return mother_cell_index, dt
 
 
 # simulation function without niche, i.e. well-stirred cells
@@ -84,7 +99,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
     
     # initialize current cell id
     cell_id=1
-    cell_list=[]
+    cell_list=[]  # List of dividing cells
     # initialize dividing cells in stem cell compartment
     for n in range(0,n0[0]):
         age = params['T'][0]*np.random.rand()
@@ -146,7 +161,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
     cont=True
     while cont:
         # get time dt to next division
-        dt = cell_list[0].get_time_to_division()
+        mother_cell_index, dt = get_next_dividing(cell_list)
         
         # if time of division is before end of simulation
         if (t+dt<t_sim):
@@ -164,7 +179,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                 cell.age += dt
         
             # get compartment of dividing cell
-            compartment=cell_list[0].comp
+            compartment=cell_list[mother_cell_index].comp
             
             ### get type of division
             
@@ -184,7 +199,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                 # if tracking lineage, get ids for mother and daughters
                 daughter_cell_id_list=[]
                 daughter_is_dividing_list=[]
-                mother_cell_id = cell_list[0].id
+                mother_cell_id = cell_list[mother_cell_index].id
     
             ### execute division
             if div_type==0:
@@ -234,7 +249,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                 u[compartment] += 2
                 
             # remove old cell after division
-            del cell_list[0]
+            del cell_list[mother_cell_index]
     
             # if division was in compartment 0
             if compartment==0:
@@ -259,9 +274,6 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                     # adjust number of non-dividing differentiated cells
                     u[0] -= 1
                     u[1] += 1
-            
-            # finally, get list of cells sorted by time to next division
-            cell_list.sort(key=lambda x: x.get_time_to_division() )
     
             # save number of dividing cells
             if track_n_vs_t:

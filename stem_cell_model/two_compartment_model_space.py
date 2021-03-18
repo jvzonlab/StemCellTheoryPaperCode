@@ -1,7 +1,9 @@
+from typing import Tuple, List
+
 import numpy as np
 
 from stem_cell_model.lineages import Lineages
-from stem_cell_model.two_compartment_model import Cell, init_moment_data, adjust_moment_data
+from stem_cell_model.two_compartment_model import Cell, init_moment_data, adjust_moment_data, get_next_dividing
 
 
 # implement cell reorderings in niche.
@@ -27,6 +29,20 @@ def reorder_niche(niche,a,t):
 
 
 def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs_t=False):
+    """
+    Run the simulation where the niche is a 1D column. When a cell in the niche divides, the
+    uppermost cell in the niche is moved to the next compartment.
+
+    :param t_sim: Total simulation time
+    :param n_max:
+    :param params: dict containing cell cycle time <T>, stem cell compartment size <S>,
+                   degrees of symmetry <phi_i> and growth rate <alpha_i> for compartment <i>
+    :param n0: initial number of stem cells in compartment <i>
+    :param track_lineage_time_interval: list [t_start, t_end] during which lineage information
+                                        should be recorded. If empty, no lineage recorderd
+    :param track_n_vs_t: track cell number versus time. If <false> only calculate moments
+    :return: Simulation result object.
+    """
 
     # if an interval to track lineages is defined
     if len(track_lineage_time_interval)==2:
@@ -35,12 +51,12 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
     else:
         track_lineage=False
 
-    # initialize niche
+    # initialize niche - array of cell ids (both dividing and non-dividing) in order
     niche = np.zeros( params['S'], dtype=int)
 
     # initialize current cell id
     cell_id=1
-    cell_list=[]
+    cell_list=[]  # List of dividing cells
     # initialize dividing cells in stem cell compartment
     for n in range(0,n0[0]):
         # assign parameters
@@ -112,7 +128,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
     cont=True
     while cont:
         # get time dt to next division
-        dt = cell_list[0].get_time_to_division()
+        mother_cell_index, dt = get_next_dividing(cell_list)
 
         # if time of division is before end of simulation
         if (t+dt<t_sim):
@@ -135,7 +151,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
             niche = reorder_niche(niche,params['a'],dt)
 
             # get compartment of dividing cell
-            compartment=cell_list[0].comp
+            compartment=cell_list[mother_cell_index].comp
 
             ### get type of division
 
@@ -153,7 +169,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
 
             daughter_cell_id_list=[]
             daughter_is_dividing_list=[]
-            mother_cell_id = cell_list[0].id
+            mother_cell_id = cell_list[mother_cell_index].id
 
             ### execute division
             if div_type==0:
@@ -202,13 +218,10 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
                 u[compartment] += 2
 
             # remove old cell after division
-            del cell_list[0]
+            del cell_list[mother_cell_index]
 
             # if division was in niche/compartment 0
             if compartment==0:
-                # # implement cell reorderings for the intervening time dt
-                # niche = reorder_niche(niche,params['a'],dt)
-                # # print( mother_cell_id, niche )
                 # get position <x> in niche of mother cell
                 x = [x for (x,y) in enumerate(niche) if y == mother_cell_id][0]
                 # at that position insert two daughter cells
@@ -243,9 +256,6 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
                     # adjust number of dividing stem cells
                     n[0] -= 1
                     n[1] += 1
-
-            # finally, get list of cells sorted by time to next division
-            cell_list.sort(key=lambda x: x.get_time_to_division() )
 
             # save number of dividing cells
             if track_n_vs_t:
