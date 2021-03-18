@@ -8,24 +8,25 @@ from stem_cell_model.two_compartment_model import Cell, init_moment_data, adjust
 
 # implement cell reorderings in niche.
 # params: a - # reorderings / time / cell, t - time interval during which reorderings occur
-def reorder_niche(niche,a,t):
+def reorder_niche(niche, a, t):
     # get niche size <S>
     S = len(niche)
     if S <= 1:
-        return(niche)  # nothing to reorder
+        return niche  # nothing to reorder
     # get the number of reorderings N in time interval <t>
     # this is given by a possion distribution with reordering rate a*S
-    N = np.random.poisson(a*S*t)
+    N = np.random.poisson(a * S * t)
 
     # get <N> random positions in niche where cells are reordered
-    ind = (np.random.rand(N)*(S-1)).astype(int)
-    for i in range(0,N):
-        # for each cell, get position
-        x = ind[i]
+    indices = np.random.randint(0, S - 1, N)
+    for x in indices:
         # swap that cell with the one above
-        niche [ [x,x+1] ] = niche[ [x+1,x] ]
+        cell_one_above = niche[x + 1]
+        niche[x + 1] = niche[x]
+        niche[x] = cell_one_above
+
     # return new niche
-    return(niche)
+    return niche
 
 
 def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs_t=False):
