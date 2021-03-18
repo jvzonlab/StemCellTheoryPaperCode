@@ -24,27 +24,30 @@ def get_division_age(T):
 
     return (a)
 
-# cell class
+
 class Cell:
-    
+    """Represents a single cell in the simulation."""
+
+    id: int
+    comp: int  # Updated by simulation
+    time_to_division: int  # Updated by simulation
+    age_div: int
+
     # initialize cell
     def __init__(self,cell_id,compartment,age,T):
         # unique cell identifier
         self.id = cell_id
         # set compartment that contains the cell
         self.comp = compartment
-        # and current cell age
-        self.age = age
         # and cell age when division will occur
         self.age_div = get_division_age(T)
         # make sure division does not occur before current time
         # (should be very rare for proper choise of T[0] and T[1])
-        while self.age_div<self.age:
+        while self.age_div<age:
             self.age_div = get_division_age(T)
-        
-    # return time to next division
-    def get_time_to_division(self):
-        return (self.age_div-self.age)
+
+        self.time_to_division = self.age_div - age
+
 
 # functions for calculating statistics of fluctuations of stem cell number
 def init_moment_data():
@@ -70,7 +73,7 @@ def get_next_dividing(cell_list: List[Cell]) -> Tuple[int, int]:
     dt = np.inf
     mother_cell_index = None
     for cell_index, cell in enumerate(cell_list):
-        time_to_division = cell.get_time_to_division()
+        time_to_division = cell.time_to_division
         if time_to_division < dt:
             dt = time_to_division
             mother_cell_index = cell_index
@@ -110,9 +113,6 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
         age = params['T'][0]*np.random.rand()
         cell_list.append( Cell(cell_id,1,age,params['T']) )
         cell_id += 1
-        
-    # get sorted list of dividing cells by increasing time of division
-    cell_list.sort(key=lambda x: x.get_time_to_division() )
 
     ### calculate p,q parameters for both compartment
     
@@ -176,7 +176,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
             
             # add dt to age
             for cell in cell_list:
-                cell.age += dt
+                cell.time_to_division -= dt
         
             # get compartment of dividing cell
             compartment=cell_list[mother_cell_index].comp

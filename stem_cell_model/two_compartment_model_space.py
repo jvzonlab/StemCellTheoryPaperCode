@@ -78,9 +78,6 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
         cell_list.append( Cell(cell_id,1,age,params['T']) )
         cell_id += 1
 
-    # get sorted list of dividing cells by increasing time of division
-    cell_list.sort(key=lambda x: x.get_time_to_division() )
-
     ### calculate p,q parameters for both compartment
 
     p=[]
@@ -145,7 +142,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
 
             # add dt to age
             for cell in cell_list:
-                cell.age += dt
+                cell.time_to_division -= dt
 
             # implement cell reorderings for the intervening time dt
             niche = reorder_niche(niche,params['a'],dt)
