@@ -1,45 +1,73 @@
+from typing import Dict, Any, Optional
+
 import numpy as np
 
-def get_statistics(run_data):
-    n_mean = run_data['mean']/run_data['t_tot']
-    n_std_sq = run_data['sq']/run_data['t_tot'] - n_mean**2
-    cc_NM = run_data['prod']/run_data['t_tot'] - n_mean[0]*n_mean[1]
-    D_std_sq = n_std_sq[0]+n_std_sq[1]+2*cc_NM
-    
-    d_mean = sum(n_mean)
-    
-    n_std=np.sqrt( n_std_sq[0] )
-    m_std=np.sqrt( n_std_sq[1] )
-    
-    n_coeff_var = n_std/n_mean[0]
-    m_coeff_var = m_std/n_mean[1]
-    
-    if abs(D_std_sq) < 0.001: #to correct precision errors (eg D is -6.59659826763e-13 instead of 0)
+
+class SingleRunStatistics:
+    """Statistics of a single simulation run."""
+
+    n_mean: float  # Mean of the number of proliferating cells in the niche compartment
+    m_mean: float  # Mean of the number of proliferating cells in the differentiation compartment
+    d_mean: float  # Mean number of dividing cells in the entire model.
+
+    n_std: float  # Standard deviation of the number of proliferating cells in the niche compartment
+    m_std: float  # Standard deviation of the number of proliferating cells in the differentiation compartment
+    d_std: float  # Standard deviation of the total number of proliferating cells
+
+    f_collapse: float  # Number of collapses per 1000 simulation time units
+    f_collapse_t: float  # Total simulation time divided by the number of collapses
+    n_explosions: Optional[float] = None  # Number of explosions per 1000 simulation time units
+    n_explosions_t: Optional[float] = None  # Total simulation time divided by the number of explosions
+
+    n_coeff_var: float  # Variation coefficient of the number of proliferating cells in the niche compartment
+    m_coeff_var: float  # Variation coefficient of the number of proliferating cells in the differentiation compartment
+    d_coeff_var: float  # Variation coefficient of the number of proliferating cells in both compartments
+
+
+def get_single_run_statistics(run_data: Dict[str, Any]) -> SingleRunStatistics:
+    """Gets the statistics of a single simulation run."""
+    out = SingleRunStatistics()
+
+    n_m_mean = run_data['mean'] / run_data['t_tot']
+    out.n_mean = n_m_mean[0]
+    out.m_mean = n_m_mean[1]
+
+    n_std_sq = run_data['sq'] / run_data['t_tot'] - n_m_mean ** 2
+    cc_NM = run_data['prod'] / run_data['t_tot'] - out.n_mean * out.m_mean
+    D_std_sq = n_std_sq[0] + n_std_sq[1] + 2 * cc_NM
+
+    d_mean = sum(n_m_mean)
+
+    out.n_std = np.sqrt(n_std_sq[0])
+    out.m_std = np.sqrt(n_std_sq[1])
+
+    out.n_coeff_var = out.n_std / out.n_mean
+    out.m_coeff_var = out.m_std / out.m_mean
+
+    if abs(D_std_sq) < 0.001:  # to correct precision errors (eg D is -6.59659826763e-13 instead of 0)
         D_std_sq = 0
-    D_std=np.sqrt( D_std_sq )
-    
-    d_coeff_var = D_std/d_mean
+    out.d_std = np.sqrt(D_std_sq)
 
-    f_collapse=1000*run_data['n_runs_ended_early']/run_data['t_tot'] #rate: event per 1,000 h
+    out.d_coeff_var = out.d_std / d_mean
 
-    #average time per simulation
+    out.f_collapse = 1000 * run_data['n_runs_ended_early'] / run_data['t_tot']  # rate: event per 1,000 h
+
+    # average time per simulation
     if run_data['n_runs_ended_early'] == 0:
-        f_collapse_t = run_data['t_tot']
-    else: 
-        f_collapse_t = run_data['t_tot']/run_data['n_runs_ended_early']
-    
-    if 'n_explosions' in run_data.keys():
-#        n_explosions=run_data['n_explosions'] #event number
-        n_explosions=1000*run_data['n_explosions']/run_data['t_tot'] #rate: event per 1,000 h
-        if run_data['n_explosions'] == 0:
-            n_explosions_t=run_data['t_tot']
-        else:
-            n_explosions_t=run_data['t_tot']/run_data['n_explosions']
-        return n_std, m_std, D_std,f_collapse,n_explosions,f_collapse_t,n_explosions_t,n_mean, d_mean, n_coeff_var,m_coeff_var,d_coeff_var
+        out.f_collapse_t = run_data['t_tot']
     else:
-        return n_std, m_std, D_std,f_collapse,f_collapse_t,n_mean, d_mean, n_coeff_var, m_coeff_var,d_coeff_var
-    
-    
+        out.f_collapse_t = run_data['t_tot'] / run_data['n_runs_ended_early']
+
+    if 'n_explosions' in run_data.keys():
+        #        n_explosions=run_data['n_explosions'] #event number
+        out.n_explosions = 1000 * run_data['n_explosions'] / run_data['t_tot']  # rate: event per 1,000 h
+        if run_data['n_explosions'] == 0:
+            out.n_explosions_t = run_data['t_tot']
+        else:
+            out.n_explosions_t = run_data['t_tot'] / run_data['n_explosions']
+    return out
+
+
 def plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
     N = np.zeros((Np,Np))
     M = np.zeros((Np,Np))
@@ -56,21 +84,21 @@ def plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_ra
         sweep_param = s[0]
         run_data = s[1]
         if sweep_param['phi'][0]==phi:
-            n_std, m_std, D_std,f_collapse,f_collapse_t,n_mean, d_mean, n_cv, m_cv, d_cv = get_statistics(run_data)
+            single_run_statistics = get_single_run_statistics(run_data)
             alpha=sweep_param['alpha']
             # find indeces i and j corresponding to the current parameters alpha_n,m        
             i = np.where(np.abs(alpha[0]-alpha_n_range)==np.abs((alpha[0]-alpha_n_range)).min())[0][0]
             j = np.where(np.abs(alpha[1]-alpha_m_range)==np.abs((alpha[1]-alpha_m_range)).min())[0][0]
         
-            N[i,j] = n_std
-            M[i,j] = m_std
-            D[i,j] = D_std
-            C[i,j] = f_collapse
-            C_t[i,j] = f_collapse_t
-            MEAN[i,j] = d_mean
-            N_CV[i,j] = n_cv
-            M_CV[i,j] = m_cv
-            D_CV[i,j] = d_cv
+            N[i,j] = single_run_statistics.n_std
+            M[i,j] = single_run_statistics.m_std
+            D[i,j] = single_run_statistics.d_std
+            C[i,j] = single_run_statistics.f_collapse
+            C_t[i,j] = single_run_statistics.f_collapse_t
+            MEAN[i,j] = single_run_statistics.d_mean
+            N_CV[i,j] = single_run_statistics.n_coeff_var
+            M_CV[i,j] = single_run_statistics.m_coeff_var
+            D_CV[i,j] = single_run_statistics.d_coeff_var
             S[i,j] = sweep_param["S"]
     
     return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S
@@ -92,7 +120,7 @@ def plot_alpha_n_vs_phi(alpha_m,sim_data,alpha_n_range,alpha_m_range,phi_range,N
 
         if sweep_param['alpha'][1] - alpha_m < 0.001:
             
-            n_std, m_std, D_std,f_collapse,f_collapse_t,n_mean, d_mean, n_cv, m_cv, d_cv = get_statistics(run_data)
+            single_run_statistics = get_single_run_statistics(run_data)
             alpha = sweep_param['alpha']
             phi = sweep_param['phi']
 
@@ -100,15 +128,15 @@ def plot_alpha_n_vs_phi(alpha_m,sim_data,alpha_n_range,alpha_m_range,phi_range,N
             i = np.where(np.abs(phi[0]-phi_range)==np.abs((phi[0]-phi_range)).min())[0][0]
             j = np.where(np.abs(alpha[0]-alpha_n_range)==np.abs((alpha[0]-alpha_n_range)).min())[0][0]
             
-            N[i,j] = n_std
-            M[i,j] = m_std
-            D[i,j] = D_std
-            C[i,j] = f_collapse
-            C_t[i,j] = f_collapse_t
-            MEAN[i,j] = d_mean
-            D_CV[i,j] = d_cv
-            N_CV[i,j] = n_cv
-            M_CV[i,j] = m_cv
+            N[i,j] = single_run_statistics.n_std
+            M[i,j] = single_run_statistics.m_std
+            D[i,j] = single_run_statistics.d_std
+            C[i,j] = single_run_statistics.f_collapse
+            C_t[i,j] = single_run_statistics.f_collapse_t
+            MEAN[i,j] = single_run_statistics.d_mean
+            D_CV[i,j] = single_run_statistics.d_coeff_var
+            N_CV[i,j] = single_run_statistics.n_coeff_var
+            M_CV[i,j] = single_run_statistics.m_coeff_var
     
     return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV
 
@@ -133,7 +161,7 @@ def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
         
         if np.abs(alpha[0]+alpha[1])<1e-3:
             
-            n_std, m_std, D_std,f_collapse,f_collapse_t,n_mean, d_mean, n_cv, m_cv, d_cv = get_statistics(run_data)
+            single_run_statistics = get_single_run_statistics(run_data)
             alpha = sweep_param['alpha']
             phi = sweep_param['phi']
 
@@ -141,15 +169,15 @@ def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
             i = np.where(np.abs(phi[0]-phi_range)==np.abs((phi[0]-phi_range)).min())[0][0]
             j = np.where(np.abs(alpha[0]-alpha_n_range)==np.abs((alpha[0]-alpha_n_range)).min())[0][0]
             
-            N[i,j] = n_std
-            M[i,j] = m_std
-            D[i,j] = D_std
-            C[i,j] = f_collapse
-            C_t[i,j] = f_collapse_t
-            MEAN[i,j] = d_mean
-            D_CV[i,j] = d_cv
-            N_CV[i,j] = n_cv
-            M_CV[i,j] = m_cv
+            N[i,j] = single_run_statistics.n_std
+            M[i,j] = single_run_statistics.m_std
+            D[i,j] = single_run_statistics.d_std
+            C[i,j] = single_run_statistics.f_collapse
+            C_t[i,j] = single_run_statistics.f_collapse_t
+            MEAN[i,j] = single_run_statistics.d_mean
+            D_CV[i,j] = single_run_statistics.d_coeff_var
+            N_CV[i,j] = single_run_statistics.n_coeff_var
+            M_CV[i,j] = single_run_statistics.m_coeff_var
             S[i,j] = sweep_param["S"]
     
     return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S

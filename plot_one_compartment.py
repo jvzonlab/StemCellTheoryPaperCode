@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pickle
-from stem_cell_model import tools
+from stem_cell_model import tools, model_statistics
 
 sim_data = pickle.load( open( "one_comp_sweep_data.p", "rb" ) )
 
@@ -31,20 +31,20 @@ for s in sim_data:
     alpha=sweep_param['alpha'][0]
     phi=sweep_param['phi'][0]
 
-    n,m,d,c,e,c_t,e_t,mean,d_mean,n_coeff_var,m_coeff_var,d_coeff_var = tools.get_statistics(run_data)
+    single_run_statistics = model_statistics.get_single_run_statistics(run_data)
     
     # get index i for current parameter phi
     i = np.where(phi_range == phi)[0][0]
 
-    N[i] = n
-    M[i] = m
-    D[i] = d
-    C[i] = c
-    E[i] = e
-    C_t[i] = c_t
-    E_t[i] = e_t
-    MEAN[i] = d_mean
-    div[i] = d_coeff_var
+    N[i] = single_run_statistics.n_std
+    M[i] = single_run_statistics.m_std
+    D[i] = single_run_statistics.d_std
+    C[i] = single_run_statistics.f_collapse
+    E[i] = single_run_statistics.n_explosions
+    C_t[i] = single_run_statistics.f_collapse_t
+    E_t[i] = single_run_statistics.n_explosions_t
+    MEAN[i] = single_run_statistics.d_mean
+    div[i] = single_run_statistics.d_coeff_var
 
 #%%
 
