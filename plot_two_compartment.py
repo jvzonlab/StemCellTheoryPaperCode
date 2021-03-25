@@ -107,10 +107,10 @@ for n in [2,0,3]:
 
 
 # plot trajectories
-    
-np.random.seed(10)
+
 D = 30
 t_lineage_range=[100,160]
+seeds = [1, 6, 1, 3]
 
 for n in range(0,len(plot_run_ind_list)):
     i=plot_run_ind_list[n]
@@ -125,6 +125,7 @@ for n in range(0,len(plot_run_ind_list)):
     M_0 = int(np.round(D-N_0))
     
     params = {'S':S, 'alpha':alpha, 'phi':[phi,phi], 'T':[16.375159506031768,3.2357834505600382], 'a':a}
+    np.random.seed(seeds[n])
     
     print("%d/%d, a_n:%1.1f, a_m:%1.1f, phi:%1.1f, S:%1.1f, N:%1.1f" % (i,len(sweep_param),alpha[0],alpha[1],phi,S,N_0) )
     
