@@ -25,8 +25,7 @@ alpha_m_range = np.linspace(-end,-start,Np)
 phi_range = np.linspace(start,end,Np)
 
 # parameters (alpha_n, alpha_m and phi) for which trajectories will be plotted
-plot_param = [ [0.2,-0.9,1.0], [0.2,-0.2,1.0], [0.9,-0.9,1.0], [0.9, -0.2, 1.0],
-                [0.5,-0.5,0.6], [0.2,-0.2,0.3] ]
+plot_param = [[0.95, -0.95, 1.0], [0.2, -0.95, 1.0], [0.2, -0.2, 1.0], [0.2, -0.2, 0.25]]
 
 plot_run_ind_list=[]
 # for each parameter set in plot_param
@@ -50,7 +49,7 @@ for s in range(0,len(plot_param)):
     # save index of overal minimum            
     plot_run_ind_list.append( ind_min )
 
-fig = plt.figure(figsize=(12, 8))
+fig = plt.figure(figsize=(7, 6))
 
 cmap = plt.cm.jet
 cmaplist = [cmap(i) for i in range(cmap.N)]
@@ -74,7 +73,7 @@ plt.ylim([alpha_n_range[-1]+half_step,alpha_n_range[0]-half_step])
 plt.xticks([-0.2,-0.4,-0.6,-0.8,-1])
 #plt.yticks([0.025,0.05])
 
-for n in range(0,4):
+for n in [1,2,0]:
     i = plot_run_ind_list[n]
     plt.plot( sim_data[i][0]['alpha'][1], sim_data[i][0]['alpha'][0], '.r')
     plt.text( sim_data[i][0]['alpha'][1]+0.02, sim_data[i][0]['alpha'][0]+0.08, '%d' % (n+1), color='r' )
@@ -101,7 +100,7 @@ plt.xlim([alpha_n_range[-1]+half_step,alpha_n_range[0]-half_step])
 plt.title('sigma_D for alpha_n=-alpha_m')
 plt.xticks([0.2,0.4,0.6,0.8,1])
 
-for n in [1,2,4,5]:
+for n in [2,0,3]:
     i = plot_run_ind_list[n]
     plt.plot( sim_data[i][0]['alpha'][0], sim_data[i][0]['phi'][0], '.r')
     plt.text( sim_data[i][0]['alpha'][0]-0.02, sim_data[i][0]['phi'][0]-0.08, '%d' % (n+1), color='r' )
@@ -109,7 +108,7 @@ for n in [1,2,4,5]:
 
 # plot trajectories
     
-np.random.seed(5)
+np.random.seed(10)
 D = 30
 t_lineage_range=[100,160]
 
@@ -134,7 +133,7 @@ for n in range(0,len(plot_run_ind_list)):
     res = run_sim_niche( t_sim,100000, params, n0=[N_0,M_0], track_n_vs_t=True, track_lineage_time_interval=t_lineage_range )
 
     # plot cellnumber dynamics vs time
-    plt.subplot2grid((6,3),(n,1), rowspan=1)
+    plt.subplot2grid((4,5),(n,2), rowspan=1, colspan=3)
     plt.plot([0,t_sim],[D,D],'--', color='grey')
     n_vs_t=res['n_vs_t']
     # plot total number of dividing cells in black
@@ -151,31 +150,12 @@ for n in range(0,len(plot_run_ind_list)):
     
     plt.text(10,1.6*D,'%d' % (n+1))
     
-    if n!=5:
+    if n!=3:
         plt.xticks([])
     else:
         plt.xlabel('time (hours)')
         
-    if n==3:
+    if n==1:
         plt.ylabel('# of dividing cells')
-                   
-    # plot cell lineage
-    
-    L_list=res['Lineage']
-    plt.subplot2grid((6,3),(n,2), rowspan=1)
-    x0=0
-    max_lin = min(30,len(L_list))
-    random.seed(1)
-    ra_L = random.choices(L_list, k = max_lin)
-    for i in ra_L:
-        w = i.draw_lineage(t_lineage_range[1],x0,show_cell_id=False,col_default="#009CB5",col_comp_0="#7FB840")
-        x0+=w+2
-    plt.ylim([t_lineage_range[1],t_lineage_range[0]])
-    plt.xlim([-2,x0/3])
-    plt.xticks([])
-    plt.yticks([])
-
-    if n==3:
-        plt.ylabel('time')
 
 plt.show()
