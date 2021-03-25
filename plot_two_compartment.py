@@ -4,6 +4,7 @@ import pickle as pickle
 import matplotlib as mpl
 import random
 mpl.rcParams['pdf.fonttype'] = 42
+mpl.rcParams['svg.fonttype'] = 'none'
 
 from stem_cell_model.two_compartment_model_space import run_sim_niche
 from stem_cell_model import tools
