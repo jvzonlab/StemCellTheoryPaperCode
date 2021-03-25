@@ -108,7 +108,7 @@ for n in [1,2,4,5]:
 
 # plot trajectories
     
-np.random.seed(16)
+np.random.seed(5)
 D = 30
 t_lineage_range=[100,160]
 
