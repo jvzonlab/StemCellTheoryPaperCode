@@ -36,7 +36,7 @@ def get_single_run_statistics(run_data: Dict[str, Any]) -> SingleRunStatistics:
     cc_NM = run_data['prod'] / run_data['t_tot'] - out.n_mean * out.m_mean
     D_std_sq = n_std_sq[0] + n_std_sq[1] + 2 * cc_NM
 
-    d_mean = sum(n_m_mean)
+    out.d_mean = sum(n_m_mean)
 
     out.n_std = np.sqrt(n_std_sq[0])
     out.m_std = np.sqrt(n_std_sq[1])
@@ -48,7 +48,7 @@ def get_single_run_statistics(run_data: Dict[str, Any]) -> SingleRunStatistics:
         D_std_sq = 0
     out.d_std = np.sqrt(D_std_sq)
 
-    out.d_coeff_var = out.d_std / d_mean
+    out.d_coeff_var = out.d_std / out.d_mean
 
     out.f_collapse = 1000 * run_data['n_runs_ended_early'] / run_data['t_tot']  # rate: event per 1,000 h
 
