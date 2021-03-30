@@ -57,46 +57,51 @@ S = 10
 N_avg = 10
 D = 30
 T=[16.153070175438597,3.2357834505600382]  # Based on measured values
-np.random.seed(1)
+np.random.seed(4)
 standard_params = {'S':int(np.round(S)), 'phi':[1, 1], 'T':T, 'alpha': [0, 0]}
 
 # First for alpha = {-1, 1}, phi = 1
-t_alpha_example_sim = 40
-simulation_alpha_minus_one = run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [-1, -1]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
-simulation_alpha_one = run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [1, 1]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
+t_alpha_example_sim = 50
+simulation_alpha_negative = run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [-1, -1]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
+simulation_alpha_positive = run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [0.5, 0.5]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
 
 # Then for phi from 0 <= phi <= 1
 t_phi_sim = 1000
 simulation_by_phi = dict()
-seeds = [2, 55, 4]
-for phi in [0.0, 0.1, 1.0]:
+seeds = [7, 6]
+for phi in [0.1, 0.9]:
     np.random.seed(seeds.pop())
     simulation_by_phi[float(phi)] = run_sim(t_phi_sim, 100000, {**standard_params, 'phi': [phi, phi]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
 
 
 # Plot everything
-fig, ((ax_top_left, ax_top_right), (ax_bottom_left, ax_bottom_right)) = plt.subplots(2, 2, figsize=(6, 4))
+fig, ((ax_top_left, ax_top_right), (ax_bottom_left, ax_bottom_right)) = plt.subplots(2, 2, figsize=(6 * 1.2, 3.2 * 1.2))
 
 # Top left panel: simulations of alpha
-n_vs_t = simulation_alpha_one["n_vs_t"]
-ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='violet', label="α = 1")
-n_vs_t = simulation_alpha_minus_one["n_vs_t"]
-ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='royalblue', label="α = -1")
+n_vs_t = simulation_alpha_positive["n_vs_t"]
+ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='#ff9f43', label="$α$ = 0.5")
+n_vs_t = simulation_alpha_negative["n_vs_t"]
+ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='#576574', label="$α$ = -1")
 
-ax_top_left.set_xticks([])
-ax_top_left.set_xlabel("Time")
+ax_top_left.set_xlim(0, t_alpha_example_sim)
+ax_top_left.set_xticks([0, t_alpha_example_sim])
+ax_top_left.set_ylim(0, 60)
+ax_top_left.set_yticks([0, 30, 60])
+ax_top_left.set_xlabel("Time (h)")
 ax_top_left.set_ylabel("# of dividing cells $D$")
 ax_top_left.legend()
 
 # Bottom left panel: phi examples
-colors = ["violet", "royalblue", "yellowgreen", "#c23616"]
+colors = ["#10ac84", "#c23616"]
 for phi, simulation_results in simulation_by_phi.items():
     n_vs_t = simulation_results["n_vs_t"]
-    ax_bottom_left.plot(n_vs_t[:, 0], n_vs_t[:, 1] + n_vs_t[:, 2], color=colors.pop(), label=f"φ = {phi}")
-ax_bottom_left.set_ylim(-5, 55)
+    ax_bottom_left.plot(n_vs_t[:, 0], n_vs_t[:, 1] + n_vs_t[:, 2], color=colors.pop(), label=f"$φ$ = {phi}")
+ax_bottom_left.set_xlim(0, t_phi_sim)
+ax_bottom_left.set_xticks([0, t_phi_sim])
+ax_bottom_left.set_ylim(0, 60)
+ax_bottom_left.set_yticks([0, 30, 60])
 ax_bottom_left.legend()
-ax_bottom_left.set_xticks([])
-ax_bottom_left.set_xlabel("Time")
+ax_bottom_left.set_xlabel("Time (h)")
 ax_bottom_left.set_ylabel("# of dividing cells $D$")
 
 # Bottom right panel: depletion and overgrowth rates
@@ -106,12 +111,12 @@ ax_bottom_right.plot(phi_range, E, color='violet', label='_nolegend_')
 ax_bottom_right.plot(phi_range, E, 'o', color='violet')
 ax_bottom_right.legend(['Depletion', 'Overgrowth'])
 ax_bottom_right.set_ylabel('Rate (events/1,000h)')
-ax_bottom_right.set_xlabel('phi')
+ax_bottom_right.set_xlabel('$φ$')
 ax_bottom_right.set_ylim([-0.05, 0.6])
 
 # Top right panel: CoV
-ax_top_right.plot(phi_range, div, 'o', color='yellowgreen')
-ax_top_right.plot(phi_range, div, color='yellowgreen', label='_nolegend_')
+ax_top_right.plot(phi_range, div, 'o', color='#9D9D9C')
+ax_top_right.plot(phi_range, div, color='#9D9D9C', label='_nolegend_')
 ax_top_right.set_ylabel('Coefficient of variation')
 ax_top_right.set_ylim([-.05, 1.05])
 ax_top_right.xaxis.set_ticklabels([])
