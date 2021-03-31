@@ -57,21 +57,25 @@ S = 10
 N_avg = 10
 D = 30
 T=[16.153070175438597,3.2357834505600382]  # Based on measured values
-np.random.seed(4)
-standard_params = {'S':int(np.round(S)), 'phi':[1, 1], 'T':T, 'alpha': [0, 0]}
+
+standard_params = {'S':int(np.round(S)), 'phi':[0.9, 0.9], 'T':T, 'alpha': [0, 0]}
 
 # First for alpha = {-1, 1}, phi = 1
 t_alpha_example_sim = 50
-simulation_alpha_negative = run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [-1, -1]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
+np.random.seed(11)
+simulation_alpha_negative = run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [-0.5, -0.5]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
+np.random.seed(2)
 simulation_alpha_positive = run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [0.5, 0.5]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
 
-# Then for phi from 0 <= phi <= 1
+# Then longer-term
 t_phi_sim = 1000
-simulation_by_phi = dict()
-seeds = [7, 6]
-for phi in [0.1, 0.9]:
+simulations_for_phi = list()
+seeds = [4, 17, 10]
+for phi in [0.9, 0.9, 0.1]:
     np.random.seed(seeds.pop())
-    simulation_by_phi[float(phi)] = run_sim(t_phi_sim, 100000, {**standard_params, 'phi': [phi, phi]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
+    results = run_sim(t_phi_sim, 100000, {**standard_params, 'phi': [phi, phi]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
+    results["phi"] = phi
+    simulations_for_phi.append(results)
 
 
 # Plot everything
@@ -81,21 +85,22 @@ fig, ((ax_top_left, ax_top_right), (ax_bottom_left, ax_bottom_right)) = plt.subp
 n_vs_t = simulation_alpha_positive["n_vs_t"]
 ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='#ff9f43', label="$α$ = 0.5")
 n_vs_t = simulation_alpha_negative["n_vs_t"]
-ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='#576574', label="$α$ = -1")
+ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='#576574', label="$α$ = -0.5")
 
 ax_top_left.set_xlim(0, t_alpha_example_sim)
 ax_top_left.set_xticks([0, t_alpha_example_sim])
 ax_top_left.set_ylim(0, 60)
 ax_top_left.set_yticks([0, 30, 60])
-ax_top_left.set_xlabel("Time (h)")
 ax_top_left.set_ylabel("# of dividing cells $D$")
 ax_top_left.legend()
 
 # Bottom left panel: phi examples
-colors = ["#10ac84", "#c23616"]
-for phi, simulation_results in simulation_by_phi.items():
+colors = ["#c23616", "#c23616", "#10ac84"]
+labels = ["$φ$ = 0.9", None, "$φ$ = 0.1"]
+for simulation_results, color, label in zip(simulations_for_phi, colors, labels):
     n_vs_t = simulation_results["n_vs_t"]
-    ax_bottom_left.plot(n_vs_t[:, 0], n_vs_t[:, 1] + n_vs_t[:, 2], color=colors.pop(), label=f"$φ$ = {phi}")
+    phi = simulation_results["phi"]
+    ax_bottom_left.plot(n_vs_t[:, 0], n_vs_t[:, 1] + n_vs_t[:, 2], color=color, label=label)
 ax_bottom_left.set_xlim(0, t_phi_sim)
 ax_bottom_left.set_xticks([0, t_phi_sim])
 ax_bottom_left.set_ylim(0, 60)
