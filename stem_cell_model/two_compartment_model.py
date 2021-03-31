@@ -307,7 +307,12 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
             run_ended_early=False
             n_exploded=False
             t_end=t_sim
-            
+
+            # final save of number of dividing cells
+            if track_n_vs_t:
+                n_vs_t.append([t_end, n[0], n[1]])
+                u_vs_t.append([t_end, u[0], u[1]])
+
         if len(cell_list)==0:
             # if no dividing cells left, stop simulation
             cont=False
