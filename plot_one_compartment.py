@@ -59,34 +59,42 @@ D = 30
 T=[16.153070175438597,3.2357834505600382]  # Based on measured values
 
 standard_params = {'S':int(np.round(S)), 'phi':[0.9, 0.9], 'T':T, 'alpha': [0, 0]}
+np.random.seed(1)  # Fixed seed
 
-# First for alpha = {-1, 1}, phi = 1
+# First for alpha = -0.5, phi = 1
 t_alpha_example_sim = 50
-np.random.seed(11)
-simulation_alpha_negative = run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [-0.5, -0.5]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
-np.random.seed(2)
-simulation_alpha_positive = run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [0.5, 0.5]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
+simulations_alpha_negative = []
+while len(simulations_alpha_negative) < 5:
+    simulations_alpha_negative.append(run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [-0.5, -0.5]}, n0=[N_avg, D - N_avg], track_n_vs_t=True))
 
-# Then longer-term
+# Then for alpha = 0.5, phi = 1
+simulations_alpha_positive = []
+while len(simulations_alpha_positive) < 5:
+    simulations_alpha_positive.append(run_sim(t_alpha_example_sim, 100000, {**standard_params, 'alpha': [0.5, 0.5]}, n0=[N_avg, D - N_avg], track_n_vs_t=True))
+
+# Then longer-term (so alpha = 0.1), first for phi = 0.9
 t_phi_sim = 1000
-simulations_for_phi = list()
-seeds = [4, 17, 10]
-for phi in [0.9, 0.9, 0.1]:
-    np.random.seed(seeds.pop())
-    results = run_sim(t_phi_sim, 100000, {**standard_params, 'phi': [phi, phi]}, n0=[N_avg, D - N_avg], track_n_vs_t=True)
-    results["phi"] = phi
-    simulations_for_phi.append(results)
+simulations_phi_zero_point_nine = list()
+while len(simulations_phi_zero_point_nine) < 5:
+    simulations_phi_zero_point_nine.append(run_sim(t_phi_sim, 100000, {**standard_params, 'phi': [0.9, 0.9]}, n0=[N_avg, D - N_avg], track_n_vs_t=True))
 
+# and finally for phi = 0.1
+simulations_phi_zero_point_one = list()
+while len(simulations_phi_zero_point_one) < 5:
+    simulations_phi_zero_point_one.append(run_sim(t_phi_sim, 100000, {**standard_params, 'phi': [0.1, 0.1]}, n0=[N_avg, D - N_avg], track_n_vs_t=True))
 
 # Plot everything
 fig, ((ax_top_left, ax_top_right), (ax_bottom_left, ax_bottom_right)) = plt.subplots(2, 2, figsize=(6 * 1.2, 3.2 * 1.2))
 
 # Top left panel: simulations of alpha
-n_vs_t = simulation_alpha_positive["n_vs_t"]
-ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='#ff9f43', label="$α$ = 0.5")
-n_vs_t = simulation_alpha_negative["n_vs_t"]
-ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='#576574', label="$α$ = -0.5")
-
+for i, simulation in enumerate(simulations_alpha_positive):
+    label = "$α$ = 0.5" if i == 0 else None  # Only label once
+    n_vs_t = simulation["n_vs_t"]
+    ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='#c23616', label=label, alpha=0.6)
+for i, simulation in enumerate(simulations_alpha_negative):
+    label = "$α$ = -0.5" if i == 0 else None  # Only label once
+    n_vs_t = simulation["n_vs_t"]
+    ax_top_left.plot(n_vs_t[:,0],n_vs_t[:,1]+n_vs_t[:,2], color='#10ac84', label=label, alpha=0.6)
 ax_top_left.set_xlim(0, t_alpha_example_sim)
 ax_top_left.set_xticks([0, t_alpha_example_sim])
 ax_top_left.set_ylim(0, 60)
@@ -95,12 +103,14 @@ ax_top_left.set_ylabel("# of dividing cells $D$")
 ax_top_left.legend()
 
 # Bottom left panel: phi examples
-colors = ["#c23616", "#c23616", "#10ac84"]
-labels = ["$φ$ = 0.9", None, "$φ$ = 0.1"]
-for simulation_results, color, label in zip(simulations_for_phi, colors, labels):
-    n_vs_t = simulation_results["n_vs_t"]
-    phi = simulation_results["phi"]
-    ax_bottom_left.plot(n_vs_t[:, 0], n_vs_t[:, 1] + n_vs_t[:, 2], color=color, label=label)
+for i, simulation in enumerate(simulations_phi_zero_point_nine):
+    label = "$φ$ = 0.9" if i == 0 else None  # Only label once
+    n_vs_t = simulation["n_vs_t"]
+    ax_bottom_left.plot(n_vs_t[:, 0], n_vs_t[:, 1] + n_vs_t[:, 2], color='#ff9f43', label=label, alpha=0.6)
+for i, simulation in enumerate(simulations_phi_zero_point_one):
+    label = "$φ$ = 0.1" if i == 0 else None  # Only label once
+    n_vs_t = simulation["n_vs_t"]
+    ax_bottom_left.plot(n_vs_t[:, 0], n_vs_t[:, 1] + n_vs_t[:, 2], color='#576574', label=label, alpha=0.6)
 ax_bottom_left.set_xlim(0, t_phi_sim)
 ax_bottom_left.set_xticks([0, t_phi_sim])
 ax_bottom_left.set_ylim(0, 60)
