@@ -1,28 +1,38 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 from scipy.stats import skewnorm
 
 from stem_cell_model.lineages import Lineages
 
-#from skewed distribution
-ae = 6.104045529523038
-loce = 12.242161056111865
-scalee = 5.248997116207871
 
-ages_list = []
+class DivisionTimer:
+    """Generates division times (from an experimentally observed distribution)."""
 
-# get cell age at the time of division
-def get_division_age(T):
-    global ages_list, ae, loce, scalee
-    
-    #generate a list of cell cycle durations by drawing numbers from skew normal distribution with parameters ae, loce, scalee from experimental data
-    if len(ages_list) == 0:
-        ages_list = skewnorm(ae, loce, scalee).rvs(1000000)
-    #assign the last number in ages list as the age of cell and remove number from list
-    a, ages_list = ages_list[-1], ages_list[:-1]
+    #from skewed distribution
+    ae = 6.104045529523038
+    loce = 12.242161056111865
+    scalee = 5.248997116207871
 
-    return (a)
+    ages_list: Union[np.ndarray, List[float]]
+    seed: int
+
+    def __init__(self, seed: int):
+        # generate a list of cell cycle durations by drawing numbers from skew normal distribution with parameters ae, loce, scalee from experimental data
+        self.seed = seed
+        self.ages_list = []
+
+    def random_division_age(self) -> float:
+        """get cell age at the time of division"""
+        # generate a list of cell cycle durations by drawing numbers from skew normal distribution with parameters ae, loce, scalee from experimental data
+        if len(self.ages_list) == 0:
+            self.seed += 1
+            self.ages_list = skewnorm(self.ae, self.loce, self.scalee).rvs(1000000, random_state=self.seed)
+
+        #assign the last number in ages list as the age of cell and remove number from list
+        a = float(self.ages_list[-1])
+        self.ages_list = self.ages_list[:-1]
+        return a
 
 
 class Cell:
@@ -30,21 +40,21 @@ class Cell:
 
     id: int
     comp: int  # Updated by simulation
-    time_to_division: int  # Updated by simulation
-    age_div: int
+    time_to_division: float  # Updated by simulation
+    age_div: float
 
     # initialize cell
-    def __init__(self,cell_id,compartment,age,T):
+    def __init__(self, cell_id: int, compartment: int, age: float, division_timer: DivisionTimer):
         # unique cell identifier
         self.id = cell_id
         # set compartment that contains the cell
         self.comp = compartment
         # and cell age when division will occur
-        self.age_div = get_division_age(T)
+        self.age_div = division_timer.random_division_age()
         # make sure division does not occur before current time
-        # (should be very rare for proper choise of T[0] and T[1])
-        while self.age_div<age:
-            self.age_div = get_division_age(T)
+        # (should be very rare for proper choice of division times)
+        while self.age_div < age:
+            self.age_div = division_timer.random_division_age()
 
         self.time_to_division = self.age_div - age
 
@@ -90,7 +100,8 @@ def get_next_dividing(cell_list: List[Cell]) -> Tuple[int, int]:
 #        should be recorded. If empty, no lineage recorderd
 # track_n_vs_t - track cell number versus time. If <false> only calculate moments
 def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs_t=False):
-    
+    division_timer = DivisionTimer(np.random.randint(1000000))
+
     # if an interval to track lineages is defined
     if len(track_lineage_time_interval)==2:
         # then set flag for tracking them
@@ -106,12 +117,12 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
     # initialize dividing cells in stem cell compartment
     for n in range(0,n0[0]):
         age = params['T'][0]*np.random.rand()
-        cell_list.append( Cell(cell_id,0,age,params['T']) )
+        cell_list.append(Cell(cell_id, 0, age, division_timer))
         cell_id += 1
     # initialize dividing cells outside compartment
     for n in range(0,n0[1]):
         age = params['T'][0]*np.random.rand()
-        cell_list.append( Cell(cell_id,1,age,params['T']) )
+        cell_list.append(Cell(cell_id, 1, age, division_timer))
         cell_id += 1
 
     ### calculate p,q parameters for both compartment
@@ -207,7 +218,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
                 # generate two new dividing cells to compartment <c>
                 for i in [0,1]:
                     # add new cells to cell list
-                    cell_list.append( Cell(cell_id,compartment,0,params['T']) )
+                    cell_list.append(Cell(cell_id, compartment, 0, division_timer))
                     if tracking_lineage:
                         # if needed, remember daughter cell id
                         daughter_cell_id_list.append( cell_id )
@@ -220,7 +231,7 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
             elif div_type==1:
                 # div -> div + non-div
                 # add a single dividing cell to compartment <c>
-                cell_list.append( Cell(cell_id,compartment,0,params['T']) )
+                cell_list.append(Cell(cell_id, compartment, 0, division_timer))
                 if tracking_lineage:
                     # rember id of this daughter, if tracking lineage
                     daughter_cell_id_list.append( cell_id )

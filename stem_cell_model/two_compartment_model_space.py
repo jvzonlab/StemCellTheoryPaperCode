@@ -3,7 +3,8 @@ from typing import Tuple, List
 import numpy as np
 
 from stem_cell_model.lineages import Lineages
-from stem_cell_model.two_compartment_model import Cell, init_moment_data, adjust_moment_data, get_next_dividing
+from stem_cell_model.two_compartment_model import Cell, init_moment_data, adjust_moment_data, get_next_dividing, \
+    DivisionTimer
 
 
 # implement cell reorderings in niche.
@@ -44,6 +45,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
     :param track_n_vs_t: track cell number versus time. If <false> only calculate moments
     :return: Simulation result object.
     """
+    division_timer = DivisionTimer(np.random.randint(1000000))
 
     # if an interval to track lineages is defined
     if len(track_lineage_time_interval)==2:
@@ -63,7 +65,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
         # assign parameters
         age = params['T'][0]*np.random.rand()
         # add cell
-        cell_list.append( Cell(cell_id,0,age,params['T']) )
+        cell_list.append(Cell(cell_id, 0, age, division_timer))
         # place cell in niche
         inserted_cell=False
         while not inserted_cell:
@@ -76,7 +78,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
     # initialize dividing cells outside compartment
     for n in range(0,n0[1]):
         age = params['T'][0]*np.random.rand()
-        cell_list.append( Cell(cell_id,1,age,params['T']) )
+        cell_list.append(Cell(cell_id, 1, age, division_timer))
         cell_id += 1
 
     ### calculate p,q parameters for both compartment
@@ -175,7 +177,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
                 # generate two new dividing cells to compartment <c>
                 for i in [0,1]:
                     # add new cells to cell list
-                    cell_list.append( Cell(cell_id,compartment,0,params['T']) )
+                    cell_list.append(Cell(cell_id, compartment, 0, division_timer))
                     # if needed, remember daughter cell id
                     daughter_cell_id_list.append( cell_id )
                     daughter_is_dividing_list.append( True )
@@ -187,7 +189,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
             elif div_type==1:
                 # div -> div + non-div
                 # add a single dividing cell to compartment <c>
-                cell_list.append( Cell(cell_id,compartment,0,params['T']) )
+                cell_list.append(Cell(cell_id, compartment, 0, division_timer))
                 # if tracking_lineage:
                 # rember id of this daughter, if tracking lineage
                 daughter_cell_id_list.append( cell_id )
