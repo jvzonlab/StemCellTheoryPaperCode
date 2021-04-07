@@ -22,10 +22,10 @@ class SimulationParameters:
                                     alpha=(params["alpha"][0], params["alpha"][1]),
                                     phi=(params["phi"][0], params["phi"][1]),
                                     T=(params["T"][0], params["T"][1]),
-                                    n=(n0[0], n0[1]))
+                                    n0=(n0[0], n0[1]))
 
     @staticmethod
-    def for_d_alpha_and_phi(D: int, alpha_n: float, alpha_m: float, phi: float) -> Optional["SimulationParameters"]:
+    def for_D_alpha_and_phi(*, D: int, alpha_n: float, alpha_m: float, phi: float, T: Tuple[float, float]) -> Optional["SimulationParameters"]:
         """Finds the other parameters belonging to the given ones. Returns None if the requested
          type of divisions do not exist."""
 
@@ -46,16 +46,54 @@ class SimulationParameters:
 
             # save parameters
             return SimulationParameters(S=int(numpy.round(S)), alpha=(alpha_n, alpha_m), phi=(phi, phi), T=T,
-                                        n=(int(numpy.round(N_avg)), int(numpy.round(D - N_avg))))
+                                        n0=(int(numpy.round(N_avg)), int(numpy.round(M_avg))))
         return None
 
-    def __init__(self, *, S: int, alpha: Tuple[float, float], phi: Tuple[float, float], T: Tuple[float, float], n: Tuple[int, int], a: float = 0):
+    @staticmethod
+    def for_S_alpha_and_phi(*, S: int, alpha_n: float, alpha_m: float, phi: float, T: Tuple[float, float]) -> Optional["SimulationParameters"]:
+        """Finds the other parameters belonging to the given ones. Returns None if the requested
+         type of divisions do not exist."""
+
+        # calculate division probabilities p_i and q_i in compartment i=n,m
+        p_n = (phi + alpha_n) / 2
+        q_n = (phi - alpha_n) / 2
+        p_m = (phi + alpha_m) / 2
+        q_m = (phi - alpha_m) / 2
+
+        # check if division probabilities exist for this alpha_n, alpha_m and phi combination
+        if (p_n >= 0) and (q_n >= 0) and (p_m >= 0) and (q_m >= 0):
+            # calculate number of dividing cells D
+            D = S*numpy.log(1+alpha_n)*(alpha_m-alpha_n)/alpha_m
+            # calculate the average number of dividing cells in stem cell compartment
+            N_avg = alpha_n * S
+            if int(numpy.round(N_avg)) == 0:
+                return None  # Not a simulation that will work
+
+            # calculate the average number of dividing cells in transit amplifying compartment
+            M_avg = D - N_avg
+
+            # save parameters
+            return SimulationParameters(S=int(numpy.round(S)), alpha=(alpha_n, alpha_m), phi=(phi, phi), T=T,
+                                        n0=(int(numpy.round(N_avg)), int(numpy.round(M_avg))))
+        return None
+
+
+    def __init__(self, *, S: int, alpha: Tuple[float, float], phi: Tuple[float, float], T: Tuple[float, float], n0: Tuple[int, int], a: float = 0):
         self.S = S
         self.alpha = alpha
         self.phi = phi
         self.T = T
-        self.n0 = n
+        self.n0 = n0
         self.a = a
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "S": self.S,
+            "alpha": [self.alpha[0], self.alpha[1]],
+            "phi": [self.phi[0], self.phi[1]],
+            "T": [self.T[0], self.T[1]],
+            "n0": [self.n0[0], self.n0[1]]
+        }
 
 
 class SimulationConfig:

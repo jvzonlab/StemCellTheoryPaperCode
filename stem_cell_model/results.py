@@ -33,20 +33,18 @@ class MomentData:
 
 
 class RunStats:
-    runs_ended_early: int
+    run_ended_early: bool
     t_end: int
     n_exploded: int
 
-    def __init__(self, *, runs_ended_early: int, t_end: int, n_exploded: int):
-        self.runs_ended_early = runs_ended_early
+    def __init__(self, *, run_ended_early: bool, t_end: int, n_exploded: int):
+        self.run_ended_early = run_ended_early
         self.t_end = t_end
         self.n_exploded = n_exploded
 
     def to_dict(self) -> Dict[str, Any]:
-        # Yes, run_ended_early should be runs_ended_early. However, we want to keep the
-        # format compatible with old data.
         return {
-            'run_ended_early': self.runs_ended_early,
+            'run_ended_early': self.run_ended_early,
             't_end': self.t_end,
             'n_exploded': self.n_exploded
         }
@@ -78,3 +76,45 @@ class SimulationResults:
         if self.lineages is not None:
             return_dict["Lineage"] = self.lineages
         return return_dict
+
+
+class MultiRunStats:
+    """Accumulates statistics of multiple runs."""
+
+    nm_mean: ndarray  # Sum of all means, divide by t_tot for the actual average
+    nm_sq: ndarray  # Sum of sq values
+    nm_prod: int = 0  # Sum of products
+    t_tot: int = 0
+    n_runs_ended_early: int = 0
+
+    def __init__(self):
+        self.nm_mean = numpy.zeros(2)
+        self.nm_sq = numpy.zeros(2)
+
+    def add_results(self, results: SimulationResults):
+        """Adds all relevant results of the given run to this instance."""
+
+        # add simulated time to total time
+        self.t_tot += results.run_stats.t_end
+        # and accumulate statistics for each individual run
+        self.nm_mean += results.moments.mean
+        self.nm_sq += results.moments.sq
+        self.nm_prod += results.moments.prod
+
+        # if run ended before time (t_sim - t_tot)
+        if results.run_stats.run_ended_early:
+            # store this
+            self.n_runs_ended_early += 1
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {'mean': self.nm_mean, 'sq': self.nm_sq, 'prod': self.nm_prod, 't_tot': self.t_tot, 'n_runs_ended_early': self.n_runs_ended_early}
+
+    def print_run_statistics(self):
+        nm_mean = self.nm_mean / self.t_tot
+        nm_std = self.nm_sq / self.t_tot - nm_mean ** 2
+        cc_NM = self.nm_prod / self.t_tot - nm_mean[0] * nm_mean[1]
+
+        print("\t<N>=%f, s_N=%f" % (nm_mean[0], numpy.sqrt(nm_std[0])))
+        print("\t<M>=%f, s_M=%f" % (nm_mean[1], numpy.sqrt(nm_std[1])))
+        print("\t<N M>=%f" % cc_NM)
+        print("\t<D>=%f, s_D=%f" % (nm_mean[0] + nm_mean[1], numpy.sqrt(nm_std[0] + nm_std[1] + 2 * cc_NM)))

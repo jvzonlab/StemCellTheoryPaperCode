@@ -340,7 +340,7 @@ def run_simulation(config: SimulationConfig) -> SimulationResults:
         n_events+=1
     
     # save data
-    run_stats = RunStats(runs_ended_early=run_ended_early, t_end=t_end, n_exploded=n_exploded)
+    run_stats = RunStats(run_ended_early=run_ended_early, t_end=t_end, n_exploded=n_exploded)
     output = SimulationResults(moments=moment_data, run_stats=run_stats)
     if config.track_n_vs_t:
         output.n_vs_t = np.array(n_vs_t)
