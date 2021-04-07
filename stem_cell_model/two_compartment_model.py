@@ -7,6 +7,7 @@ from scipy.stats import skewnorm
 
 from stem_cell_model.lineages import Lineages
 from stem_cell_model.parameters import SimulationConfig, SimulationParameters
+from stem_cell_model.results import SimulationResults, MomentData, RunStats
 
 
 class DivisionTimer:
@@ -61,24 +62,6 @@ class Cell:
         self.time_to_division = self.age_div - age
 
 
-# functions for calculating statistics of fluctuations of stem cell number
-def init_moment_data():
-    # <N>, <M>, <N^2>, <M^2>, <NM> 
-    moment_data={'mean':np.zeros(2), 'sq':np.zeros(2), 'prod':0}
-    return (moment_data)
-
-
-def adjust_moment_data(dt,n, moment_data):
-    # <N>,<M>
-    moment_data['mean'] += dt*n
-    # <N^2>,<M^2>
-    moment_data['sq'] += dt*n**2
-    # <NM>
-    moment_data['prod'] += dt*n[0]*n[1]
-    
-    return (moment_data)
-
-
 def get_next_dividing(cell_list: List[Cell]) -> Tuple[int, int]:
     """Gets the next dividing cell from the list, by scanning the entire list.
     Returns the index of the cell in the list, as well as the time until that cell divides."""
@@ -104,10 +87,10 @@ def get_next_dividing(cell_list: List[Cell]) -> Tuple[int, int]:
 def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs_t=False):
     """Old simulation method - kept for compatibility with old code. Directly forwards to the new one."""
     return run_simulation(SimulationConfig.from_old_format(
-        t_sim, n_max, params, n0, track_lineage_time_interval, track_n_vs_t))
+        t_sim, n_max, params, n0, track_lineage_time_interval, track_n_vs_t)).to_dict()
 
 
-def run_simulation(config: SimulationConfig):
+def run_simulation(config: SimulationConfig) -> SimulationResults:
     """Runs a single simulation of a well-mixed compartment.
     Therefore, the "a" parameter is not used."""
     division_timer = DivisionTimer(config.random)
@@ -155,7 +138,7 @@ def run_simulation(config: SimulationConfig):
     u = np.array( [params.S-params.n0[0], 0], dtype=int )
     
     # initialize moment data for fluctuations in stem cell number
-    moment_data = init_moment_data()
+    moment_data = MomentData()
     
     # run stats
     run_ended_early=False
@@ -194,7 +177,7 @@ def run_simulation(config: SimulationConfig):
 #            print("--- t=%f ---" % t)
             
             # adjust moments
-            moment_data=adjust_moment_data(dt,n,moment_data)
+            moment_data.adjust_moment_data(dt,n)
             
             # add dt to age
             for cell in cell_list:
@@ -325,7 +308,7 @@ def run_simulation(config: SimulationConfig):
             # next division would be after t_sim, stop simulation
             cont=False
             # adjust moments
-            moment_data=adjust_moment_data(config.t_sim-t,n,moment_data)
+            moment_data.adjust_moment_data(config.t_sim-t,n)
             run_ended_early=False
             n_exploded=False
             t_end=config.t_sim
@@ -342,7 +325,7 @@ def run_simulation(config: SimulationConfig):
             n_exploded=False
             t_end=t
 #            # adjust moments
-#            moment_data=adjust_moment_data(t_sim-t,n,moment_data)
+#            moment_data..adjust_moment_data(t_sim - t, n)
         
         if n[0] + n[1] >= config.n_max:
             # if more than x dividing cells, stop simulation
@@ -351,28 +334,19 @@ def run_simulation(config: SimulationConfig):
             n_exploded=True
             t_end=t
 #            # adjust moments
-#            moment_data=adjust_moment_data(t_sim-t,n,moment_data)
+#            moment_data.adjust_moment_data(t_sim - t, n)
     
         # increase event counter
         n_events+=1
     
     # save data
-    output={'Moments':moment_data}
+    run_stats = RunStats(runs_ended_early=run_ended_early, t_end=t_end, n_exploded=n_exploded)
+    output = SimulationResults(moments=moment_data, run_stats=run_stats)
     if config.track_n_vs_t:
-        output['n_vs_t']=np.array(n_vs_t)
-        output['u_vs_t']=np.array(u_vs_t)
+        output.n_vs_t = np.array(n_vs_t)
+        output.u_vs_t = np.array(u_vs_t)
     if track_lineage:
-        output['Lineage']=L_list
-    output['RunStats']={'run_ended_early':run_ended_early,'t_end':t_end,'n_exploded':n_exploded}
+        output.lineages = L_list
     # and return as output
-    return (output)
+    return output
 
-# simulation function with niche, cells in niche reorder at rate params['a']
-
-# t_sim - total simulation time
-# params - list containing cell cycle time <T>, stem cell compartment size <S>,
-#       degrees of symmetry <phi_i> and growth rate <alpha_i> for compartment <i>
-# n0_i - initial number of stem cells in compartment <i>
-# track_lineage_time_interval - list [t_start, t_end] during which lineage information 
-#        should be recorded. If empty, no lineage recorderd
-# track_n_vs_t - track cell number versus time. If <false> only calculate moments

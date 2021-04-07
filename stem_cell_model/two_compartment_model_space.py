@@ -1,11 +1,9 @@
-from typing import Tuple, List
-
 import numpy as np
 
 from stem_cell_model.lineages import Lineages
 from stem_cell_model.parameters import SimulationConfig
-from stem_cell_model.two_compartment_model import Cell, init_moment_data, adjust_moment_data, get_next_dividing, \
-    DivisionTimer
+from stem_cell_model.results import MomentData, SimulationResults, RunStats
+from stem_cell_model.two_compartment_model import Cell, get_next_dividing, DivisionTimer
 
 
 # implement cell reorderings in niche.
@@ -43,13 +41,13 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
     :param track_lineage_time_interval: list [t_start, t_end] during which lineage information
                                         should be recorded. If empty, no lineage recorderd
     :param track_n_vs_t: track cell number versus time. If <false> only calculate moments
-    :return: Simulation result object.
+    :return: Simulation result object as a raw dictionary.
     """
     return run_simulation_niche(SimulationConfig.from_old_format(
-        t_sim, n_max, params, n0, track_lineage_time_interval, track_n_vs_t))
+        t_sim, n_max, params, n0, track_lineage_time_interval, track_n_vs_t)).to_dict()
 
 
-def run_simulation_niche(config: SimulationConfig):
+def run_simulation_niche(config: SimulationConfig) -> SimulationResults:
     """Run the simulation where the niche is a 1D column. When a cell in the niche divides, the
     uppermost cell in the niche is moved to the next compartment."""
     division_timer = DivisionTimer(config.random)
@@ -108,7 +106,7 @@ def run_simulation_niche(config: SimulationConfig):
     u = np.array([params.S - params.n0[0], 0], dtype=int)
 
     # initialize moment data for fluctuations in stem cell number
-    moment_data = init_moment_data()
+    moment_data = MomentData()
 
     # run stats
     run_ended_early=False
@@ -149,7 +147,7 @@ def run_simulation_niche(config: SimulationConfig):
             # print("--- t=%f ---" % t)
 
             # adjust moments
-            moment_data=adjust_moment_data(dt,n,moment_data)
+            moment_data.adjust_moment_data(dt,n)
 
             # add dt to age
             for cell in cell_list:
@@ -291,8 +289,7 @@ def run_simulation_niche(config: SimulationConfig):
         else:
             # next division would be after t_sim, stop simulation
             cont=False
-            # adjust moments
-            # moment_data=adjust_moment_data(t_sim-t,n,moment_data)
+
             run_ended_early=False
             n_exploded=False
             t_end = config.t_sim
@@ -309,7 +306,7 @@ def run_simulation_niche(config: SimulationConfig):
             n_exploded=False
             t_end=t
             # adjust moments
-            moment_data=adjust_moment_data(config.t_sim-t,n,moment_data)
+            moment_data.adjust_moment_data(config.t_sim-t, n)
 
         if n[0] + n[1] >= config.n_max:
             # if more than x dividing cells, stop simulation
@@ -318,18 +315,18 @@ def run_simulation_niche(config: SimulationConfig):
             n_exploded=True
             t_end=t
             # adjust moments
-            moment_data=adjust_moment_data(config.t_sim - t, n, moment_data)
+            moment_data.adjust_moment_data(config.t_sim - t, n)
 
         # increase event counter
         n_events+=1
 
     # save data
-    output={'Moments':moment_data}
+    run_stats = RunStats(runs_ended_early=run_ended_early, t_end=t_end, n_exploded=n_exploded)
+    output = SimulationResults(moments=moment_data, run_stats=run_stats)
     if config.track_n_vs_t:
-        output['n_vs_t']=np.array(n_vs_t)
-        output['u_vs_t']=np.array(u_vs_t)
+        output.n_vs_t = np.array(n_vs_t)
+        output.u_vs_t = np.array(u_vs_t)
     if track_lineage:
-        output['Lineage']=L_list
-    output['RunStats']={'run_ended_early':run_ended_early,'t_end':t_end,'n_exploded':n_exploded}
+        output.lineages = L_list
     # and return as output
-    return (output)
+    return output
