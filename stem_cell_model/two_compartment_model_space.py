@@ -1,4 +1,7 @@
+
 import numpy as np
+from numpy import ndarray
+from numpy.random import Generator
 
 from stem_cell_model.lineages import Lineages
 from stem_cell_model.parameters import SimulationConfig
@@ -8,17 +11,17 @@ from stem_cell_model.two_compartment_model import Cell, get_next_dividing, Divis
 
 # implement cell reorderings in niche.
 # params: a - # reorderings / time / cell, t - time interval during which reorderings occur
-def reorder_niche(niche, a, t):
+def reorder_niche(random: Generator, niche: ndarray, a: float, t: int):
     # get niche size <S>
     S = len(niche)
     if S <= 1:
         return niche  # nothing to reorder
     # get the number of reorderings N in time interval <t>
     # this is given by a possion distribution with reordering rate a*S
-    N = np.random.poisson(a * S * t)
+    N = random.poisson(a * S * t)
 
     # get <N> random positions in niche where cells are reordered
-    indices = np.random.randint(0, S - 1, N)
+    indices = random.integers(low=0, high=S - 1, size=N, endpoint=False)
     for x in indices:
         # swap that cell with the one above
         cell_one_above = niche[x + 1]
@@ -50,7 +53,8 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
 def run_simulation_niche(config: SimulationConfig) -> SimulationResults:
     """Run the simulation where the niche is a 1D column. When a cell in the niche divides, the
     uppermost cell in the niche is moved to the next compartment."""
-    division_timer = DivisionTimer(config.random)
+    random = config.random
+    division_timer = DivisionTimer(random)
     params = config.params
 
     # if an interval to track lineages is defined
@@ -69,13 +73,13 @@ def run_simulation_niche(config: SimulationConfig) -> SimulationResults:
     # initialize dividing cells in stem cell compartment
     for n in range(0, params.n0[0]):
         # assign parameters
-        age = params.T[0]*np.random.rand()
+        age = params.T[0] * random.random()
         # add cell
         cell_list.append(Cell(cell_id, 0, age, division_timer))
         # place cell in niche
         inserted_cell=False
         while not inserted_cell:
-            ind = int(np.random.rand()*params.S)
+            ind = int(random.random() * params.S)
             if niche[ind] == 0:
                 inserted_cell = True
                 niche[ind] = cell_id
@@ -83,7 +87,7 @@ def run_simulation_niche(config: SimulationConfig) -> SimulationResults:
         cell_id += 1
     # initialize dividing cells outside compartment
     for n in range(0, params.n0[1]):
-        age = params.T[0] * np.random.rand()
+        age = params.T[0] * random.random()
         cell_list.append(Cell(cell_id, 1, age, division_timer))
         cell_id += 1
 
@@ -154,7 +158,7 @@ def run_simulation_niche(config: SimulationConfig) -> SimulationResults:
                 cell.time_to_division -= dt
 
             # implement cell reorderings for the intervening time dt
-            niche = reorder_niche(niche,params.a,dt)
+            niche = reorder_niche(random, niche, params.a, dt)
 
             # get compartment of dividing cell
             compartment=cell_list[mother_cell_index].comp
@@ -162,7 +166,7 @@ def run_simulation_niche(config: SimulationConfig) -> SimulationResults:
             ### get type of division
 
             # draw random number in (0,1)
-            r = np.random.rand()
+            r = random.random()
             if r<=p[compartment]:
                 # if r in (0,p), then div -> div + div
                 div_type=0

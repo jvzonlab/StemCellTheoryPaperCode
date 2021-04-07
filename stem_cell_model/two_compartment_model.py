@@ -93,7 +93,8 @@ def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], trac
 def run_simulation(config: SimulationConfig) -> SimulationResults:
     """Runs a single simulation of a well-mixed compartment.
     Therefore, the "a" parameter is not used."""
-    division_timer = DivisionTimer(config.random)
+    random = config.random
+    division_timer = DivisionTimer(config)
     params = config.params
 
     # if an interval to track lineages is defined
@@ -110,12 +111,12 @@ def run_simulation(config: SimulationConfig) -> SimulationResults:
     cell_list=[]  # List of dividing cells
     # initialize dividing cells in stem cell compartment
     for n in range(0, params.n0[0]):
-        age = params.T[0]*np.random.rand()
+        age = params.T[0] * random.random()
         cell_list.append(Cell(cell_id, 0, age, division_timer))
         cell_id += 1
     # initialize dividing cells outside compartment
     for n in range(0, params.n0[1]):
-        age = params.T[0]*np.random.rand()
+        age = params.T[0] * random.random()
         cell_list.append(Cell(cell_id, 1, age, division_timer))
         cell_id += 1
 
@@ -189,7 +190,7 @@ def run_simulation(config: SimulationConfig) -> SimulationResults:
             ### get type of division
             
             # draw random number in (0,1)
-            r = np.random.rand()
+            r = random.random()
             if r<=p[compartment]:
                 # if r in (0,p), then div -> div + div
                 div_type=0
@@ -261,7 +262,7 @@ def run_simulation(config: SimulationConfig) -> SimulationResults:
                 # get list of cells in current compartment    
                 comp_cell_list = [x for x in cell_list if x.comp==0]
                 # draw random cell in compartment
-                n_move=int((params.S+1)*np.random.rand())
+                n_move = int((params.S + 1) * random.random())
                 # if cell is a dividing cell
                 if n_move<len(comp_cell_list):
                     random_cell = comp_cell_list[n_move]
