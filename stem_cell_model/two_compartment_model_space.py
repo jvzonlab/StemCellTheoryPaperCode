@@ -3,6 +3,7 @@ from typing import Tuple, List
 import numpy as np
 
 from stem_cell_model.lineages import Lineages
+from stem_cell_model.parameters import SimulationConfig
 from stem_cell_model.two_compartment_model import Cell, init_moment_data, adjust_moment_data, get_next_dividing, \
     DivisionTimer
 
@@ -32,8 +33,7 @@ def reorder_niche(niche, a, t):
 
 def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs_t=False):
     """
-    Run the simulation where the niche is a 1D column. When a cell in the niche divides, the
-    uppermost cell in the niche is moved to the next compartment.
+    Old method to run the niche simulation - please use the one below for new code.
 
     :param t_sim: Total simulation time
     :param n_max:
@@ -45,39 +45,47 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
     :param track_n_vs_t: track cell number versus time. If <false> only calculate moments
     :return: Simulation result object.
     """
-    division_timer = DivisionTimer(np.random.randint(1000000))
+    return run_simulation_niche(SimulationConfig.from_old_format(
+        t_sim, n_max, params, n0, track_lineage_time_interval, track_n_vs_t))
+
+
+def run_simulation_niche(config: SimulationConfig):
+    """Run the simulation where the niche is a 1D column. When a cell in the niche divides, the
+    uppermost cell in the niche is moved to the next compartment."""
+    division_timer = DivisionTimer(config.random)
+    params = config.params
 
     # if an interval to track lineages is defined
-    if len(track_lineage_time_interval)==2:
+    if config.track_lineage_time_interval is not None:
         # then set flag for tracking them
         track_lineage=True
     else:
         track_lineage=False
 
     # initialize niche - array of cell ids (both dividing and non-dividing) in order
-    niche = np.zeros( params['S'], dtype=int)
+    niche = np.zeros(params.S, dtype=int)
 
     # initialize current cell id
     cell_id=1
     cell_list=[]  # List of dividing cells
     # initialize dividing cells in stem cell compartment
-    for n in range(0,n0[0]):
+    for n in range(0, params.n0[0]):
         # assign parameters
-        age = params['T'][0]*np.random.rand()
+        age = params.T[0]*np.random.rand()
         # add cell
         cell_list.append(Cell(cell_id, 0, age, division_timer))
         # place cell in niche
         inserted_cell=False
         while not inserted_cell:
-            ind = int(np.random.rand()*params['S'])
+            ind = int(np.random.rand()*params.S)
             if niche[ind] == 0:
                 inserted_cell = True
                 niche[ind] = cell_id
         # increase id
         cell_id += 1
     # initialize dividing cells outside compartment
-    for n in range(0,n0[1]):
-        age = params['T'][0]*np.random.rand()
+    for n in range(0, params.n0[1]):
+        age = params.T[0] * np.random.rand()
         cell_list.append(Cell(cell_id, 1, age, division_timer))
         cell_id += 1
 
@@ -86,8 +94,8 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
     p=[]
     q=[]
     for compartment in [0,1]:
-        p.append( (params['phi'][compartment] + params['alpha'][compartment])/2 )
-        q.append( (params['phi'][compartment] - params['alpha'][compartment])/2 )
+        p.append((params.phi[compartment] + params.alpha[compartment]) / 2)
+        q.append((params.phi[compartment] - params.alpha[compartment]) / 2)
 
     ### init for data collection
 
@@ -95,9 +103,9 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
     t=0
     # intialize stem cell number n(t) = [ N(t), M(t) ], where N(t) is # stem cells
     # in compartment 1 and M(t) is # of stem cells in compartment 2
-    n = np.array( n0, dtype=int )
+    n = np.array(params.n0, dtype=int)
     # initialize differentiated cell number u_i(t) in compartment <i>
-    u = np.array( [params['S']-n0[0], 0], dtype=int )
+    u = np.array([params.S - params.n0[0], 0], dtype=int)
 
     # initialize moment data for fluctuations in stem cell number
     moment_data = init_moment_data()
@@ -107,14 +115,14 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
     t_end=0
     n_events=0
 
-    if track_n_vs_t:
+    if config.track_n_vs_t:
         # initialize tracks of stem cell numbers N(t) and M(t)
         n_vs_t = [ [t, n[0], n[1]] ]
         # and same for numbers of differentiated cells
         u_vs_t = [ [t, u[0], u[1]] ]
 
     # if an interval to track lineages is defined
-    if len(track_lineage_time_interval)==2:
+    if config.track_lineage_time_interval is not None:
         # then set flag for tracking them
         track_lineage=True
         # initialize lineage list
@@ -131,7 +139,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
         mother_cell_index, dt = get_next_dividing(cell_list)
 
         # if time of division is before end of simulation
-        if (t+dt<t_sim):
+        if t + dt < config.t_sim:
             # implement the next division
 
             # print (n,u)
@@ -148,7 +156,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
                 cell.time_to_division -= dt
 
             # implement cell reorderings for the intervening time dt
-            niche = reorder_niche(niche,params['a'],dt)
+            niche = reorder_niche(niche,params.a,dt)
 
             # get compartment of dividing cell
             compartment=cell_list[mother_cell_index].comp
@@ -258,7 +266,7 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
                     n[1] += 1
 
             # save number of dividing cells
-            if track_n_vs_t:
+            if config.track_n_vs_t:
                 n_vs_t.append( [t, n[0], n[1]] )
 
                 u_vs_t.append( [t, u[0], u[1]] )
@@ -270,14 +278,14 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
 
             # check if lineage needs to start being tracked
             if track_lineage:
-                if (t>track_lineage_time_interval[0]) and (t<track_lineage_time_interval[1]) and (not tracking_lineage):
+                if (t > config.track_lineage_time_interval[0]) and (t < config.track_lineage_time_interval[1]) and (not tracking_lineage):
                     tracking_lineage=True
                     for cell in cell_list:
-                        L_list.append(Lineages(cell.id, track_lineage_time_interval[0], cell.comp, True, 1))
+                        L_list.append(Lineages(cell.id, config.track_lineage_time_interval[0], cell.comp, True, 1))
 
             # check if lineage tracking should stop
-            if (tracking_lineage==True):
-                if (t>=track_lineage_time_interval[1]):
+            if tracking_lineage:
+                if t >= config.track_lineage_time_interval[1]:
                     tracking_lineage=False
 
         else:
@@ -287,10 +295,10 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
             # moment_data=adjust_moment_data(t_sim-t,n,moment_data)
             run_ended_early=False
             n_exploded=False
-            t_end=t_sim
+            t_end = config.t_sim
 
             # final save of number of dividing cells
-            if track_n_vs_t:
+            if config.track_n_vs_t:
                 n_vs_t.append([t_end, n[0], n[1]])
                 u_vs_t.append([t_end, u[0], u[1]])
 
@@ -301,23 +309,23 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
             n_exploded=False
             t_end=t
             # adjust moments
-            moment_data=adjust_moment_data(t_sim-t,n,moment_data)
+            moment_data=adjust_moment_data(config.t_sim-t,n,moment_data)
 
-        if n[0] + n[1] >= n_max:
+        if n[0] + n[1] >= config.n_max:
             # if more than x dividing cells, stop simulation
             cont=False
             run_ended_early=False
             n_exploded=True
             t_end=t
             # adjust moments
-            moment_data=adjust_moment_data(t_sim-t,n,moment_data)
+            moment_data=adjust_moment_data(config.t_sim - t, n, moment_data)
 
         # increase event counter
         n_events+=1
 
     # save data
     output={'Moments':moment_data}
-    if track_n_vs_t:
+    if config.track_n_vs_t:
         output['n_vs_t']=np.array(n_vs_t)
         output['u_vs_t']=np.array(u_vs_t)
     if track_lineage:
