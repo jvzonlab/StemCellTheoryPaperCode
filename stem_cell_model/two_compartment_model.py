@@ -94,7 +94,7 @@ def run_simulation(config: SimulationConfig) -> SimulationResults:
     """Runs a single simulation of a well-mixed compartment.
     Therefore, the "a" parameter is not used."""
     random = config.random
-    division_timer = DivisionTimer(config)
+    division_timer = DivisionTimer(config.random)
     params = config.params
 
     # if an interval to track lineages is defined
