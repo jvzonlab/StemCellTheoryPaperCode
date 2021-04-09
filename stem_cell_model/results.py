@@ -81,11 +81,23 @@ class SimulationResults:
 class MultiRunStats:
     """Accumulates statistics of multiple runs."""
 
-    nm_mean: ndarray  # Sum of all means, divide by t_tot for the actual average
-    nm_sq: ndarray  # Sum of sq values
+    nm_mean: ndarray  # Sum of all means, divide by t_tot for the actual average. Two values, one for each compartment.
+    nm_sq: ndarray  # Sum of sq values. Two values, one for each compartment.
     nm_prod: int = 0  # Sum of products
     t_tot: int = 0
     n_runs_ended_early: int = 0
+    n_explosions: Optional[int] = None
+
+    @staticmethod
+    def from_dict(dictionary: Dict[str, Any]) -> "MultiRunStats":
+        stats = MultiRunStats()
+        stats.nm_mean = dictionary["mean"]
+        stats.nm_sq = dictionary["sq"]
+        stats.nm_prod = dictionary["prod"]
+        stats.t_tot = dictionary["t_tot"]
+        stats.n_runs_ended_early = dictionary["n_runs_ended_early"]
+        stats.n_explosions = dictionary.get("n_explosions")  # This value is optional
+        return stats
 
     def __init__(self):
         self.nm_mean = numpy.zeros(2)
@@ -107,7 +119,10 @@ class MultiRunStats:
             self.n_runs_ended_early += 1
 
     def to_dict(self) -> Dict[str, Any]:
-        return {'mean': self.nm_mean, 'sq': self.nm_sq, 'prod': self.nm_prod, 't_tot': self.t_tot, 'n_runs_ended_early': self.n_runs_ended_early}
+        dictionary = {'mean': self.nm_mean, 'sq': self.nm_sq, 'prod': self.nm_prod, 't_tot': self.t_tot, 'n_runs_ended_early': self.n_runs_ended_early}
+        if self.n_explosions is not None:
+            dictionary["n_explosions"] = self.n_explosions
+        return dictionary
 
     def print_run_statistics(self):
         nm_mean = self.nm_mean / self.t_tot
@@ -118,3 +133,6 @@ class MultiRunStats:
         print("\t<M>=%f, s_M=%f" % (nm_mean[1], numpy.sqrt(nm_std[1])))
         print("\t<N M>=%f" % cc_NM)
         print("\t<D>=%f, s_D=%f" % (nm_mean[0] + nm_mean[1], numpy.sqrt(nm_std[0] + nm_std[1] + 2 * cc_NM)))
+
+
+

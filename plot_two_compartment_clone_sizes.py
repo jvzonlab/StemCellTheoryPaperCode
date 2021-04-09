@@ -1,17 +1,19 @@
+from typing import List, Tuple
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pickle
 import matplotlib as mpl
-from stem_cell_model.two_compartment_model_space import run_sim_niche
+
+from stem_cell_model import sweeper, two_compartment_model_space
+from stem_cell_model.parameters import SimulationParameters, SimulationConfig
+from stem_cell_model.results import MultiRunStats
 
 mpl.rcParams['pdf.fonttype'] = 42
 
-def load_data():
-    sim_data = []
-    for i in range(0,72):
-        filename = f"two_comp_sweep_data_fixed_D_aT1/sweep_fixed_D30_Np40_aT1_i{i}.p"
-        sim_data.extend(pickle.load( open( filename, "rb" ) ))
-    return sim_data
+def load_data() -> List[Tuple[SimulationParameters, MultiRunStats]]:
+    return list(sweeper.load_sweep_results("two_comp_sweep_data_fixed_D_aT1"))
+
 sim_data = load_data()
 Np=40
 start = .025
@@ -35,9 +37,9 @@ for s in range(0,len(plot_param)):
         # get parameters for this run
         sweep_param=sim_data[i][0]
         # look at difference in alpha_n,m and phi
-        da0 = sweep_param['alpha'][0]-plot_param[s][0]
-        da1 = sweep_param['alpha'][1]-plot_param[s][1]
-        dph = sweep_param['phi'][0]-plot_param[s][2]
+        da0 = sweep_param.alpha[0]-plot_param[s][0]
+        da1 = sweep_param.alpha[1]-plot_param[s][1]
+        dph = sweep_param.phi[0]-plot_param[s][2]
         # if smaller than current minimum distance
         if (da0**2+da1**2+dph**2)<d_min:
             # set new minimum to this distance
@@ -57,36 +59,35 @@ cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, cma
 
 # plot trajectories
     
-np.random.seed(15)
-D = 30
-t_lineage_range=[0,160]
+random = np.random.Generator(np.random.MT19937(seed=15))
+t_lineage_range = (0, 160)
 crypts = 50
 
 for n in range(0,len(plot_run_ind_list)):
     i=plot_run_ind_list[n]
 
     # set model parameters
-    S=int( np.round(sim_data[i][0]['S']) )
-    
-    alpha=sim_data[i][0]['alpha']
-    a=sim_data[i][0]['a']
-    phi=sim_data[i][0]['phi'][0]
-    N_0=int( alpha[0]*S )
-    M_0 = int(np.round(D-N_0))
-    
-    params = {'S':S, 'alpha':alpha, 'phi':[phi,phi], 'T':[16.375159506031768,3.2357834505600382], 'a':a}
-    
-    print("%d/%d, a_n:%1.1f, a_m:%1.1f, phi:%1.1f, S:%1.1f, N:%1.1f" % (i,len(sweep_param),alpha[0],alpha[1],phi,S,N_0) )
+    params = sim_data[i][0]
+    S = int(np.round(params.S))
+    alpha = params.alpha
+    a = params.a
+    phi = params.phi[0]
+    N_0 = params.n0[0]
+    M_0 = params.n0[1]
+
+    print("%d/%d, a_n:%1.1f, a_m:%1.1f, phi:%1.1f, S:%1.1f, N:%1.1f" % (i,len(sim_data),alpha[0],alpha[1],phi,S,N_0) )
     
     # run simulations
     t_sim=t_lineage_range[1] + 1
     clone_sizes = []
     clone_size_duration = 40
     min_clone_count_time, max_clone_count_time = t_lineage_range
+    config = SimulationConfig(t_sim=t_sim, n_max=100000, params=params, track_n_vs_t=True, track_lineage_time_interval=t_lineage_range, random=random)
 
     for i in range(crypts):  # simulate a crypt 50 times, so that the uncertainty in the clone size is small
-        res = run_sim_niche( t_sim,100000, params, n0=[N_0,M_0], track_n_vs_t=True, track_lineage_time_interval=t_lineage_range )
-        L_list=res['Lineage']
+
+        res = two_compartment_model_space.run_simulation_niche(config)
+        L_list=res.lineages
         for i in range(len(L_list)):
             clone_sizes += L_list[i].get_clone_size_distributions_with_duration(min_clone_count_time, max_clone_count_time, clone_size_duration)
 

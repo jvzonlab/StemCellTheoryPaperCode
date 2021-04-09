@@ -3,7 +3,7 @@ import multiprocessing
 import os
 import pickle
 from multiprocessing.context import Process
-from typing import Callable, List, Iterable
+from typing import Callable, List, Iterable, Tuple
 
 import numpy
 
@@ -73,6 +73,17 @@ def sweep(simulator: Simulator, params_list: List[SimulationParameters], *,
     # Wait for the workers to finish
     for p in worker_processes:
         p.join()  # This method waits until the worker process is finished
+
+
+def load_sweep_results(folder: str) -> Iterable[Tuple[SimulationParameters, MultiRunStats]]:
+    """Loads the results of a sweep simulation."""
+    for file_name in os.listdir(folder):
+        if not file_name.endswith(".p"):
+            continue
+        with open(os.path.join(folder, file_name), "rb") as handle:
+            data = pickle.load(handle)
+            for params_dict, results_dict in data:
+                yield SimulationParameters.from_dict(params_dict), MultiRunStats.from_dict(results_dict)
 
 
 def _split_list(params_list: List[SimulationParameters], *, size_of_sublist: int,

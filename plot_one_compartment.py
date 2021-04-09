@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pickle
 from stem_cell_model import tools
+from stem_cell_model.parameters import SimulationParameters
+from stem_cell_model.results import MultiRunStats
 
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['svg.fonttype'] = 'none'
@@ -31,11 +33,11 @@ div = np.zeros((11)) #coefficient of variation
 
 
 for s in sim_data:
-    sweep_param = s[0]
-    run_data = s[1]
+    sweep_param = SimulationParameters.from_dict(s[0])
+    run_data = MultiRunStats.from_dict(s[1])
 
-    alpha=sweep_param['alpha'][0]
-    phi=sweep_param['phi'][0]
+    alpha=sweep_param.alpha[0]
+    phi=sweep_param.phi[0]
 
     single_run_statistics = tools.get_single_run_statistics(run_data)
     

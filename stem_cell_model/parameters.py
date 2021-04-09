@@ -4,6 +4,10 @@ import numpy
 from numpy.random import Generator
 from numpy.random import MT19937
 
+# The number of dividing cells used in all old simulations
+# Used to load old simulation data, when this number wasn't stored
+_DEFAULT_D = 30
+
 
 class SimulationParameters:
     """Parameters with biophysical relevance."""
@@ -14,15 +18,29 @@ class SimulationParameters:
     n0: Tuple[int, int]  # Starting number of dividing cells per compartment.
     a: float  # Reorderings / time / cell
 
-
     @staticmethod
-    def from_old_format(params: Dict[str, Any], n0: List[int]) -> "SimulationParameters":
-        """For compatibility with how the method used to be called."""
-        return SimulationParameters(S=params["S"],
-                                    alpha=(params["alpha"][0], params["alpha"][1]),
-                                    phi=(params["phi"][0], params["phi"][1]),
-                                    T=(params["T"][0], params["T"][1]),
-                                    n0=(n0[0], n0[1]))
+    def from_dict(dictionary: Dict[str, Any]):
+        """Reads all parameters from a parameters dictionary."""
+        if "a" not in dictionary or "n0" not in dictionary:
+            dictionary = dictionary.copy()
+            if "a" not in dictionary:
+                # Assume well-mixed compartment - so infinite swaps
+                dictionary["a"] = float("inf")
+            if "n0" not in dictionary:
+                # Calculate it based on S, D and alpha
+                alpha = dictionary["alpha"]
+                S = dictionary["S"]
+                D = _DEFAULT_D
+                N_0 = int(alpha[0] * S)
+                M_0 = int(numpy.round(D - N_0))
+                dictionary["n0"] = [N_0, M_0]
+
+        return SimulationParameters(S=dictionary["S"],
+                                    alpha=(dictionary["alpha"][0], dictionary["alpha"][1]),
+                                    phi=(dictionary["phi"][0], dictionary["phi"][1]),
+                                    T=(dictionary["T"][0], dictionary["T"][1]),
+                                    n0=(dictionary["n0"][0], dictionary["n0"][1]),
+                                    a=dictionary["a"])
 
     @staticmethod
     def for_D_alpha_and_phi(*, D: int, alpha_n: float, alpha_m: float, phi: float, T: Tuple[float, float]) -> Optional["SimulationParameters"]:
@@ -77,8 +95,7 @@ class SimulationParameters:
                                         n0=(int(numpy.round(N_avg)), int(numpy.round(M_avg))))
         return None
 
-
-    def __init__(self, *, S: int, alpha: Tuple[float, float], phi: Tuple[float, float], T: Tuple[float, float], n0: Tuple[int, int], a: float = 0):
+    def __init__(self, *, S: int, alpha: Tuple[float, float], phi: Tuple[float, float], T: Tuple[float, float], n0: Tuple[int, int], a: float = float("inf")):
         self.S = S
         self.alpha = alpha
         self.phi = phi
@@ -92,7 +109,8 @@ class SimulationParameters:
             "alpha": [self.alpha[0], self.alpha[1]],
             "phi": [self.phi[0], self.phi[1]],
             "T": [self.T[0], self.T[1]],
-            "n0": [self.n0[0], self.n0[1]]
+            "n0": [self.n0[0], self.n0[1]],
+            "a": self.a
         }
 
 
@@ -111,8 +129,9 @@ class SimulationConfig:
         """Returns a SimulationConfig using the old format (with the global seed)."""
         track_lineage_time_interval_tuple = None if len(track_lineage_time_interval) != 2 else (
             track_lineage_time_interval[0], track_lineage_time_interval[1])
+        params = {**params, "n0": n0}  # Don't modify original map, but add n0
         return SimulationConfig(t_sim=t_sim, n_max=n_max,
-                                params=SimulationParameters.from_old_format(params, n0),
+                                params=SimulationParameters.from_dict(params),
                                 track_lineage_time_interval=track_lineage_time_interval_tuple,
                                 track_n_vs_t=track_n_vs_t,
                                 random=numpy.random.Generator(MT19937(seed=numpy.random.randint(1000000))))

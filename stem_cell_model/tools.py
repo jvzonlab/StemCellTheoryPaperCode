@@ -2,6 +2,8 @@ from typing import Dict, Any, Optional
 
 import numpy as np
 
+from stem_cell_model.results import MultiRunStats
+
 
 class SingleRunStatistics:
     """Statistics of a single simulation run."""
@@ -24,16 +26,16 @@ class SingleRunStatistics:
     d_coeff_var: float  # Variation coefficient of the number of proliferating cells in both compartments
 
 
-def get_single_run_statistics(run_data: Dict[str, Any]) -> SingleRunStatistics:
+def get_single_run_statistics(run_data: MultiRunStats) -> SingleRunStatistics:
     """Gets the statistics of a single simulation run."""
     out = SingleRunStatistics()
 
-    n_m_mean = run_data['mean'] / run_data['t_tot']
+    n_m_mean = run_data.nm_mean / run_data.t_tot
     out.n_mean = n_m_mean[0]
     out.m_mean = n_m_mean[1]
 
-    n_std_sq = run_data['sq'] / run_data['t_tot'] - n_m_mean ** 2
-    cc_NM = run_data['prod'] / run_data['t_tot'] - out.n_mean * out.m_mean
+    n_std_sq = run_data.nm_sq / run_data.t_tot - n_m_mean ** 2
+    cc_NM = run_data.nm_prod / run_data.t_tot - out.n_mean * out.m_mean
     D_std_sq = n_std_sq[0] + n_std_sq[1] + 2 * cc_NM
 
     out.d_mean = sum(n_m_mean)
@@ -50,21 +52,21 @@ def get_single_run_statistics(run_data: Dict[str, Any]) -> SingleRunStatistics:
 
     out.d_coeff_var = out.d_std / out.d_mean
 
-    out.f_collapse = 1000 * run_data['n_runs_ended_early'] / run_data['t_tot']  # rate: event per 1,000 h
+    out.f_collapse = 1000 * run_data.n_runs_ended_early / run_data.t_tot  # rate: event per 1,000 h
 
     # average time per simulation
-    if run_data['n_runs_ended_early'] == 0:
-        out.f_collapse_t = run_data['t_tot']
+    if run_data.n_runs_ended_early == 0:
+        out.f_collapse_t = run_data.t_tot
     else:
-        out.f_collapse_t = run_data['t_tot'] / run_data['n_runs_ended_early']
+        out.f_collapse_t = run_data.t_tot / run_data.n_runs_ended_early
 
-    if 'n_explosions' in run_data.keys():
+    if run_data.n_explosions is not None:
         #        n_explosions=run_data['n_explosions'] #event number
-        out.n_explosions = 1000 * run_data['n_explosions'] / run_data['t_tot']  # rate: event per 1,000 h
-        if run_data['n_explosions'] == 0:
-            out.n_explosions_t = run_data['t_tot']
+        out.n_explosions = 1000 * run_data.n_explosions / run_data.t_tot  # rate: event per 1,000 h
+        if run_data.n_explosions == 0:
+            out.n_explosions_t = run_data.t_tot
         else:
-            out.n_explosions_t = run_data['t_tot'] / run_data['n_explosions']
+            out.n_explosions_t = run_data.t_tot / run_data.n_explosions
     return out
 
 
@@ -82,7 +84,7 @@ def plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_ra
     
     for s in sim_data: 
         sweep_param = s[0]
-        run_data = s[1]
+        run_data = MultiRunStats.from_dict(s[1])
         if sweep_param['phi'][0]==phi:
             single_run_statistics = get_single_run_statistics(run_data)
             alpha=sweep_param['alpha']
@@ -116,7 +118,7 @@ def plot_alpha_n_vs_phi(alpha_m,sim_data,alpha_n_range,alpha_m_range,phi_range,N
     
     for s in sim_data: 
         sweep_param = s[0]
-        run_data = s[1]
+        run_data = MultiRunStats.from_dict(s[1])
 
         if sweep_param['alpha'][1] - alpha_m < 0.001:
             
@@ -154,7 +156,7 @@ def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
     
     for s in sim_data: 
         sweep_param = s[0]
-        run_data = s[1]
+        run_data = MultiRunStats.from_dict(s[1])
         
         alpha=sweep_param['alpha']
         phi=sweep_param['phi'][0]
