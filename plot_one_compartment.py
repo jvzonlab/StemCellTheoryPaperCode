@@ -39,7 +39,7 @@ for s in sim_data:
     alpha=sweep_param.alpha[0]
     phi=sweep_param.phi[0]
 
-    single_run_statistics = tools.get_single_run_statistics(run_data)
+    single_run_statistics = tools.get_single_parameter_set_statistics(run_data)
     
     # get index i for current parameter phi
     i = np.where(phi_range == phi)[0][0]

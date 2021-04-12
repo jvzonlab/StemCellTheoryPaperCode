@@ -5,7 +5,7 @@ import numpy as np
 from stem_cell_model.results import MultiRunStats
 
 
-class SingleRunStatistics:
+class SingleParameterSetStatistics:
     """Statistics of a single simulation run."""
 
     n_mean: float  # Mean of the number of proliferating cells in the niche compartment
@@ -26,9 +26,9 @@ class SingleRunStatistics:
     d_coeff_var: float  # Variation coefficient of the number of proliferating cells in both compartments
 
 
-def get_single_run_statistics(run_data: MultiRunStats) -> SingleRunStatistics:
-    """Gets the statistics of a single simulation run."""
-    out = SingleRunStatistics()
+def get_single_parameter_set_statistics(run_data: MultiRunStats) -> SingleParameterSetStatistics:
+    """Gets the statistics of the runs of a single set of simulation parameters."""
+    out = SingleParameterSetStatistics()
 
     n_m_mean = run_data.nm_mean / run_data.t_tot
     out.n_mean = n_m_mean[0]
@@ -86,21 +86,21 @@ def plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_ra
         sweep_param = s[0]
         run_data = MultiRunStats.from_dict(s[1])
         if sweep_param['phi'][0]==phi:
-            single_run_statistics = get_single_run_statistics(run_data)
+            statistics = get_single_parameter_set_statistics(run_data)
             alpha=sweep_param['alpha']
             # find indeces i and j corresponding to the current parameters alpha_n,m        
             i = np.where(np.abs(alpha[0]-alpha_n_range)==np.abs((alpha[0]-alpha_n_range)).min())[0][0]
             j = np.where(np.abs(alpha[1]-alpha_m_range)==np.abs((alpha[1]-alpha_m_range)).min())[0][0]
         
-            N[i,j] = single_run_statistics.n_std
-            M[i,j] = single_run_statistics.m_std
-            D[i,j] = single_run_statistics.d_std
-            C[i,j] = single_run_statistics.f_collapse
-            C_t[i,j] = single_run_statistics.f_collapse_t
-            MEAN[i,j] = single_run_statistics.d_mean
-            N_CV[i,j] = single_run_statistics.n_coeff_var
-            M_CV[i,j] = single_run_statistics.m_coeff_var
-            D_CV[i,j] = single_run_statistics.d_coeff_var
+            N[i,j] = statistics.n_std
+            M[i,j] = statistics.m_std
+            D[i,j] = statistics.d_std
+            C[i,j] = statistics.f_collapse
+            C_t[i,j] = statistics.f_collapse_t
+            MEAN[i,j] = statistics.d_mean
+            N_CV[i,j] = statistics.n_coeff_var
+            M_CV[i,j] = statistics.m_coeff_var
+            D_CV[i,j] = statistics.d_coeff_var
             S[i,j] = sweep_param["S"]
     
     return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S
@@ -122,7 +122,7 @@ def plot_alpha_n_vs_phi(alpha_m,sim_data,alpha_n_range,alpha_m_range,phi_range,N
 
         if sweep_param['alpha'][1] - alpha_m < 0.001:
             
-            single_run_statistics = get_single_run_statistics(run_data)
+            statistics = get_single_parameter_set_statistics(run_data)
             alpha = sweep_param['alpha']
             phi = sweep_param['phi']
 
@@ -130,15 +130,15 @@ def plot_alpha_n_vs_phi(alpha_m,sim_data,alpha_n_range,alpha_m_range,phi_range,N
             i = np.where(np.abs(phi[0]-phi_range)==np.abs((phi[0]-phi_range)).min())[0][0]
             j = np.where(np.abs(alpha[0]-alpha_n_range)==np.abs((alpha[0]-alpha_n_range)).min())[0][0]
             
-            N[i,j] = single_run_statistics.n_std
-            M[i,j] = single_run_statistics.m_std
-            D[i,j] = single_run_statistics.d_std
-            C[i,j] = single_run_statistics.f_collapse
-            C_t[i,j] = single_run_statistics.f_collapse_t
-            MEAN[i,j] = single_run_statistics.d_mean
-            D_CV[i,j] = single_run_statistics.d_coeff_var
-            N_CV[i,j] = single_run_statistics.n_coeff_var
-            M_CV[i,j] = single_run_statistics.m_coeff_var
+            N[i,j] = statistics.n_std
+            M[i,j] = statistics.m_std
+            D[i,j] = statistics.d_std
+            C[i,j] = statistics.f_collapse
+            C_t[i,j] = statistics.f_collapse_t
+            MEAN[i,j] = statistics.d_mean
+            D_CV[i,j] = statistics.d_coeff_var
+            N_CV[i,j] = statistics.n_coeff_var
+            M_CV[i,j] = statistics.m_coeff_var
     
     return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV
 
@@ -163,7 +163,7 @@ def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
         
         if np.abs(alpha[0]+alpha[1])<1e-3:
             
-            single_run_statistics = get_single_run_statistics(run_data)
+            statistics = get_single_parameter_set_statistics(run_data)
             alpha = sweep_param['alpha']
             phi = sweep_param['phi']
 
@@ -171,15 +171,15 @@ def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
             i = np.where(np.abs(phi[0]-phi_range)==np.abs((phi[0]-phi_range)).min())[0][0]
             j = np.where(np.abs(alpha[0]-alpha_n_range)==np.abs((alpha[0]-alpha_n_range)).min())[0][0]
             
-            N[i,j] = single_run_statistics.n_std
-            M[i,j] = single_run_statistics.m_std
-            D[i,j] = single_run_statistics.d_std
-            C[i,j] = single_run_statistics.f_collapse
-            C_t[i,j] = single_run_statistics.f_collapse_t
-            MEAN[i,j] = single_run_statistics.d_mean
-            D_CV[i,j] = single_run_statistics.d_coeff_var
-            N_CV[i,j] = single_run_statistics.n_coeff_var
-            M_CV[i,j] = single_run_statistics.m_coeff_var
+            N[i,j] = statistics.n_std
+            M[i,j] = statistics.m_std
+            D[i,j] = statistics.d_std
+            C[i,j] = statistics.f_collapse
+            C_t[i,j] = statistics.f_collapse_t
+            MEAN[i,j] = statistics.d_mean
+            D_CV[i,j] = statistics.d_coeff_var
+            N_CV[i,j] = statistics.n_coeff_var
+            M_CV[i,j] = statistics.m_coeff_var
             S[i,j] = sweep_param["S"]
     
     return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S
