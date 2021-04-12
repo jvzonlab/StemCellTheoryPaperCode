@@ -6,11 +6,11 @@ from stem_cell_model.parameters import SimulationParameters
 from stem_cell_model.two_compartment_model_space import run_simulation_niche
 
 
-def run_simulation():
+def run_simulation(steps_along_axis: int = 40):
     # Arguments
-    S_values = set((10 ** numpy.linspace(0, 2, num=40, endpoint=True)).astype(numpy.int32))
-    phi_values = numpy.linspace(0.025, 1, num=40, endpoint=True)
-    alpha_n_values = numpy.linspace(0.025, 1, num=40, endpoint=True)
+    S_values = set((10 ** numpy.linspace(0, 2, num=steps_along_axis, endpoint=True)).astype(numpy.int32))
+    phi_values = numpy.linspace(0.025, 1, num=steps_along_axis, endpoint=True)
+    alpha_n_values = numpy.linspace(0.025, 1, num=steps_along_axis, endpoint=True)
     T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
     t_sim = int(1e5)  # Total simulation time
     n_max = 1000000  # Maximum number of dividing cells, will never be reached with this value
