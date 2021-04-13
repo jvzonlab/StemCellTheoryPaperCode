@@ -113,6 +113,8 @@ class SimulationParameters:
             "a": self.a
         }
 
+    def __repr__(self) -> str:
+        return f"SimulationParameters(S={self.S}, alpha={self.alpha}, phi={self.phi}, T={self.T}, n={self.n0}, a={self.a})"
 
 class SimulationConfig:
     """The parameters, and all other information needed to run a simulation. Two simulations ran from exactly the same config will output exactly the same results."""
