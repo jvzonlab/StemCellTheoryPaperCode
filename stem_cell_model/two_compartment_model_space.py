@@ -4,7 +4,7 @@ from numpy import ndarray
 from numpy.random import Generator
 
 from stem_cell_model import parameters
-from stem_cell_model.lineages import Lineages
+from stem_cell_model.lineages import Lineage
 from stem_cell_model.parameters import SimulationConfig, SimulationParameters
 from stem_cell_model.results import MomentData, SimulationResults, RunStats
 from stem_cell_model.two_compartment_model import Cell, get_next_dividing, DivisionTimer
@@ -283,7 +283,7 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
                 if (t > config.track_lineage_time_interval[0]) and (t < config.track_lineage_time_interval[1]) and (not tracking_lineage):
                     tracking_lineage=True
                     for cell in cell_list:
-                        L_list.append(Lineages(cell.id, config.track_lineage_time_interval[0], cell.comp, True, 1))
+                        L_list.append(Lineage(cell.id, config.track_lineage_time_interval[0], cell.comp, True, 1))
 
             # check if lineage tracking should stop
             if tracking_lineage:

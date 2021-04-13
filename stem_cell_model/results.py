@@ -3,7 +3,7 @@ from typing import Tuple, Dict, Any, Optional, List
 import numpy
 from numpy import ndarray
 
-from stem_cell_model.lineages import Lineages
+from stem_cell_model.lineages import Lineage
 
 
 class MomentData:
@@ -56,7 +56,7 @@ class SimulationResults:
     moments: MomentData
     n_vs_t: Optional[ndarray] = None
     u_vs_t: Optional[ndarray] = None
-    lineages: Optional[List[Lineages]] = None
+    lineages: Optional[List[Lineage]] = None
     run_stats: RunStats
 
     def __init__(self, *, moments: MomentData, run_stats: RunStats):

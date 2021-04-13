@@ -7,7 +7,7 @@ import operator
 from stem_cell_model.division_counts import DivisionCounts
 
 
-class Lineages:
+class Lineage:
 
     lin_id: Union[List, int]
     lin_interval: Union[List, int]

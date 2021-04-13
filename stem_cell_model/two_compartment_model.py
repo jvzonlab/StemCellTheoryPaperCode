@@ -6,7 +6,7 @@ from numpy.random import MT19937
 from scipy.stats import skewnorm
 
 from stem_cell_model import parameters
-from stem_cell_model.lineages import Lineages
+from stem_cell_model.lineages import Lineage
 from stem_cell_model.parameters import SimulationConfig, SimulationParameters
 from stem_cell_model.results import SimulationResults, MomentData, RunStats
 
@@ -297,7 +297,7 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                 if (t>config.track_lineage_time_interval[0]) and (t<config.track_lineage_time_interval[1]) and (not tracking_lineage):
                     tracking_lineage=True
                     for cell in cell_list:
-                        L_list.append(Lineages(cell.id, config.track_lineage_time_interval[0], cell.comp, True, 1))
+                        L_list.append(Lineage(cell.id, config.track_lineage_time_interval[0], cell.comp, True, 1))
             
             # check if lineage tracking should stop
             if tracking_lineage:
