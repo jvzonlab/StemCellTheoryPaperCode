@@ -43,7 +43,8 @@ class SimulationParameters:
                                     a=dictionary["a"])
 
     @staticmethod
-    def for_D_alpha_and_phi(*, D: int, alpha_n: float, alpha_m: float, phi: float, T: Tuple[float, float]) -> Optional["SimulationParameters"]:
+    def for_D_alpha_and_phi(*, D: int, alpha_n: float, alpha_m: float, phi: float, T: Tuple[float, float],
+                            a: float = float("inf")) -> Optional["SimulationParameters"]:
         """Finds the other parameters belonging to the given ones. Returns None if the requested
          type of divisions do not exist."""
 
@@ -64,11 +65,12 @@ class SimulationParameters:
 
             # save parameters
             return SimulationParameters(S=int(numpy.round(S)), alpha=(alpha_n, alpha_m), phi=(phi, phi), T=T,
-                                        n0=(int(numpy.round(N_avg)), int(numpy.round(M_avg))))
+                                        n0=(int(numpy.round(N_avg)), int(numpy.round(M_avg))), a=a)
         return None
 
     @staticmethod
-    def for_S_alpha_and_phi(*, S: int, alpha_n: float, alpha_m: float, phi: float, T: Tuple[float, float]) -> Optional["SimulationParameters"]:
+    def for_S_alpha_and_phi(*, S: int, alpha_n: float, alpha_m: float, phi: float, T: Tuple[float, float],
+                            a: float = float("inf")) -> Optional["SimulationParameters"]:
         """Finds the other parameters belonging to the given ones. Returns None if the requested
          type of divisions do not exist."""
 
@@ -92,7 +94,7 @@ class SimulationParameters:
 
             # save parameters
             return SimulationParameters(S=int(numpy.round(S)), alpha=(alpha_n, alpha_m), phi=(phi, phi), T=T,
-                                        n0=(int(numpy.round(N_avg)), int(numpy.round(M_avg))))
+                                        n0=(int(numpy.round(N_avg)), int(numpy.round(M_avg))), a=a)
         return None
 
     def __init__(self, *, S: int, alpha: Tuple[float, float], phi: Tuple[float, float], T: Tuple[float, float], n0: Tuple[int, int], a: float = float("inf")):

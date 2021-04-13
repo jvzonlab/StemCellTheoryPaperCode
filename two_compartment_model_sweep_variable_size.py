@@ -22,7 +22,7 @@ def run_simulation(steps_along_axis: int = 40):
         for phi in phi_values:
             for alpha_n in alpha_n_values:
                 params = SimulationParameters.for_S_alpha_and_phi(
-                    S=S, alpha_n=alpha_n, alpha_m=-alpha_n, phi=phi, T=T)
+                    S=S, alpha_n=alpha_n, alpha_m=-alpha_n, phi=phi, T=T, a=1/T[0])
                 if params is not None:
                     params_list.append(params)
 
