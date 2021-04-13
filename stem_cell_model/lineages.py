@@ -1,10 +1,94 @@
-from typing import List, Union, Tuple, Iterable
+from typing import List, Union, Tuple, Iterable, Dict, Any
 
+import numpy
 import numpy as np
 import matplotlib.pyplot as plt
 import operator
 
 from stem_cell_model.division_counts import DivisionCounts
+
+
+class CloneSizeDistribution:
+
+    _clone_sizes: Dict[int, int]
+
+    @staticmethod
+    def of_single_clone(clone_size: int) -> "CloneSizeDistribution":
+        """Returns a clone size "distribution" consisting of only a single clone."""
+        distribution = CloneSizeDistribution()
+        distribution._clone_sizes[clone_size] = 1
+        return distribution
+
+    @staticmethod
+    def of_clone_sizes(*args: int)-> "CloneSizeDistribution":
+        """Returns a clone size distribution of the given sizes. For example, (3, 4, 3, 5) is
+        a clone size distribution where clone size 3 is the most frequent.."""
+        distribution = CloneSizeDistribution()
+        for clone_size in args:
+            distribution.add_clone_size(clone_size)
+        return distribution
+
+    def __init__(self):
+        self._clone_sizes = dict()
+
+    def add_clone_size(self, clone_size: int):
+        """Add a single clone size to this distribution."""
+        if clone_size in self._clone_sizes:
+            self._clone_sizes[clone_size] += 1
+        else:
+            self._clone_sizes[clone_size] = 1
+
+    def merge(self, other: "CloneSizeDistribution"):
+        """Adds all data from the other clone size distribution to this clone size distribution."""
+        for clone_size, count in other._clone_sizes.items():
+            if clone_size in self._clone_sizes:
+                self._clone_sizes[clone_size] += count
+            else:
+                self._clone_sizes[clone_size] = count
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, CloneSizeDistribution):
+            return False
+        return other._clone_sizes == self._clone_sizes
+
+    def max(self) -> int:
+        """Gets the highest occuring clone size."""
+        return max(self._clone_sizes.keys())
+
+    def to_flat_array(self) -> numpy.ndarray:
+        """Returns a flat array of the clone sizes. If this distribution has 5 occurrences of clone size
+        3 and 2 occurrences of clone size 4, then this returns [3, 3, 3, 3, 3, 4, 4].
+
+        Of course, this is quite wasteful for RAM. This method mainly exists for compatibility with
+        old scripts that use matplotlib.pyplot.hist. You should instead use a bar plot with
+        indices() and to_height_array()."""
+        length = sum(self._clone_sizes.values())
+        array = numpy.empty(length, dtype=numpy.uint16)
+
+        i = 0
+        for clone_size, count in self._clone_sizes.items():
+            for _ in range(count):
+                array[i] = clone_size
+                i += 1
+        return array
+
+    def get_clone_size_count(self, clone_size: int) -> int:
+        """Gets how many times the given clone size was found."""
+        clone_size_count = self._clone_sizes.get(clone_size)
+        if clone_size_count is None:
+            return 0
+        return clone_size_count
+
+    def indices(self) -> List[int]:
+        """Returns [1, 2, 3, ..., self.max()]."""
+        return list(range(1, self.max() + 1))
+
+    def to_height_array(self) -> List[int]:
+        """Gets how often each clone size occurs, starting from clone size 1 (at position 0)."""
+        return_values = list()
+        for i in range(1, self.max() + 1):
+            return_values.append(self.get_clone_size_count(i))
+        return return_values
 
 
 class Lineage:
@@ -212,21 +296,21 @@ class Lineage:
 
     # gets the clone size distribution of this lineage tree. For each cell that exists at min_time, the clone size
     # at max_time is returned.
-    def get_clone_size_distribution(self, min_time: float, max_time: float) -> List[int]:
+    def get_clone_size_distribution(self, min_time: float, max_time: float) -> CloneSizeDistribution:
         return self._get_sub_clone_size_distribution(self.lin_interval, min_time, max_time, "")
 
     # gets the clone size distributions of the given duration for this lineage tree.
     # If min_time is 0, max_time is 70, duration is 50 and increment is 5, then this will return the clone sizes for
     # [0, 50], [5, 55], [10, 60], [15, 65] and [20, 70.
-    def get_clone_size_distributions_with_duration(self, min_time: float, max_time: float, duration: float, increment: int = 5) -> List[int]:
-        clone_sizes = []
+    def get_clone_size_distributions_with_duration(self, min_time: float, max_time: float, duration: float, increment: int = 5) -> CloneSizeDistribution:
+        clone_sizes = CloneSizeDistribution()
         for start_time in range(int(min_time), int(max_time - duration + 1), increment):
-            clone_sizes += self.get_clone_size_distribution(start_time, start_time + duration)
+            clone_sizes.merge(self.get_clone_size_distribution(start_time, start_time + duration))
         return clone_sizes
 
     # gets the clone size distribution for the given sub-lineage. For each cell that exists at min_time, the clone size
     # at max_time is returned.
-    def _get_sub_clone_size_distribution(self, lin_interval: Union[float, List], min_time: float, max_time: float, indent: str) -> List[int]:
+    def _get_sub_clone_size_distribution(self, lin_interval: Union[float, List], min_time: float, max_time: float, indent: str) -> CloneSizeDistribution:
         if _is_single_number(lin_interval):
             # this is a non-dividing cell starting at lin_interval
             time_start = lin_interval
@@ -239,16 +323,16 @@ class Lineage:
             division_time = daughter1 if _is_single_number(daughter1) else daughter1[0]
 
         if time_start > max_time:
-            return []  # cell didn't exist yet at this time point - report no clone size
+            return CloneSizeDistribution()  # cell didn't exist yet at this time point - report no clone size
 
         if division_time is None or division_time > min_time:
             # cell continues to exist (without dividing) until min_time is reached
-            return [self._get_clone_size(lin_interval, max_time)]
+            return CloneSizeDistribution.of_single_clone(self._get_clone_size(lin_interval, max_time))
 
-        # need to search deeper in the lineage
-        clone_sizes = []
-        clone_sizes += self._get_sub_clone_size_distribution(daughter1, min_time, max_time, indent + "│ ")
-        clone_sizes += self._get_sub_clone_size_distribution(daughter2, min_time, max_time, indent + "│ ")
+        # need to search deeper in the lineage to reach the time window
+        clone_sizes = CloneSizeDistribution()
+        clone_sizes.merge(self._get_sub_clone_size_distribution(daughter1, min_time, max_time, indent + "│ "))
+        clone_sizes.merge(self._get_sub_clone_size_distribution(daughter2, min_time, max_time, indent + "│ "))
         return clone_sizes
 
     # returns the clone size of the given sub-lineage, ignoring any divisions happening after max_time

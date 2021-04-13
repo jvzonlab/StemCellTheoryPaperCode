@@ -6,6 +6,7 @@ import pickle as pickle
 import matplotlib as mpl
 
 from stem_cell_model import sweeper, two_compartment_model_space
+from stem_cell_model.lineages import CloneSizeDistribution
 from stem_cell_model.parameters import SimulationParameters, SimulationConfig
 from stem_cell_model.results import MultiRunStats
 
@@ -79,7 +80,7 @@ for n in range(0,len(plot_run_ind_list)):
     
     # run simulations
     t_sim=t_lineage_range[1] + 1
-    clone_sizes = []
+    clone_sizes = CloneSizeDistribution()
     clone_size_duration = 40
     min_clone_count_time, max_clone_count_time = t_lineage_range
     config = SimulationConfig(t_sim=t_sim, n_max=100000, track_n_vs_t=True, track_lineage_time_interval=t_lineage_range, random=random)
@@ -89,13 +90,13 @@ for n in range(0,len(plot_run_ind_list)):
         res = two_compartment_model_space.run_simulation_niche(config, params)
         L_list=res.lineages
         for i in range(len(L_list)):
-            clone_sizes += L_list[i].get_clone_size_distributions_with_duration(min_clone_count_time, max_clone_count_time, clone_size_duration)
+            clone_sizes.merge(L_list[i].get_clone_size_distributions_with_duration(min_clone_count_time, max_clone_count_time, clone_size_duration))
 
     # plot clone sizes
-    max_clone_size = max(12, max(clone_sizes))  # Show at least 12 bins
+    max_clone_size = max(12, clone_sizes.max())  # Show at least 12 bins
     plt.subplot2grid((6,1),(n,0), rowspan=1)
     plt.text(1,1,"#" + str(n + 1), transform=plt.gca().transAxes, verticalalignment="top")
-    plt.hist(clone_sizes, bins=np.arange(2, max_clone_size + 1) - 0.5, color="black")
+    plt.hist(clone_sizes.to_flat_array(), bins=np.arange(2, max_clone_size + 1) - 0.5, color="black")
     if n == 5:
         plt.xlabel(f'clone size for {clone_size_duration}h')
         plt.xticks(range(2, max_clone_size + 2, 2))
