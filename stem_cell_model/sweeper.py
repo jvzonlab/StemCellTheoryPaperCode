@@ -16,7 +16,7 @@ _STOP_SIGNAL_VALUE = "~~stop~~"
 
 # Simple type definition: a Simulator is a method that takes a SimulationConfig instance
 # and outputs a SimulationResults instance
-Simulator = Callable[[SimulationConfig], SimulationResults]
+Simulator = Callable[[SimulationConfig, SimulationParameters], SimulationResults]
 
 
 class _WorkPackage:
@@ -131,8 +131,8 @@ def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParam
         cont = True
         while cont:
             # do simulation for a time (t_sim - t_tot)
-            config = SimulationConfig(t_sim=t_sim - output.t_tot, n_max=n_max, random=random, params=params)
-            res = simulator(config)
+            config = SimulationConfig(t_sim=t_sim - output.t_tot, n_max=n_max, random=random)
+            res = simulator(config, params)
         
             output.add_results(res)
         

@@ -5,6 +5,7 @@ from numpy.random import Generator
 from numpy.random import MT19937
 from scipy.stats import skewnorm
 
+from stem_cell_model import parameters
 from stem_cell_model.lineages import Lineages
 from stem_cell_model.parameters import SimulationConfig, SimulationParameters
 from stem_cell_model.results import SimulationResults, MomentData, RunStats
@@ -86,16 +87,15 @@ def get_next_dividing(cell_list: List[Cell]) -> Tuple[int, int]:
 # track_n_vs_t - track cell number versus time. If <false> only calculate moments
 def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs_t=False):
     """Old simulation method - kept for compatibility with old code. Directly forwards to the new one."""
-    return run_simulation(SimulationConfig.from_old_format(
+    return run_simulation(*parameters.from_old_format(
         t_sim, n_max, params, n0, track_lineage_time_interval, track_n_vs_t)).to_dict()
 
 
-def run_simulation(config: SimulationConfig) -> SimulationResults:
+def run_simulation(config: SimulationConfig, params: SimulationParameters) -> SimulationResults:
     """Runs a single simulation of a well-mixed compartment.
     Therefore, the "a" parameter is not used."""
     random = config.random
     division_timer = DivisionTimer(config.random)
-    params = config.params
 
     # if an interval to track lineages is defined
     if config.track_lineage_time_interval is not None:

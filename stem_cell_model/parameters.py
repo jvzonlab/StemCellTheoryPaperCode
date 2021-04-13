@@ -124,26 +124,24 @@ class SimulationConfig:
     n_max: int  # Maximum number of dividing cells. If more cells exist, the simulation fails.
     random: Generator  # Random number generator
 
-    params: SimulationParameters  # Biophysical parameters.
     track_lineage_time_interval: Optional[Tuple[int, int]]  # Time points to track lineages
     track_n_vs_t: bool  # Whether the number of dividing cells over time should be stored
 
-    @staticmethod
-    def from_old_format(t_sim: int, n_max: int, params: Dict[str, Any], n0: List[int], track_lineage_time_interval: List[int], track_n_vs_t: bool):
-        """Returns a SimulationConfig using the old format (with the global seed)."""
-        track_lineage_time_interval_tuple = None if len(track_lineage_time_interval) != 2 else (
-            track_lineage_time_interval[0], track_lineage_time_interval[1])
-        params = {**params, "n0": n0}  # Don't modify original map, but add n0
-        return SimulationConfig(t_sim=t_sim, n_max=n_max,
-                                params=SimulationParameters.from_dict(params),
-                                track_lineage_time_interval=track_lineage_time_interval_tuple,
-                                track_n_vs_t=track_n_vs_t,
-                                random=numpy.random.Generator(MT19937(seed=numpy.random.randint(1000000))))
-
-    def __init__(self, *, t_sim: int, n_max: int, random: Generator, params: SimulationParameters, track_lineage_time_interval: Optional[Tuple[int, int]] = None, track_n_vs_t: bool = False):
+    def __init__(self, *, t_sim: int, n_max: int, random: Generator, track_lineage_time_interval: Optional[Tuple[int, int]] = None, track_n_vs_t: bool = False):
         self.t_sim = t_sim
         self.n_max = n_max
         self.random = random
-        self.params = params
         self.track_lineage_time_interval = track_lineage_time_interval
         self.track_n_vs_t = track_n_vs_t
+
+
+def from_old_format(t_sim: int, n_max: int, params: Dict[str, Any], n0: List[int], track_lineage_time_interval: List[int], track_n_vs_t: bool) -> Tuple[SimulationConfig, SimulationParameters]:
+    """Returns a SimulationConfig using the old format (with the global seed)."""
+    track_lineage_time_interval_tuple = None if len(track_lineage_time_interval) != 2 else (
+        track_lineage_time_interval[0], track_lineage_time_interval[1])
+    params = {**params, "n0": n0}  # Don't modify original map, but add n0
+    return SimulationConfig(t_sim=t_sim, n_max=n_max,
+                            track_lineage_time_interval=track_lineage_time_interval_tuple,
+                            track_n_vs_t=track_n_vs_t,
+                            random=numpy.random.Generator(MT19937(seed=numpy.random.randint(1000000)))), \
+           SimulationParameters.from_dict(params)

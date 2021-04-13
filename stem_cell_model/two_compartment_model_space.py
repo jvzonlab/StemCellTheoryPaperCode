@@ -3,8 +3,9 @@ import numpy as np
 from numpy import ndarray
 from numpy.random import Generator
 
+from stem_cell_model import parameters
 from stem_cell_model.lineages import Lineages
-from stem_cell_model.parameters import SimulationConfig
+from stem_cell_model.parameters import SimulationConfig, SimulationParameters
 from stem_cell_model.results import MomentData, SimulationResults, RunStats
 from stem_cell_model.two_compartment_model import Cell, get_next_dividing, DivisionTimer
 
@@ -46,16 +47,15 @@ def run_sim_niche( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[]
     :param track_n_vs_t: track cell number versus time. If <false> only calculate moments
     :return: Simulation result object as a raw dictionary.
     """
-    return run_simulation_niche(SimulationConfig.from_old_format(
+    return run_simulation_niche(*parameters.from_old_format(
         t_sim, n_max, params, n0, track_lineage_time_interval, track_n_vs_t)).to_dict()
 
 
-def run_simulation_niche(config: SimulationConfig) -> SimulationResults:
+def run_simulation_niche(config: SimulationConfig, params: SimulationParameters) -> SimulationResults:
     """Run the simulation where the niche is a 1D column. When a cell in the niche divides, the
     uppermost cell in the niche is moved to the next compartment."""
     random = config.random
     division_timer = DivisionTimer(random)
-    params = config.params
 
     # if an interval to track lineages is defined
     if config.track_lineage_time_interval is not None:
