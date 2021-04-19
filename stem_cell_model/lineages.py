@@ -1,3 +1,4 @@
+import math
 from typing import List, Union, Tuple, Iterable, Dict, Any
 
 import numpy
@@ -90,6 +91,14 @@ class CloneSizeDistribution:
             return_values.append(self.get_clone_size_count(i))
         return return_values
 
+    def get_average_and_st_dev(self) -> Tuple[float, float]:
+        total_size = sum(clone_size * count for clone_size, count in self._clone_sizes.items())
+        total_count = sum(self._clone_sizes.values())
+        average = total_size / total_count
+
+        variance = 1 / (total_count - 1) * sum((clone_size ** 2) * count for clone_size, count in self._clone_sizes.items()) - (total_count / (total_count - 1)) * average ** 2
+
+        return average, math.sqrt(variance)
 
 class Lineage:
 
