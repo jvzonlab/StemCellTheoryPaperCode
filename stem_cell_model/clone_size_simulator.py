@@ -2,7 +2,8 @@ from typing import Callable
 
 from numpy.random import Generator
 
-from stem_cell_model.lineages import CloneSizeDistribution
+from stem_cell_model import clone_size_distributions
+from stem_cell_model.clone_size_distributions import CloneSizeDistribution
 from stem_cell_model.parameters import SimulationParameters, SimulationConfig
 from stem_cell_model.results import SimulationResults
 
@@ -35,7 +36,7 @@ def calculate(simulator: Simulator, clone_size_config: CloneSizeSimulationConfig
             print(f"{i} crypts done...")
         results = simulator(config, params)
         for lineage in results.lineages:
-            clone_size_distribution.merge(lineage.get_clone_size_distribution(
+            clone_size_distribution.merge(clone_size_distributions.get_clone_size_distribution(lineage,
                 clone_size_config.t_wait, clone_size_config.t_wait + clone_size_config.t_clone_size))
     return clone_size_distribution
 

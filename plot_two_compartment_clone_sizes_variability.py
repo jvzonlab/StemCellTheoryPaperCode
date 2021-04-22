@@ -2,8 +2,8 @@
 import numpy
 from matplotlib import pyplot as plt
 
-from stem_cell_model import clone_size_distribution_calculator
-from stem_cell_model.clone_size_distribution_calculator import CloneSizeSimulationConfig
+from stem_cell_model import clone_size_simulator
+from stem_cell_model.clone_size_simulator import CloneSizeSimulationConfig
 from stem_cell_model.parameters import SimulationParameters, SimulationConfig
 from stem_cell_model.two_compartment_model_space import run_simulation_niche
 
@@ -21,14 +21,14 @@ config = CloneSizeSimulationConfig(t_clone_size=t_clone_size, random=random, n_c
 
 fig, (ax_left, ax_right) = plt.subplots(1, 2)
 
-results_symmetric_low_noise = clone_size_distribution_calculator.calculate(
+results_symmetric_low_noise = clone_size_simulator.calculate(
     run_simulation_niche, config, parameters_symmetric_low_noise)
 ax_left.set_title("Low noise ($\\alpha_n = 0.95$)")
 ax_left.bar(results_symmetric_low_noise.indices(), results_symmetric_low_noise.to_height_array())
 ax_left.set_xticks([i for i in results_symmetric_low_noise.indices() if i % 2 == 0])
 ax_left.set_xlabel("Clone size")
 
-results_symmetric_high_noise = clone_size_distribution_calculator.calculate(
+results_symmetric_high_noise = clone_size_simulator.calculate(
     run_simulation_niche, config, parameters_symmetric_high_noise)
 ax_right.set_title("High noise ($\\alpha_n = 0.05$)")
 ax_right.bar(results_symmetric_high_noise.indices(), results_symmetric_high_noise.to_height_array())

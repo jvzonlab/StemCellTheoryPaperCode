@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import pickle as pickle
 import matplotlib as mpl
 
-from stem_cell_model import sweeper, two_compartment_model_space
-from stem_cell_model.lineages import CloneSizeDistribution
+from stem_cell_model import sweeper, two_compartment_model_space, clone_size_distributions
+from stem_cell_model.clone_size_distributions import CloneSizeDistribution
 from stem_cell_model.parameters import SimulationParameters, SimulationConfig
 from stem_cell_model.results import MultiRunStats
 
@@ -90,7 +90,7 @@ for n in range(0,len(plot_run_ind_list)):
         res = two_compartment_model_space.run_simulation_niche(config, params)
         L_list=res.lineages
         for i in range(len(L_list)):
-            clone_sizes.merge(L_list[i].get_clone_size_distributions_with_duration(min_clone_count_time, max_clone_count_time, clone_size_duration))
+            clone_sizes.merge(clone_size_distributions.get_clone_size_distributions_with_duration(L_list[i], min_clone_count_time, max_clone_count_time, clone_size_duration))
 
     # plot clone sizes
     max_clone_size = max(12, clone_sizes.max())  # Show at least 12 bins

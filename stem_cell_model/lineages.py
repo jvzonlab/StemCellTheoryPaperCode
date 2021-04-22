@@ -9,102 +9,7 @@ import operator
 from stem_cell_model.division_counts import DivisionCounts
 
 
-class CloneSizeDistribution:
-
-    _clone_sizes: Dict[int, int]
-
-    @staticmethod
-    def of_single_clone(clone_size: int) -> "CloneSizeDistribution":
-        """Returns a clone size "distribution" consisting of only a single clone."""
-        distribution = CloneSizeDistribution()
-        distribution._clone_sizes[clone_size] = 1
-        return distribution
-
-    @staticmethod
-    def of_clone_sizes(*args: int)-> "CloneSizeDistribution":
-        """Returns a clone size distribution of the given sizes. For example, (3, 4, 3, 5) is
-        a clone size distribution where clone size 3 is the most frequent.."""
-        distribution = CloneSizeDistribution()
-        for clone_size in args:
-            distribution.add_clone_size(clone_size)
-        return distribution
-
-    def __init__(self):
-        self._clone_sizes = dict()
-
-    def add_clone_size(self, clone_size: int):
-        """Add a single clone size to this distribution."""
-        if clone_size in self._clone_sizes:
-            self._clone_sizes[clone_size] += 1
-        else:
-            self._clone_sizes[clone_size] = 1
-
-    def merge(self, other: "CloneSizeDistribution"):
-        """Adds all data from the other clone size distribution to this clone size distribution."""
-        for clone_size, count in other._clone_sizes.items():
-            if clone_size in self._clone_sizes:
-                self._clone_sizes[clone_size] += count
-            else:
-                self._clone_sizes[clone_size] = count
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, CloneSizeDistribution):
-            return False
-        return other._clone_sizes == self._clone_sizes
-
-    def __repr__(self) -> str:
-        return "CloneSizeDistribution(" + repr(self._clone_sizes) + ")"
-
-    def max(self) -> int:
-        """Gets the highest occuring clone size."""
-        return max(self._clone_sizes.keys())
-
-    def to_flat_array(self) -> numpy.ndarray:
-        """Returns a flat array of the clone sizes. If this distribution has 5 occurrences of clone size
-        3 and 2 occurrences of clone size 4, then this returns [3, 3, 3, 3, 3, 4, 4].
-
-        Of course, this is quite wasteful for RAM. This method mainly exists for compatibility with
-        old scripts that use matplotlib.pyplot.hist. You should instead use a bar plot with
-        indices() and to_height_array()."""
-        length = sum(self._clone_sizes.values())
-        array = numpy.empty(length, dtype=numpy.uint16)
-
-        i = 0
-        for clone_size, count in self._clone_sizes.items():
-            for _ in range(count):
-                array[i] = clone_size
-                i += 1
-        return array
-
-    def get_clone_size_count(self, clone_size: int) -> int:
-        """Gets how many times the given clone size was found."""
-        clone_size_count = self._clone_sizes.get(clone_size)
-        if clone_size_count is None:
-            return 0
-        return clone_size_count
-
-    def indices(self) -> List[int]:
-        """Returns [1, 2, 3, ..., self.max()]."""
-        return list(range(1, self.max() + 1))
-
-    def to_height_array(self) -> List[int]:
-        """Gets how often each clone size occurs, starting from clone size 1 (at position 0)."""
-        return_values = list()
-        for i in range(1, self.max() + 1):
-            return_values.append(self.get_clone_size_count(i))
-        return return_values
-
-    def get_average_and_st_dev(self) -> Tuple[float, float]:
-        total_size = sum(clone_size * count for clone_size, count in self._clone_sizes.items())
-        total_count = sum(self._clone_sizes.values())
-        average = total_size / total_count
-
-        variance = 1 / (total_count - 1) * sum((clone_size ** 2) * count for clone_size, count in self._clone_sizes.items()) - (total_count / (total_count - 1)) * average ** 2
-
-        return average, math.sqrt(variance)
-
-
-class _LineageTrack:
+class LineageTrack:
     track_id: int
     track_start_time: int
     compartment: "_CompartmentByTime"
@@ -114,7 +19,7 @@ class _LineageTrack:
     is_proliferative: bool
 
     # The tracks of the daughters. Either empty or (daughter1, daughter2)
-    daughters: Union[Tuple, Tuple["_LineageTrack", "_LineageTrack"]] = ()
+    daughters: Union[Tuple, Tuple["LineageTrack", "LineageTrack"]] = ()
 
     def __init__(self, track_id: int, track_start_time: int, compartment: int, is_proliferative: bool):
         self.track_id = track_id
@@ -148,9 +53,9 @@ class Lineage:
 
     # Id -> Track mapping. If multiple tracks share the same id
     # (which happens in a single lineage), the youngest is used. (This is the currently live cell.)
-    _id_to_track: Dict[int, _LineageTrack]
+    _id_to_track: Dict[int, LineageTrack]
 
-    _tracks: List[_LineageTrack]
+    _tracks: List[LineageTrack]
 
     n_cell: int
 
@@ -158,7 +63,7 @@ class Lineage:
         self._id_to_track = dict()
         self._tracks = list()
 
-        first_track = _LineageTrack(lin_id, lin_interval, lin_compartment, lin_is_dividing)
+        first_track = LineageTrack(lin_id, lin_interval, lin_compartment, lin_is_dividing)
         self._id_to_track[first_track.track_id] = first_track
         self._tracks.append(first_track)
 
@@ -176,8 +81,8 @@ class Lineage:
         self.n_cell += 1
 
         compartment = track.compartment.last_compartment()
-        track_daughter_1 = _LineageTrack(id_daughter_list[0], t_divide, compartment, daughter_is_dividing_list[0])
-        track_daughter_2 = _LineageTrack(id_daughter_list[1], t_divide, compartment, daughter_is_dividing_list[1])
+        track_daughter_1 = LineageTrack(id_daughter_list[0], t_divide, compartment, daughter_is_dividing_list[0])
+        track_daughter_2 = LineageTrack(id_daughter_list[1], t_divide, compartment, daughter_is_dividing_list[1])
         track.daughters = (track_daughter_1, track_daughter_2)
 
         self._tracks.append(track_daughter_1)
@@ -186,7 +91,7 @@ class Lineage:
         self._id_to_track[track_daughter_1.track_id] = track_daughter_1
         self._id_to_track[track_daughter_2.track_id] = track_daughter_2
 
-    def _get_sublineage_draw_data(self, track: _LineageTrack, t_end: int, x_curr_branch: float, x_end_branch: float, line_list):
+    def _get_sublineage_draw_data(self, track: LineageTrack, t_end: int, x_curr_branch: float, x_end_branch: float, line_list):
     #def _get_sublineage_draw_data(self, lin_id, lin_interval, lin_compartment, t_end, x_curr_branch, x_end_branch, line_list):
         # if current branch doesn't have daughters
         if len(track.daughters) == 0:
@@ -267,24 +172,6 @@ class Lineage:
     def is_cell_in_lineage(self, cell_id):
         return cell_id in self._id_to_track
 
-    # gets the clone size distribution of this lineage tree. For each cell that exists at min_time, the clone size
-    # at max_time is returned.
-    def get_clone_size_distribution(self, min_time: float, max_time: float) -> CloneSizeDistribution:
-        distribution = CloneSizeDistribution()
-        for track in self._tracks:
-            if track.exists_at_time(min_time):
-                distribution.add_clone_size(track.get_clone_size(max_time))
-        return distribution
-
-    # gets the clone size distributions of the given duration for this lineage tree.
-    # If min_time is 0, max_time is 70, duration is 50 and increment is 5, then this will return the clone sizes for
-    # [0, 50], [5, 55], [10, 60], [15, 65] and [20, 70.
-    def get_clone_size_distributions_with_duration(self, min_time: float, max_time: float, duration: float, increment: int = 5) -> CloneSizeDistribution:
-        clone_sizes = CloneSizeDistribution()
-        for start_time in range(int(min_time), int(max_time - duration + 1), increment):
-            clone_sizes.merge(self.get_clone_size_distribution(start_time, start_time + duration))
-        return clone_sizes
-
     def move_cell(self, cell_id: int, t: int, towards_component: int):
         # moves the cell at the given time point to the given compartment
         track = self._id_to_track.get(cell_id)
@@ -309,6 +196,11 @@ class Lineage:
                         counter.add_cousin_entry(cousin1.is_proliferative, cousin2.is_proliferative)
 
         return counter
+
+    def get_tracks(self) -> Iterable[LineageTrack]:
+        """Gets all tracks in the lineage. A track is a single vertical line in the lineage tree."""
+        yield from self._tracks
+
 
 
 class _CompartmentByTime:

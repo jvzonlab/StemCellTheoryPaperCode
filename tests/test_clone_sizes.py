@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import numpy
 
-from stem_cell_model.lineages import CloneSizeDistribution
+from stem_cell_model.clone_size_distributions import CloneSizeDistribution
 
 
 class TestCloneSizes(TestCase):
