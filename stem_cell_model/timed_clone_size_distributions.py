@@ -13,12 +13,12 @@ class TimedCloneSizeDistribution:
         self._interval = interval
         self._distributions = distributions
 
-    def get_times(self):
+    def get_durations(self) -> List[float]:
         return [i * self._interval for i in range(1, len(self._distributions) + 1)]
 
     def get_clone_size_counts(self, min_clone_size: int, max_clone_size: int) -> List[int]:
         """Gets the clone size count over time for the given clone sizes. For the times corresponding to the list
-        indices, see get_times()."""
+        indices, see get_durations()."""
         clone_size_counts = list()
         for distribution in self._distributions:
             clone_size_count = 0
@@ -48,7 +48,7 @@ def get_proliferative_clone_size_distribution(lineages: Lineages, min_time: floa
     shouldn't grow forever, unlike the normal clone size distribution."""
     current_max_time = min_time + interval
     distributions = list()
-    while current_max_time < max_time:
+    while current_max_time <= max_time:
         distribution = CloneSizeDistribution()
         for track in lineages.get_tracks():
             if track.exists_at_time(min_time):

@@ -55,7 +55,7 @@ class LineageTrack:
             daughter1, daughter2 = self.daughters
             if daughter1.track_start_time > max_time:
                 return 1 if self.is_proliferative else 0  # Don't include these daughters, the division happened after the time cutoff
-            return daughter1.get_clone_size(max_time) + daughter2.get_clone_size(max_time)
+            return daughter1.get_proliferative_clone_size(max_time) + daughter2.get_proliferative_clone_size(max_time)
         else:
             return 1 if self.is_proliferative else 0
 

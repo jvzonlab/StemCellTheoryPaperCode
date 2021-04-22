@@ -1,29 +1,37 @@
 from unittest import TestCase
 
-from stem_cell_model import clone_size_distributions
-from stem_cell_model.clone_size_distributions import CloneSizeDistribution
-from stem_cell_model.lineages import Lineages
+from stem_cell_model.lineages import Lineages, LineageTrack
 
 
 class TestLineages(TestCase):
 
-    def test_clone_sizes(self):
-        """Cell 1 divides into [2, 3], and cell 2 into [4, 5] while cell 3 stops dividing."""
-        lineages = Lineages(lin_id=1, lin_interval=1, lin_compartment=0, lin_is_dividing=False, n_cell=1)
-        lineages.divide_cell(id_mother=1, id_daughter_list=[2, 3], daughter_is_dividing_list=[True, False], t_divide=10)
-        lineages.divide_cell(id_mother=2, id_daughter_list=[4, 5], daughter_is_dividing_list=[False, False],
-                             t_divide=20)
+    def test_clone_size_proliferative(self):
+        track = LineageTrack(track_id=1, track_start_time=0, compartment=0, is_proliferative=True)
 
-        self.assertEqual(CloneSizeDistribution.of_single_clone(3),
-                         clone_size_distributions.get_clone_size_distribution(lineages, 2, 25))  # One clone of size three
+        daughter1 = LineageTrack(track_id=2, track_start_time=10, compartment=0, is_proliferative=True)
+        daughter2 = LineageTrack(track_id=3, track_start_time=10, compartment=0, is_proliferative=True)
+        track.daughters = (daughter1, daughter2)
 
-        # If we start after the first division, we should see one clone of size 2 and one clone of size 1
-        self.assertEqual(CloneSizeDistribution.of_clone_sizes(2, 1),
-                         clone_size_distributions.get_clone_size_distribution(lineages, 11, 25))
+        granddaughter1_1 = LineageTrack(track_id=4, track_start_time=20, compartment=0, is_proliferative=False)
+        granddaughter1_2 = LineageTrack(track_id=5, track_start_time=20, compartment=0, is_proliferative=False)
+        daughter1.daughters = (granddaughter1_1, granddaughter1_2)
+
+        granddaughter2_1 = LineageTrack(track_id=6, track_start_time=20, compartment=0, is_proliferative=False)
+        granddaughter2_2 = LineageTrack(track_id=7, track_start_time=20, compartment=0, is_proliferative=False)
+        daughter2.daughters = (granddaughter2_1, granddaughter2_2)
+
+        self.assertEqual(1, track.get_clone_size(9))
+        self.assertEqual(2, track.get_clone_size(19))
+        self.assertEqual(4, track.get_clone_size(29))
+
+        self.assertEqual(1, track.get_proliferative_clone_size(9))
+        self.assertEqual(2, track.get_proliferative_clone_size(19))
+        self.assertEqual(0, track.get_proliferative_clone_size(29))
 
     def test_is_cell_in_lineage(self):
         """Cell 1 divides into [2, 3], and cell 2 into [4, 5] while cell 3 stops dividing."""
-        lineages = Lineages(lin_id=1, lin_interval=1, lin_compartment=0, lin_is_dividing=False, n_cell=1)
+        lineages = Lineages()
+        lineages.add_lineage(lin_id=1, lin_interval=1, lin_compartment=0, lin_is_dividing=False)
         lineages.divide_cell(id_mother=1, id_daughter_list=[2, 3], daughter_is_dividing_list=[True, False], t_divide=10)
         lineages.divide_cell(id_mother=2, id_daughter_list=[4, 5], daughter_is_dividing_list=[False, False],
                              t_divide=20)
@@ -33,7 +41,8 @@ class TestLineages(TestCase):
 
     def test_count_divisions(self):
         """Cell 1 divides into [2, 3], and cell 2 into [4, 5] while cell 3 stops dividing."""
-        lineages = Lineages(lin_id=1, lin_interval=1, lin_compartment=0, lin_is_dividing=False, n_cell=1)
+        lineages = Lineages()
+        lineages.add_lineage(lin_id=1, lin_interval=1, lin_compartment=0, lin_is_dividing=False)
         lineages.divide_cell(id_mother=1, id_daughter_list=[2, 3], daughter_is_dividing_list=[True, False], t_divide=10)
         lineages.divide_cell(id_mother=2, id_daughter_list=[4, 5], daughter_is_dividing_list=[False, False],
                              t_divide=20)
