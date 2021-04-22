@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Iterable
 
 from stem_cell_model.clone_size_distributions import CloneSizeDistribution
 from stem_cell_model.lineages import Lineages
@@ -16,13 +16,13 @@ class TimedCloneSizeDistribution:
     def get_durations(self) -> List[float]:
         return [i * self._interval for i in range(1, len(self._distributions) + 1)]
 
-    def get_clone_size_counts(self, min_clone_size: int, max_clone_size: int) -> List[int]:
+    def get_clone_size_counts(self, clone_sizes: Iterable[int]) -> List[int]:
         """Gets the clone size count over time for the given clone sizes. For the times corresponding to the list
         indices, see get_durations()."""
         clone_size_counts = list()
         for distribution in self._distributions:
             clone_size_count = 0
-            for clone_size in range(min_clone_size, max_clone_size + 1):
+            for clone_size in clone_sizes:
                 clone_size_count += distribution.get_clone_size_count(clone_size)
             clone_size_counts.append(clone_size_count)
         return clone_size_counts
