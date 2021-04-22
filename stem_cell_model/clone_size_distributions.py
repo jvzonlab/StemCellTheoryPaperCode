@@ -102,11 +102,11 @@ class CloneSizeDistribution:
         return average, math.sqrt(variance)
 
 
-def get_clone_size_distribution(lineage: Lineages, min_time: float, max_time: float) -> CloneSizeDistribution:
+def get_clone_size_distribution(lineages: Lineages, min_time: float, max_time: float) -> CloneSizeDistribution:
     """Gets the clone size distribution of this lineage tree. For each cell that exists at min_time, the clone size
     at max_time is returned."""
     distribution = CloneSizeDistribution()
-    for track in lineage.get_tracks():
+    for track in lineages.get_tracks():
         if track.exists_at_time(min_time):
             distribution.add_clone_size(track.get_clone_size(max_time))
     return distribution
