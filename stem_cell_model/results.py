@@ -54,8 +54,12 @@ class SimulationResults:
     """Holds all results of a simulation."""
 
     moments: MomentData
+
+    # Array of [ [t1, n1(t1), n2(t1)], [t2, n1(t2), n2(t2)], ...] with nx the number of dividing cells in compartment x
     n_vs_t: Optional[ndarray] = None
+    # Array of [ [t1, n1(t1), n2(t1)], [t2, n1(t2), n2(t2)], ...] with nx the number of non-dividing cells in comp x
     u_vs_t: Optional[ndarray] = None
+
     lineages: Optional[Lineages] = None
     run_stats: RunStats
 
