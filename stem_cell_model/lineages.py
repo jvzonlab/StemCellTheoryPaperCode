@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import operator
 
+from matplotlib.axes import Axes
+
 from stem_cell_model.division_counts import DivisionCounts
 
 
@@ -28,6 +30,8 @@ class LineageTrack:
         self.is_proliferative = is_proliferative
 
     def get_clone_size(self, max_time: float) -> int:
+        """Gets how many cells this cell will eventually produce. For example, if this cell divides, and both daughters
+        divide too, this method returns 4."""
         if self.track_start_time > max_time:
             raise ValueError("Track started after max_time")
 
@@ -38,6 +42,22 @@ class LineageTrack:
             return daughter1.get_clone_size(max_time) + daughter2.get_clone_size(max_time)
         else:
             return 1
+
+    def get_proliferative_clone_size(self, max_time: float) -> int:
+        """Gets how many dividing cells this track will eventually produce. If this track divides into two dividing
+        daughter cells, and one of those daughters divides into two dividing cells, then the clone size is three.
+
+        Returns 0 if this cell doesn't divide. Returns 1 if this track is proliferative, but hasn't divided yet."""
+        if self.track_start_time > max_time:
+            raise ValueError("Track started after max_time")
+
+        if len(self.daughters) == 2:
+            daughter1, daughter2 = self.daughters
+            if daughter1.track_start_time > max_time:
+                return 1 if self.is_proliferative else 0  # Don't include these daughters, the division happened after the time cutoff
+            return daughter1.get_clone_size(max_time) + daughter2.get_clone_size(max_time)
+        else:
+            return 1 if self.is_proliferative else 0
 
     def exists_at_time(self, time: float) -> bool:
         """Cells exist from start_time to (but not including) daughter.start_time. This function returns
@@ -56,12 +76,14 @@ class Lineages:
     _id_to_track: Dict[int, LineageTrack]
 
     _tracks: List[LineageTrack]
+    _lineage_starts: List[LineageTrack]
 
     n_cell: int
 
     def __init__(self):
         self._id_to_track = dict()
         self._tracks = list()
+        self._lineage_starts = list()
         self.n_cell = 0
 
     def add_lineage(self, lin_id: int, lin_interval: int, lin_compartment: int, lin_is_dividing: bool):
@@ -71,6 +93,7 @@ class Lineages:
         first_track = LineageTrack(lin_id, lin_interval, lin_compartment, lin_is_dividing)
         self._id_to_track[first_track.track_id] = first_track
         self._tracks.append(first_track)
+        self._lineage_starts.append(first_track)
         self.n_cell += 1
 
     def divide_cell(self, id_mother: int, id_daughter_list: Union[List[int], Tuple[int, int]],
@@ -146,12 +169,12 @@ class Lineages:
         # return updated lineage data        
         return x_curr_branch, x_end_branch, line_list
 
-    def get_lineage_draw_data(self, t_end):
-        x_curr,x_end,line_list = self._get_sublineage_draw_data(self._tracks[0], t_end, 0, 0, [])
+    def get_lineage_draw_data(self, track: LineageTrack, t_end: int):
+        x_curr, x_end, line_list = self._get_sublineage_draw_data(track, t_end, 0, 0, [])
         return x_end, line_list
 
-    def draw_lineage(self,T_end,x_offset,show_cell_id=False,col_comp_0='r', col_default='k'):
-        (diagram_width, line_list)=self.get_lineage_draw_data(T_end)
+    def _draw_single_lineage(self, ax: Axes, track: LineageTrack, t_end: int, x_offset, show_cell_id=False, col_comp_0='r', col_default='k'):
+        (diagram_width, line_list)=self.get_lineage_draw_data(track, t_end)
     
         for l in line_list:
             X=l[0]
@@ -162,15 +185,20 @@ class Lineages:
             if len(T)==2:
                 ## two timepoints T, so this is a vertical line
                 # plot line
-                plt.plot( [x_offset+X[0],x_offset+X[0]], T, linestyle='-', color=col )
+                ax.plot( [x_offset+X[0],x_offset+X[0]], T, linestyle='-', color=col )
                 if show_cell_id:
                     # print cell id
-                    plt.text( x_offset+X[0], T[0], CID)
+                    ax.text( x_offset+X[0], T[0], CID)
             if len(X)==2:
                 ## two x positions, so this a horizontal line indicating division
                 # plot line
-                plt.plot( [x_offset+X[0],x_offset+X[1]], [T[0],T[0]], linestyle='-', color=col )
+                ax.plot( [x_offset+X[0],x_offset+X[1]], [T[0],T[0]], linestyle='-', color=col )
         return(diagram_width)
+
+    def draw_lineages(self, ax: Axes, t_end: int, x_offset, show_cell_id=False, col_comp_0='r', col_default='k'):
+        for track in self._lineage_starts:
+            diagram_width = self._draw_single_lineage(ax, track, t_end, x_offset, show_cell_id, col_comp_0, col_default)
+            x_offset += diagram_width
 
     # checks if a cell with id=cell_id is in this lineage        
     def is_cell_in_lineage(self, cell_id):
