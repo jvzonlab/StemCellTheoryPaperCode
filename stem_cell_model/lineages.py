@@ -49,7 +49,7 @@ class LineageTrack:
         return True
 
 
-class Lineage:
+class Lineages:
 
     # Id -> Track mapping. If multiple tracks share the same id
     # (which happens in a single lineage), the youngest is used. (This is the currently live cell.)
@@ -59,17 +59,22 @@ class Lineage:
 
     n_cell: int
 
-    def __init__(self, lin_id: int, lin_interval: int, lin_compartment: int, lin_is_dividing: bool, n_cell: int):
+    def __init__(self):
         self._id_to_track = dict()
         self._tracks = list()
+        self.n_cell = 0
 
+    def add_lineage(self, lin_id: int, lin_interval: int, lin_compartment: int, lin_is_dividing: bool):
+        """Starts a new lineage. Raises ValueError if the given id is already in use."""
+        if lin_id in self._id_to_track:
+            raise ValueError("Duplicate lineage id: " + str(lin_id))
         first_track = LineageTrack(lin_id, lin_interval, lin_compartment, lin_is_dividing)
         self._id_to_track[first_track.track_id] = first_track
         self._tracks.append(first_track)
+        self.n_cell += 1
 
-        self.n_cell=n_cell
-
-    def divide_cell(self, id_mother, id_daughter_list, daughter_is_dividing_list, t_divide):
+    def divide_cell(self, id_mother: int, id_daughter_list: Union[List[int], Tuple[int, int]],
+                    daughter_is_dividing_list: Union[List[bool], Tuple[bool, bool]], t_divide: int):
         # id_mother: label of mother cell
         # id_daughter_cell_list: list of [daughter1_id, daughter2_id]
         # daughter_is_dividing_list: List of [bool, bool], indicating whether a daughter continues dividing.
@@ -92,7 +97,6 @@ class Lineage:
         self._id_to_track[track_daughter_2.track_id] = track_daughter_2
 
     def _get_sublineage_draw_data(self, track: LineageTrack, t_end: int, x_curr_branch: float, x_end_branch: float, line_list):
-    #def _get_sublineage_draw_data(self, lin_id, lin_interval, lin_compartment, t_end, x_curr_branch, x_end_branch, line_list):
         # if current branch doesn't have daughters
         if len(track.daughters) == 0:
             # then it has no sublineage, so we plot an end branch

@@ -4,7 +4,7 @@ from numpy import ndarray
 from numpy.random import Generator
 
 from stem_cell_model import parameters
-from stem_cell_model.lineages import Lineage
+from stem_cell_model.lineages import Lineages
 from stem_cell_model.parameters import SimulationConfig, SimulationParameters
 from stem_cell_model.results import MomentData, SimulationResults, RunStats
 from stem_cell_model.two_compartment_model import Cell, get_next_dividing, DivisionTimer
@@ -126,11 +126,11 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
     # if an interval to track lineages is defined
     if config.track_lineage_time_interval is not None:
         # then set flag for tracking them
-        track_lineage=True
+        track_lineage = True
         # initialize lineage list
-        L_list=[]
+        lineages = Lineages()
     else:
-        track_lineage=False
+        track_lineage = False
 
     ### run simulation
 
@@ -260,8 +260,7 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
                     cell_list[ ind ].comp=1
                                         # implement cell moving in saved lineages
                     if tracking_lineage:
-                        for L in L_list:
-                            L.move_cell(cell_list[ ind ].id, t, cell_list[ ind ].comp)
+                        lineages.move_cell(cell_list[ ind ].id, t, cell_list[ ind ].comp)
 
                     # adjust number of dividing stem cells
                     n[0] -= 1
@@ -275,15 +274,14 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
 
             # implement cell division in saved lineages
             if tracking_lineage:
-                for L in L_list:
-                    L.divide_cell(mother_cell_id,daughter_cell_id_list,daughter_is_dividing_list,t)
+                lineages.divide_cell(mother_cell_id,daughter_cell_id_list,daughter_is_dividing_list,t)
 
             # check if lineage needs to start being tracked
             if track_lineage:
                 if (t > config.track_lineage_time_interval[0]) and (t < config.track_lineage_time_interval[1]) and (not tracking_lineage):
                     tracking_lineage=True
                     for cell in cell_list:
-                        L_list.append(Lineage(cell.id, config.track_lineage_time_interval[0], cell.comp, True, 1))
+                        lineages.add_lineage(cell.id, config.track_lineage_time_interval[0], cell.comp, True)
 
             # check if lineage tracking should stop
             if tracking_lineage:
@@ -331,6 +329,6 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
         output.n_vs_t = np.array(n_vs_t)
         output.u_vs_t = np.array(u_vs_t)
     if track_lineage:
-        output.lineages = L_list
+        output.lineages = lineages
     # and return as output
     return output

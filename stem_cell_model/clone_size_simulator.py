@@ -35,8 +35,7 @@ def calculate(simulator: Simulator, clone_size_config: CloneSizeSimulationConfig
         if i > 0 and i % 100 == 0:
             print(f"{i} crypts done...")
         results = simulator(config, params)
-        for lineage in results.lineages:
-            clone_size_distribution.merge(clone_size_distributions.get_clone_size_distribution(lineage,
-                clone_size_config.t_wait, clone_size_config.t_wait + clone_size_config.t_clone_size))
+        clone_size_distribution.merge(clone_size_distributions.get_clone_size_distribution(results.lineages,
+            clone_size_config.t_wait, clone_size_config.t_wait + clone_size_config.t_clone_size))
     return clone_size_distribution
 

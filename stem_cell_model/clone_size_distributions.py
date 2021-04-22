@@ -3,7 +3,7 @@ from typing import Dict, Any, List, Tuple
 
 import numpy
 
-from stem_cell_model.lineages import Lineage
+from stem_cell_model.lineages import Lineages
 
 
 class CloneSizeDistribution:
@@ -102,7 +102,7 @@ class CloneSizeDistribution:
         return average, math.sqrt(variance)
 
 
-def get_clone_size_distribution(lineage: Lineage, min_time: float, max_time: float) -> CloneSizeDistribution:
+def get_clone_size_distribution(lineage: Lineages, min_time: float, max_time: float) -> CloneSizeDistribution:
     """Gets the clone size distribution of this lineage tree. For each cell that exists at min_time, the clone size
     at max_time is returned."""
     distribution = CloneSizeDistribution()
@@ -112,11 +112,11 @@ def get_clone_size_distribution(lineage: Lineage, min_time: float, max_time: flo
     return distribution
 
 
-def get_clone_size_distributions_with_duration(lineage: Lineage, min_time: float, max_time: float, duration: float,
+def get_clone_size_distributions_with_duration(lineage: Lineages, min_time: float, max_time: float, duration: float,
                                                increment: int = 5) -> CloneSizeDistribution:
     """# gets the clone size distributions of the given duration for this lineage tree. If min_time is 0, max_time is
     70, duration is 50 and increment is 5, then this will return the clone sizes for [0, 50], [5, 55], [10, 60],
-    [15, 65] and [20, 70."""
+    [15, 65] and [20, 70]."""
     clone_sizes = CloneSizeDistribution()
     for start_time in range(int(min_time), int(max_time - duration + 1), increment):
         clone_sizes.merge(get_clone_size_distribution(lineage, start_time, start_time + duration))

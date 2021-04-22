@@ -86,11 +86,9 @@ for n in range(0,len(plot_run_ind_list)):
     config = SimulationConfig(t_sim=t_sim, n_max=100000, track_n_vs_t=True, track_lineage_time_interval=t_lineage_range, random=random)
 
     for i in range(crypts):  # simulate a crypt 50 times, so that the uncertainty in the clone size is small
-
         res = two_compartment_model_space.run_simulation_niche(config, params)
-        L_list=res.lineages
-        for i in range(len(L_list)):
-            clone_sizes.merge(clone_size_distributions.get_clone_size_distributions_with_duration(L_list[i], min_clone_count_time, max_clone_count_time, clone_size_duration))
+        lineages = res.lineages
+        clone_sizes.merge(clone_size_distributions.get_clone_size_distributions_with_duration(lineages, min_clone_count_time, max_clone_count_time, clone_size_duration))
 
     # plot clone sizes
     max_clone_size = max(12, clone_sizes.max())  # Show at least 12 bins
@@ -106,13 +104,7 @@ for n in range(0,len(plot_run_ind_list)):
         plt.ylabel("count")
 
     # print sister and cousin statistics
-    stats = None
-    for i in range(len(L_list)):
-        lineage = L_list[i]
-        if stats is None:
-            stats = lineage.count_divisions()
-        else:
-            stats += lineage.count_divisions()
+    stats = lineages.count_divisions()
     print(f"STATS FOR PARAMETER SET {n}: {stats}")
 
 plt.show()
