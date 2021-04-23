@@ -12,8 +12,15 @@ from stem_cell_model.two_compartment_model_space import run_simulation_niche
 
 def _plot_clone_sizes_over_time(ax: Axes, results: TimedCloneSizeDistribution, *, legend: bool = True):
     durations = results.get_durations()
-    ax.plot(durations, results.get_clone_size_counts([4, 6, 8, 10]), label="4,6,8,10", color="#00b894")
-    ax.plot(durations, results.get_clone_size_counts([3, 5, 7, 9]), label="3,5,7,9", color="#fdcb6e")
+    ax.plot(durations, results.get_clone_size_counts([2]), label="2", color="#00b894")
+    ax.plot(durations, results.get_clone_size_counts([3, 4]), label="3-4", color="#fdcb6e")
+    ax.plot(durations, results.get_clone_size_counts([5, 6, 7, 8]), label="5-8", color="#a29bfe")
+    ax.plot(durations, results.get_clone_size_counts(range(9, 17)), label="9-16", color="#fd79a8")
+    ax.plot(durations, results.get_clone_size_counts(range(17, 33)), label="17-32", color="#d63031")
+    ax.plot(durations, results.get_clone_size_counts(range(33, 65)), label="33-64", color="#0984e3")
+    ax.plot(durations, results.get_clone_size_counts(range(65, 129)), label="65-128", color="#ff7675")
+    ax.set_xlabel("Time (h)")
+    ax.set_ylabel("Number of clones")
     ax.set_xlabel("Time (h)")
     ax.set_ylabel("Number of clones")
 
@@ -56,7 +63,7 @@ _plot_clone_sizes_over_time(ax_bottom_left, results, legend=False)
 results = clone_size_simulator.calculate_proliferative_over_time(
     run_simulation_niche, config, parameters_asymm)
 ax_top_right.set_title("Asymmetric ($\\alpha_n = 0.05$, $\\phi=0.05$)")
-_plot_clone_sizes_over_time(ax_top_right, results)
+_plot_clone_sizes_over_time(ax_top_right, results, legend=False)
 
 # Right bottom panel
 results = clone_size_simulator.calculate_proliferative_over_time(
