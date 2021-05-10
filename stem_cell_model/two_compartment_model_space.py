@@ -23,10 +23,13 @@ def reorder_niche(random: Generator, niche: ndarray, a: float, t: int):
 
     # get <N> random positions in niche where cells are reordered
     indices = random.integers(low=0, high=S - 1, size=N, endpoint=False)
-    for x in indices:
+
+    # swap them with the positions above (according to cProfile, this is the fastest method that I tried)
+    indices_plus_one = indices + 1
+    for x, x_plus_one in zip(indices, indices_plus_one):
         # swap that cell with the one above
-        cell_one_above = niche[x + 1]
-        niche[x + 1] = niche[x]
+        cell_one_above = niche[x_plus_one]
+        niche[x_plus_one] = niche[x]
         niche[x] = cell_one_above
 
     # return new niche
