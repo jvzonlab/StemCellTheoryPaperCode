@@ -1,13 +1,16 @@
 
 import numpy
+import matplotlib.cm
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
 from stem_cell_model import clone_size_simulator
-from stem_cell_model.clone_size_simulator import CloneSizeSimulationConfig, TimedCloneSizeSimulationConfig
+from stem_cell_model.clone_size_simulator import TimedCloneSizeSimulationConfig
 from stem_cell_model.parameters import SimulationParameters, SimulationConfig
 from stem_cell_model.timed_clone_size_distributions import TimedCloneSizeDistribution
 from stem_cell_model.two_compartment_model_space import run_simulation_niche
+
+_COLORS = [matplotlib.cm.Blues(x) for x in [0.1, 0.4, 0.7, 1.0]]
 
 
 def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution, *, legend: bool = True):
@@ -24,9 +27,9 @@ def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution,
         x = clone_sizes / average_clone_size[i]
         size_fraction = results.get_distribution_at(i).get_clone_size_frequencies(clone_sizes) / clone_count[i]
         y = average_clone_size[i] * size_fraction
-        ax.scatter(x, y, label=f"{time/24:.0f} days", s=5)
+        ax.scatter(x, y, label=f"{time/24:.0f} days", s=5, color=_COLORS[i])
 
-    # Plot predicted scaling fucntion [Lopez-Garcia2010]
+    # Plot predicted scaling function [Lopez-Garcia2010]
     x = numpy.arange(0, 5, 0.01)
     F = (numpy.pi * x / 2) * numpy.exp(-numpy.pi * x ** 2 / 4)
     ax.plot(x, F, label=f"Scaling", color="black")
