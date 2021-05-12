@@ -96,6 +96,14 @@ class Lineages:
         self._lineage_starts.append(first_track)
         self.n_cell += 1
 
+    def __len__(self) -> int:
+        """Gets the number of lineage starts."""
+        return len(self._lineage_starts)
+
+    def __getitem__(self, item) -> LineageTrack:
+        """Gets a particular lineage start"""
+        return self._lineage_starts[item]
+
     def divide_cell(self, id_mother: int, id_daughter_list: Union[List[int], Tuple[int, int]],
                     daughter_is_dividing_list: Union[List[bool], Tuple[bool, bool]], t_divide: int):
         # id_mother: label of mother cell
@@ -119,88 +127,18 @@ class Lineages:
         self._id_to_track[track_daughter_1.track_id] = track_daughter_1
         self._id_to_track[track_daughter_2.track_id] = track_daughter_2
 
-    def _get_sublineage_draw_data(self, track: LineageTrack, t_end: int, x_curr_branch: float, x_end_branch: float, line_list):
-        # if current branch doesn't have daughters
-        if len(track.daughters) == 0:
-            # then it has no sublineage, so we plot an end branch
-            # set x position of current branch to that of the next end branch
-            x_curr_branch=x_end_branch
-            # plot line from time of birth to end time of lineage tree
-#            plt.plot([x_curr_branch,x_curr_branch],[lin_interval,t_end],'-k')
-            X=[x_curr_branch]
-            T=[track.track_start_time,t_end]
-            CID=track.track_id
-            for T, comp in track.compartment.get_all_compartments_with_times(T):
-                line_list.append( [X,T,CID,comp] )
-#            plt.text(x_curr_branch, track.track_start_time, track.track_id)
-            # and increase the position of the next end branch 
-            x_end_branch=x_end_branch+1
-        else:
-            # if has a sublineage
-            x=[]
-            for i in range(0,2):
-                # for each daughter sublineage, get the id and time interval data
-                daughter = track.daughters[i]
-                # and draw sublineage sublineage
-                x_curr_branch, x_end_branch, line_list = self._get_sublineage_draw_data(daughter, t_end, x_curr_branch, x_end_branch, line_list)
-                # for each sublineage, save the current branch x position
-                x.append(x_curr_branch)
-            # get the start of the time interval
-            t0 = track.track_start_time
-            CID = track.track_id
-            compartments = track.compartment
-            # and the end            
-            t1 = track.daughters[0].track_start_time
-            # plot horizontal line connected the two daughter branches
-#            plt.plot([x[0],x[1]], [ t1,t1 ], '-k')
-            X=[x[0],x[1]]
-            T=[t1]
-            line_list.append( [X,T,CID,compartments.last_compartment()] )
-
-            # and plot the mother branch
-            x_curr_branch=(x[0]+x[1])/2.
-#            plt.plot([x_curr_branch,x_curr_branch], [ t0,t1 ], '-k')
-#            plt.text(x_curr_branch, t0, cell_id)
-            X=[x_curr_branch]
-            T=[t0,t1]
-            for T, comp in compartments.get_all_compartments_with_times(T):
-                line_list.append( [X,T,CID,comp] )
-    
-        # return updated lineage data        
-        return x_curr_branch, x_end_branch, line_list
-
-    def get_lineage_draw_data(self, track: LineageTrack, t_end: int):
-        x_curr, x_end, line_list = self._get_sublineage_draw_data(track, t_end, 0, 0, [])
-        return x_end, line_list
-
-    def _draw_single_lineage(self, ax: Axes, track: LineageTrack, t_end: int, x_offset, show_cell_id=False, col_comp_0='r', col_default='k'):
-        (diagram_width, line_list)=self.get_lineage_draw_data(track, t_end)
-    
-        for l in line_list:
-            X=l[0]
-            T=l[1]
-            CID=l[2]
-            comp=l[3]
-            col = col_comp_0 if comp == 0 else col_default
-            if len(T)==2:
-                ## two timepoints T, so this is a vertical line
-                # plot line
-                ax.plot( [x_offset+X[0],x_offset+X[0]], T, linestyle='-', color=col )
-                if show_cell_id:
-                    # print cell id
-                    ax.text( x_offset+X[0], T[0], CID)
-            if len(X)==2:
-                ## two x positions, so this a horizontal line indicating division
-                # plot line
-                ax.plot( [x_offset+X[0],x_offset+X[1]], [T[0],T[0]], linestyle='-', color=col )
-        return(diagram_width)
-
     def draw_lineages(self, ax: Axes, t_end: int, x_offset, show_cell_id=False, col_comp_0='r', col_default='k'):
+        """Draws the lineage tree of all lineages."""
         for track in self._lineage_starts:
-            diagram_width = self._draw_single_lineage(ax, track, t_end, x_offset, show_cell_id, col_comp_0, col_default)
+            diagram_width = _draw_single_lineage(ax, track, t_end, x_offset, show_cell_id, col_comp_0, col_default)
             x_offset += diagram_width
 
-    # checks if a cell with id=cell_id is in this lineage        
+    def draw_single_lineage(self, ax: Axes, track: LineageTrack, t_end: int, x_offset, show_cell_id=False,
+                            col_comp_0='r', col_default='k') -> int:
+        """Draws the lineage tree of a single lineage. Returns the width of the lineage tree."""
+        return _draw_single_lineage(ax, track, t_end, x_offset, show_cell_id, col_comp_0, col_default)
+
+    # checks if a cell with id=cell_id is in this lineage
     def is_cell_in_lineage(self, cell_id):
         return cell_id in self._id_to_track
 
@@ -233,6 +171,85 @@ class Lineages:
         """Gets all tracks in the lineage. A track is a single vertical line in the lineage tree."""
         yield from self._tracks
 
+
+# Lineage drawing
+def _get_lineage_draw_data(track: LineageTrack, t_end: int):
+    x_curr, x_end, line_list = _get_sublineage_draw_data(track, t_end, 0, 0, [])
+    return x_end, line_list
+
+def _get_sublineage_draw_data(track: LineageTrack, t_end: int, x_curr_branch: float, x_end_branch: float, line_list):
+    # if current branch doesn't have daughters
+    if len(track.daughters) == 0:
+        # then it has no sublineage, so we plot an end branch
+        # set x position of current branch to that of the next end branch
+        x_curr_branch=x_end_branch
+        # plot line from time of birth to end time of lineage tree
+#            plt.plot([x_curr_branch,x_curr_branch],[lin_interval,t_end],'-k')
+        X=[x_curr_branch]
+        T=[track.track_start_time,t_end]
+        CID=track.track_id
+        for T, comp in track.compartment.get_all_compartments_with_times(T):
+            line_list.append( [X,T,CID,comp] )
+#            plt.text(x_curr_branch, track.track_start_time, track.track_id)
+        # and increase the position of the next end branch
+        x_end_branch=x_end_branch+1
+    else:
+        # if has a sublineage
+        x=[]
+        for i in range(0,2):
+            # for each daughter sublineage, get the id and time interval data
+            daughter = track.daughters[i]
+            # and draw sublineage sublineage
+            x_curr_branch, x_end_branch, line_list = _get_sublineage_draw_data(daughter, t_end, x_curr_branch, x_end_branch, line_list)
+            # for each sublineage, save the current branch x position
+            x.append(x_curr_branch)
+        # get the start of the time interval
+        t0 = track.track_start_time
+        CID = track.track_id
+        compartments = track.compartment
+        # and the end
+        t1 = track.daughters[0].track_start_time
+        # plot horizontal line connected the two daughter branches
+#            plt.plot([x[0],x[1]], [ t1,t1 ], '-k')
+        X=[x[0],x[1]]
+        T=[t1]
+        line_list.append( [X,T,CID,compartments.last_compartment()] )
+
+        # and plot the mother branch
+        x_curr_branch=(x[0]+x[1])/2.
+#            plt.plot([x_curr_branch,x_curr_branch], [ t0,t1 ], '-k')
+#            plt.text(x_curr_branch, t0, cell_id)
+        X=[x_curr_branch]
+        T=[t0,t1]
+        for T, comp in compartments.get_all_compartments_with_times(T):
+            line_list.append( [X,T,CID,comp] )
+
+    # return updated lineage data
+    return x_curr_branch, x_end_branch, line_list
+
+
+def _draw_single_lineage(ax: Axes, track: LineageTrack, t_end: int, x_offset, show_cell_id=False, col_comp_0='r',
+                         col_default='k'):
+    (diagram_width, line_list) = _get_lineage_draw_data(track, t_end)
+
+    for l in line_list:
+        X = l[0]
+        T = l[1]
+        CID = l[2]
+        comp = l[3]
+        col = col_comp_0 if comp == 0 else col_default
+        if len(T) == 2:
+            ## two timepoints T, so this is a vertical line
+            # plot line
+            ax.plot([x_offset + X[0], x_offset + X[0]], T, linestyle='-', color=col)
+            if show_cell_id:
+                # print cell id
+                ax.text(x_offset + X[0], T[0], CID)
+        if len(X) == 2:
+            ## two x positions, so this a horizontal line indicating division
+            # plot line
+            ax.plot([x_offset + X[0], x_offset + X[1]], [T[0], T[0]], linestyle='-', color=col)
+    return diagram_width
 
 
 class _CompartmentByTime:
