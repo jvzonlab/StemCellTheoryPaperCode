@@ -35,9 +35,9 @@ class MomentData:
 class RunStats:
     run_ended_early: bool
     t_end: int
-    n_exploded: int
+    n_exploded: bool
 
-    def __init__(self, *, run_ended_early: bool, t_end: int, n_exploded: int):
+    def __init__(self, *, run_ended_early: bool, t_end: int, n_exploded: bool):
         self.run_ended_early = run_ended_early
         self.t_end = t_end
         self.n_exploded = n_exploded
@@ -121,6 +121,12 @@ class MultiRunStats:
         if results.run_stats.run_ended_early:
             # store this
             self.n_runs_ended_early += 1
+
+        # if run ended before time because of an explosion
+        if results.run_stats.n_exploded:
+            if self.n_explosions is None:
+                self.n_explosions = 0
+            self.n_explosions += 1
 
     def to_dict(self) -> Dict[str, Any]:
         dictionary = {'mean': self.nm_mean, 'sq': self.nm_sq, 'prod': self.nm_prod, 't_tot': self.t_tot, 'n_runs_ended_early': self.n_runs_ended_early}
