@@ -127,22 +127,11 @@ def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParam
         # intialize statistic quantities for entire run
         output = MultiRunStats()
         
-        # start simulation
-        cont = True
-        while cont:
-            # do simulation for a time (t_sim - t_tot)
+        # run simulation
+        while output.t_tot < t_sim:
             config = SimulationConfig(t_sim=t_sim - output.t_tot, n_max=n_max, random=random)
             res = simulator(config, params)
-        
             output.add_results(res)
-        
-            # if run ended before time (t_sim - t_tot)
-            if res.run_stats.run_ended_early:
-                # continue
-                cont = True
-            else:
-                # Simulation is done, stop simulating for these parameter values
-                cont = False
         
         # save simulation data
         sim_data.append([params.to_dict(), output.to_dict()])
