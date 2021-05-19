@@ -109,15 +109,15 @@ def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParam
 
     # Fixed seed (based on file name) to ensure reproducibility
     file_name = os.path.basename(output_file)
-    seed = abs(hash(file_name))
-    random = numpy.random.Generator(numpy.random.MT19937(seed=seed))
 
     sim_data = list()
 
     for i, params in enumerate(params_list):
+        seed = abs(hash(params))
+        random = numpy.random.Generator(numpy.random.MT19937(seed=seed))
 
         # print run information
-        print(f"{file_name}: {i + 1}/{len(params_list)}, a_n:{params.alpha[0]:.3f}, a_m:{params.alpha[1]:.3f}, phi:{params.phi[0]:.3f}, S:{params.S}, N0:{params.n0[0]}, M0:{params.n0[1]}")
+        print(f"{file_name}: {i + 1}/{len(params_list)}, a_n:{params.alpha[0]:.3f}, a_m:{params.alpha[1]:.3f}, phi:{params.phi[0]:.3f}, S:{params.S}, N0:{params.n0[0]}, M0:{params.n0[1]}, seed:{seed}")
 
         # some simulation will end before the total simulation time t_sim because
         # stem cells are fully lost. In that case, we rerun simulations with the same 

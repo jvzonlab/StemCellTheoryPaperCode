@@ -118,6 +118,15 @@ class SimulationParameters:
     def __repr__(self) -> str:
         return f"SimulationParameters(S={self.S}, alpha={self.alpha}, phi={self.phi}, T={self.T}, n={self.n0}, a={self.a})"
 
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, SimulationParameters):
+            return False
+        return other.alpha == self.alpha and other.n0 == self.n0 and other.phi == self.phi and other.T == self.T and other.a == self.a
+
+    def __hash__(self) -> int:
+        return hash((self.alpha, self.n0, self.phi, self.T, self.a))
+
+
 class SimulationConfig:
     """The parameters, and all other information needed to run a simulation. Two simulations ran from exactly the same config will output exactly the same results."""
     t_sim: int  # Total simulation time
