@@ -34,10 +34,10 @@ class MomentData:
 
 class RunStats:
     run_ended_early: bool
-    t_end: int
+    t_end: float
     n_exploded: bool
 
-    def __init__(self, *, run_ended_early: bool, t_end: int, n_exploded: bool):
+    def __init__(self, *, run_ended_early: bool, t_end: float, n_exploded: bool):
         self.run_ended_early = run_ended_early
         self.t_end = t_end
         self.n_exploded = n_exploded
@@ -88,7 +88,7 @@ class MultiRunStats:
     nm_mean: ndarray  # Sum of all means, divide by t_tot for the actual average. Two values, one for each compartment.
     nm_sq: ndarray  # Sum of sq values. Two values, one for each compartment.
     nm_prod: int = 0  # Sum of products
-    t_tot: int = 0
+    t_tot: float = 0
     n_runs_ended_early: int = 0
     n_explosions: Optional[int] = None
 

@@ -310,8 +310,11 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
             run_ended_early=True
             n_exploded=False
             t_end=t
-            # adjust moments
-            moment_data.adjust_moment_data(config.t_sim-t, n)
+
+            # final save of number of dividing cells
+            if config.track_n_vs_t:
+                n_vs_t.append([t_end, n[0], n[1]])
+                u_vs_t.append([t_end, u[0], u[1]])
 
         if n[0] + n[1] >= config.n_max:
             # if more than x dividing cells, stop simulation
@@ -319,8 +322,6 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
             run_ended_early=False
             n_exploded=True
             t_end=t
-            # adjust moments
-            moment_data.adjust_moment_data(config.t_sim - t, n)
 
         # increase event counter
         n_events+=1
