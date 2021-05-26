@@ -1,6 +1,7 @@
 from typing import Dict, Any, Optional
 
 import numpy as np
+from numpy import ndarray
 
 from stem_cell_model.results import MultiRunStats
 
@@ -24,6 +25,31 @@ class SingleParameterSetStatistics:
     n_coeff_var: float  # Variation coefficient of the number of proliferating cells in the niche compartment
     m_coeff_var: float  # Variation coefficient of the number of proliferating cells in the differentiation compartment
     d_coeff_var: float  # Variation coefficient of the number of proliferating cells in both compartments
+
+
+class ResultImages:
+    N: ndarray
+    M: ndarray
+    D: ndarray
+    C: ndarray
+    C_t: ndarray
+    MEAN: ndarray
+    N_CV: ndarray
+    M_CV: ndarray
+    D_CV: ndarray
+    S: ndarray
+
+    def __init__(self, Np):
+        self.N = np.zeros((Np, Np))
+        self.M = np.zeros((Np, Np))
+        self.D = np.zeros((Np, Np))
+        self.C = np.zeros((Np, Np))
+        self.C_t = np.zeros((Np, Np))
+        self.MEAN = np.zeros((Np, Np))
+        self.N_CV = np.zeros((Np, Np))
+        self.M_CV = np.zeros((Np, Np))
+        self.D_CV = np.zeros((Np, Np))
+        self.S = np.zeros((Np, Np))
 
 
 def get_single_parameter_set_statistics(run_data: MultiRunStats) -> SingleParameterSetStatistics:
@@ -71,16 +97,7 @@ def get_single_parameter_set_statistics(run_data: MultiRunStats) -> SingleParame
 
 
 def plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
-    N = np.zeros((Np,Np))
-    M = np.zeros((Np,Np))
-    D = np.zeros((Np,Np))
-    C = np.zeros((Np,Np))
-    C_t = np.zeros((Np,Np))
-    MEAN = np.zeros((Np,Np))
-    N_CV = np.zeros((Np,Np))
-    M_CV = np.zeros((Np,Np))
-    D_CV = np.zeros((Np,Np))
-    S = np.zeros((Np,Np))
+    out = ResultImages(Np)
     
     for s in sim_data: 
         sweep_param = s[0]
@@ -92,29 +109,21 @@ def plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_ra
             i = np.where(np.abs(alpha[0]-alpha_n_range)==np.abs((alpha[0]-alpha_n_range)).min())[0][0]
             j = np.where(np.abs(alpha[1]-alpha_m_range)==np.abs((alpha[1]-alpha_m_range)).min())[0][0]
         
-            N[i,j] = statistics.n_std
-            M[i,j] = statistics.m_std
-            D[i,j] = statistics.d_std
-            C[i,j] = statistics.f_collapse
-            C_t[i,j] = statistics.f_collapse_t
-            MEAN[i,j] = statistics.d_mean
-            N_CV[i,j] = statistics.n_coeff_var
-            M_CV[i,j] = statistics.m_coeff_var
-            D_CV[i,j] = statistics.d_coeff_var
-            S[i,j] = sweep_param["S"]
+            out.N[i,j] = statistics.n_std
+            out.M[i,j] = statistics.m_std
+            out.D[i,j] = statistics.d_std
+            out.C[i,j] = statistics.f_collapse
+            out.C_t[i,j] = statistics.f_collapse_t
+            out.MEAN[i,j] = statistics.d_mean
+            out.N_CV[i,j] = statistics.n_coeff_var
+            out.M_CV[i,j] = statistics.m_coeff_var
+            out.D_CV[i,j] = statistics.d_coeff_var
+            out.S[i,j] = sweep_param["S"]
     
-    return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S
+    return out
 
 def plot_alpha_n_vs_phi(alpha_m,sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
-    N = np.zeros((Np,Np))
-    M = np.zeros((Np,Np))
-    D = np.zeros((Np,Np))
-    C = np.zeros((Np,Np))
-    C_t = np.zeros((Np,Np))
-    MEAN = np.zeros((Np,Np))
-    N_CV = np.zeros((Np,Np))
-    M_CV = np.zeros((Np,Np))
-    D_CV = np.zeros((Np,Np))
+    out = ResultImages(Np)
     
     for s in sim_data: 
         sweep_param = s[0]
@@ -130,29 +139,21 @@ def plot_alpha_n_vs_phi(alpha_m,sim_data,alpha_n_range,alpha_m_range,phi_range,N
             i = np.where(np.abs(phi[0]-phi_range)==np.abs((phi[0]-phi_range)).min())[0][0]
             j = np.where(np.abs(alpha[0]-alpha_n_range)==np.abs((alpha[0]-alpha_n_range)).min())[0][0]
             
-            N[i,j] = statistics.n_std
-            M[i,j] = statistics.m_std
-            D[i,j] = statistics.d_std
-            C[i,j] = statistics.f_collapse
-            C_t[i,j] = statistics.f_collapse_t
-            MEAN[i,j] = statistics.d_mean
-            D_CV[i,j] = statistics.d_coeff_var
-            N_CV[i,j] = statistics.n_coeff_var
-            M_CV[i,j] = statistics.m_coeff_var
+            out.N[i,j] = statistics.n_std
+            out.M[i,j] = statistics.m_std
+            out.D[i,j] = statistics.d_std
+            out.C[i,j] = statistics.f_collapse
+            out.C_t[i,j] = statistics.f_collapse_t
+            out.MEAN[i,j] = statistics.d_mean
+            out.D_CV[i,j] = statistics.d_coeff_var
+            out.N_CV[i,j] = statistics.n_coeff_var
+            out.M_CV[i,j] = statistics.m_coeff_var
+            out.S[i,j] = sweep_param["S"]
     
-    return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV
+    return out
 
-def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
-    N = np.zeros((Np,Np))
-    M = np.zeros((Np,Np))
-    D = np.zeros((Np,Np))
-    C = np.zeros((Np,Np))-1
-    C_t = np.zeros((Np,Np))
-    MEAN = np.zeros((Np,Np))
-    N_CV = np.zeros((Np,Np))
-    M_CV = np.zeros((Np,Np))
-    D_CV = np.zeros((Np,Np))
-    S = np.zeros((Np,Np))
+def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np) -> ResultImages:
+    out = ResultImages(Np)
     
     for s in sim_data: 
         sweep_param = s[0]
@@ -171,15 +172,15 @@ def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np):
             i = np.where(np.abs(phi[0]-phi_range)==np.abs((phi[0]-phi_range)).min())[0][0]
             j = np.where(np.abs(alpha[0]-alpha_n_range)==np.abs((alpha[0]-alpha_n_range)).min())[0][0]
             
-            N[i,j] = statistics.n_std
-            M[i,j] = statistics.m_std
-            D[i,j] = statistics.d_std
-            C[i,j] = statistics.f_collapse
-            C_t[i,j] = statistics.f_collapse_t
-            MEAN[i,j] = statistics.d_mean
-            D_CV[i,j] = statistics.d_coeff_var
-            N_CV[i,j] = statistics.n_coeff_var
-            M_CV[i,j] = statistics.m_coeff_var
-            S[i,j] = sweep_param["S"]
+            out.N[i,j] = statistics.n_std
+            out.M[i,j] = statistics.m_std
+            out.D[i,j] = statistics.d_std
+            out.C[i,j] = statistics.f_collapse
+            out.C_t[i,j] = statistics.f_collapse_t
+            out.MEAN[i,j] = statistics.d_mean
+            out.D_CV[i,j] = statistics.d_coeff_var
+            out.N_CV[i,j] = statistics.n_coeff_var
+            out.M_CV[i,j] = statistics.m_coeff_var
+            out.S[i,j] = sweep_param["S"]
     
-    return N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S
+    return out

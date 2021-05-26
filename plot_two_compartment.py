@@ -12,8 +12,8 @@ from stem_cell_model import tools
 
 def load_data():
     sim_data = []
-    for i in range(0,72):
-        filename = f"two_comp_sweep_data_fixed_D_aT1/sweep_fixed_D30_Np40_aT1_i{i}.p"
+    for i in range(0,222):
+        filename = f"two_comp_sweep_data_fixed_D_aT100/sweep_i{i}.p"
         sim_data.extend(pickle.load( open( filename, "rb" ) ))
     return sim_data
 sim_data = load_data()
@@ -61,9 +61,9 @@ plt.subplot2grid((30,3),(4,0), rowspan=11)
 min_val = 0
 max_val = 1
 phi = 1
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_alphas_for_constant_phi(phi, sim_data, alpha_n_range, alpha_m_range, phi_range, Np)
+result_images = tools.plot_alphas_for_constant_phi(phi, sim_data, alpha_n_range, alpha_m_range, phi_range, Np)
 half_step = (alpha_m_range[1]-alpha_m_range[0])/2
-im = plt.imshow(D_CV,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step, 
+im = plt.imshow(result_images.D_CV,interpolation='nearest',extent=(alpha_m_range[0]-half_step,alpha_m_range[-1]+half_step,
                                                      alpha_n_range[-1]+half_step,alpha_n_range[0]-half_step), 
            cmap=cmap,vmin=min_val, vmax=max_val)
 plt.title('phi=%.01f' % phi)
@@ -88,8 +88,8 @@ cbar.set_ticks([0,.2,.4,.6,.8,1])
 plt.title('Coefficient of variation')
 
 plt.subplot2grid((30,3),(19,0), rowspan=11)
-N,M,D,C,C_t,MEAN,N_CV,M_CV,D_CV,S = tools.plot_opposite_alphas(sim_data, alpha_n_range, alpha_m_range, phi_range, Np)
-plt.imshow(D_CV,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
+result_images = tools.plot_opposite_alphas(sim_data, alpha_n_range, alpha_m_range, phi_range, Np)
+plt.imshow(result_images.D_CV,interpolation='nearest',extent=(alpha_n_range[0]-half_step,alpha_n_range[-1]+half_step,
                                                 phi_range[-1]+half_step,phi_range[0]-half_step), 
            cmap=cmap,vmin=min_val, vmax=max_val)
 plt.xlabel('alpha_n, -alpha_m')
