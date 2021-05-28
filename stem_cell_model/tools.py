@@ -38,6 +38,8 @@ class ResultImages:
     M_CV: ndarray
     D_CV: ndarray
     S: ndarray
+    n_explosions: ndarray
+    n_explosions_t: ndarray
 
     def __init__(self, Np):
         self.N = np.zeros((Np, Np))
@@ -50,6 +52,8 @@ class ResultImages:
         self.M_CV = np.zeros((Np, Np))
         self.D_CV = np.zeros((Np, Np))
         self.S = np.zeros((Np, Np))
+        self.n_explosions = np.zeros((Np, Np))
+        self.n_explosions_t = np.zeros((Np, Np))
 
 
 def get_single_parameter_set_statistics(run_data: MultiRunStats) -> SingleParameterSetStatistics:
@@ -119,6 +123,8 @@ def plot_alphas_for_constant_phi(phi,sim_data,alpha_n_range,alpha_m_range,phi_ra
             out.M_CV[i,j] = statistics.m_coeff_var
             out.D_CV[i,j] = statistics.d_coeff_var
             out.S[i,j] = sweep_param["S"]
+            out.n_explosions[i, j] = statistics.n_explosions
+            out.n_explosions_t[i, j] = statistics.n_explosions_t
     
     return out
 
@@ -149,6 +155,8 @@ def plot_alpha_n_vs_phi(alpha_m,sim_data,alpha_n_range,alpha_m_range,phi_range,N
             out.N_CV[i,j] = statistics.n_coeff_var
             out.M_CV[i,j] = statistics.m_coeff_var
             out.S[i,j] = sweep_param["S"]
+            out.n_explosions[i, j] = statistics.n_explosions
+            out.n_explosions_t[i, j] = statistics.n_explosions_t
     
     return out
 
@@ -182,5 +190,7 @@ def plot_opposite_alphas(sim_data,alpha_n_range,alpha_m_range,phi_range,Np) -> R
             out.N_CV[i,j] = statistics.n_coeff_var
             out.M_CV[i,j] = statistics.m_coeff_var
             out.S[i,j] = sweep_param["S"]
+            out.n_explosions[i, j] = statistics.n_explosions
+            out.n_explosions_t[i, j] = statistics.n_explosions_t
     
     return out
