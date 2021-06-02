@@ -105,6 +105,11 @@ class SimulationParameters:
         self.n0 = n0
         self.a = a
 
+    @property
+    def D(self) -> int:
+        """The total number of dividing cells, so both in and out the niche."""
+        return sum(self.n0)
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "S": self.S,
