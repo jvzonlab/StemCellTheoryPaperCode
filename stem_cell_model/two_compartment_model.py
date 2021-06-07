@@ -108,16 +108,16 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
     
     # initialize current cell id
     cell_id=1
-    cell_list=[]  # List of dividing cells
+    dividing_cell_list=[]  # List of dividing cells
     # initialize dividing cells in stem cell compartment
     for n in range(0, params.n0[0]):
         age = params.T[0] * random.random()
-        cell_list.append(Cell(cell_id, 0, age, division_timer))
+        dividing_cell_list.append(Cell(cell_id, 0, age, division_timer))
         cell_id += 1
     # initialize dividing cells outside compartment
     for n in range(0, params.n0[1]):
         age = params.T[0] * random.random()
-        cell_list.append(Cell(cell_id, 1, age, division_timer))
+        dividing_cell_list.append(Cell(cell_id, 1, age, division_timer))
         cell_id += 1
 
     ### calculate p,q parameters for both compartment
@@ -167,7 +167,7 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
     cont=True
     while cont:
         # get time dt to next division
-        mother_cell_index, dt = get_next_dividing(cell_list)
+        mother_cell_index, dt = get_next_dividing(dividing_cell_list)
         
         # if time of division is before end of simulation
         if t + dt < config.t_sim:
@@ -181,11 +181,11 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
             moment_data.adjust_moment_data(dt,n)
             
             # add dt to age
-            for cell in cell_list:
+            for cell in dividing_cell_list:
                 cell.time_to_division -= dt
         
             # get compartment of dividing cell
-            compartment=cell_list[mother_cell_index].comp
+            compartment = dividing_cell_list[mother_cell_index].comp
             
             ### get type of division
             
@@ -205,7 +205,7 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                 # if tracking lineage, get ids for mother and daughters
                 daughter_cell_id_list=[]
                 daughter_is_dividing_list=[]
-                mother_cell_id = cell_list[mother_cell_index].id
+                mother_cell_id = dividing_cell_list[mother_cell_index].id
     
             ### execute division
             if div_type==0:
@@ -213,7 +213,7 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                 # generate two new dividing cells to compartment <c>
                 for i in [0,1]:
                     # add new cells to cell list
-                    cell_list.append(Cell(cell_id, compartment, 0, division_timer))
+                    dividing_cell_list.append(Cell(cell_id, compartment, 0, division_timer))
                     if tracking_lineage:
                         # if needed, remember daughter cell id
                         daughter_cell_id_list.append( cell_id )
@@ -226,7 +226,7 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
             elif div_type==1:
                 # div -> div + non-div
                 # add a single dividing cell to compartment <c>
-                cell_list.append(Cell(cell_id, compartment, 0, division_timer))
+                dividing_cell_list.append(Cell(cell_id, compartment, 0, division_timer))
                 if tracking_lineage:
                     # rember id of this daughter, if tracking lineage
                     daughter_cell_id_list.append( cell_id )
@@ -255,12 +255,12 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                 u[compartment] += 2
                 
             # remove old cell after division
-            del cell_list[mother_cell_index]
+            del dividing_cell_list[mother_cell_index]
     
             # if division was in compartment 0
             if compartment==0:
                 # get list of cells in current compartment    
-                comp_cell_list = [x for x in cell_list if x.comp==0]
+                comp_cell_list = [x for x in dividing_cell_list if x.comp==0]
                 # draw random cell in compartment
                 n_move = int((params.S + 1) * random.random())
                 # if cell is a dividing cell
@@ -294,7 +294,7 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
             if track_lineage:
                 if (t>config.track_lineage_time_interval[0]) and (t<config.track_lineage_time_interval[1]) and (not tracking_lineage):
                     tracking_lineage=True
-                    for cell in cell_list:
+                    for cell in dividing_cell_list:
                         lineages.add_lineage(cell.id, config.track_lineage_time_interval[0], cell.comp, True)
 
             # check if lineage tracking should stop
@@ -317,7 +317,7 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                 n_vs_t.append([t_end, n[0], n[1]])
                 u_vs_t.append([t_end, u[0], u[1]])
 
-        if len(cell_list)==0:
+        if len(dividing_cell_list)==0:
             # if no dividing cells left, stop simulation
             cont=False
             run_ended_early=True
