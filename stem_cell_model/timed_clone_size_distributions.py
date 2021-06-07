@@ -74,7 +74,7 @@ class TimedCloneSizeDistribution:
 def get_proliferative_clone_size_distribution(lineages: Lineages, min_time: float, max_time: float, interval: float,
                                               ) -> TimedCloneSizeDistribution:
     """Gets the proliferative clone size distribution of this lineage tree. So non-dividing cells aren't included in
-    this particulat distribution. For homeostatic systems, this distribution shouldn't grow forever, unlike the normal
+    this particular distribution. For homeostatic systems, this distribution shouldn't grow forever, unlike the normal
     clone size distribution."""
     current_max_time = min_time + interval
     distributions = list()
@@ -83,6 +83,24 @@ def get_proliferative_clone_size_distribution(lineages: Lineages, min_time: floa
         for track in lineages.get_tracks():
             if track.exists_at_time(min_time):
                 distribution.add_clone_size(track.get_proliferative_clone_size(current_max_time))
+        distributions.append(distribution)
+        current_max_time += interval
+
+    return TimedCloneSizeDistribution(interval, distributions)
+
+
+def get_niche_clone_size_distribution(lineages: Lineages, min_time: float, max_time: float, interval: float,
+                                              ) -> TimedCloneSizeDistribution:
+    """Gets the niche clone size distribution of this lineage tree. So cell outside the stem cell niche aren't included
+    int this particular clone size distribution. For homeostatic systems, this distribution shouldn't grow forever,
+    unlike the normal clone size distribution."""
+    current_max_time = min_time + interval
+    distributions = list()
+    while current_max_time <= max_time:
+        distribution = CloneSizeDistribution()
+        for track in lineages.get_tracks():
+            if track.exists_at_time(min_time):
+                distribution.add_clone_size(track.get_niche_clone_size(current_max_time))
         distributions.append(distribution)
         current_max_time += interval
 

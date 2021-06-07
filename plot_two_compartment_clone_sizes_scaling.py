@@ -8,7 +8,7 @@ from stem_cell_model import clone_size_simulator
 from stem_cell_model.clone_size_simulator import TimedCloneSizeSimulationConfig
 from stem_cell_model.parameters import SimulationParameters, SimulationConfig
 from stem_cell_model.timed_clone_size_distributions import TimedCloneSizeDistribution
-from stem_cell_model.two_compartment_model_space import run_simulation_niche
+from stem_cell_model.two_compartment_model import run_simulation
 
 _COLORS = [matplotlib.cm.Blues(x) for x in [0.1, 0.4, 0.7, 1.0]]
 
@@ -18,7 +18,6 @@ def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution,
 
     durations = results.get_durations()
     average_clone_size = results.get_average_clone_size_over_time()
-    print(average_clone_size)
     clone_count = results.get_clone_count_over_time()
     # Plot x: n/<n(t)>
     # Plot y: <n(t)> P_n(t) = average clone size * [clone size fraction of size n]
@@ -58,32 +57,36 @@ parameters_mixed = SimulationParameters.for_D_alpha_and_phi(
 random = numpy.random.Generator(numpy.random.MT19937(seed=1))
 t_clone_size = 24 * 7 * 4
 t_interval = 24 * 7
-config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_interval, random=random, n_crypts=500)
+config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_interval, random=random, n_crypts=100)
 
 fig, ((ax_top_left, ax_top_right), (ax_bottom_left, ax_bottom_right)) = plt.subplots(2, 2)
 
 # Top left panel
-results = clone_size_simulator.calculate_proliferative_over_time(
-    run_simulation_niche, config, parameters_symm_low_noise)
+results = clone_size_simulator.calculate_niche_over_time(
+    run_simulation, config, parameters_symm_low_noise)
 ax_top_left.set_title("Symmetric low noise ($\\alpha_n = 0.95$, $\\phi=0.95$)")
+print("Average clone size over time:", results.get_average_clone_size_over_time(), " Niche size:", parameters_symm_low_noise.S)
 _plot_clone_scaling_over_time(ax_top_left, results)
 
 # Bottom left panel
-results = clone_size_simulator.calculate_proliferative_over_time(
-    run_simulation_niche, config, parameters_symm_high_noise)
+results = clone_size_simulator.calculate_niche_over_time(
+    run_simulation, config, parameters_symm_high_noise)
 ax_bottom_left.set_title("Symmetric high noise ($\\alpha_n = 0.05$, $\\phi=0.95$)")
+print("Average clone size over time:", results.get_average_clone_size_over_time(), " Niche size:", parameters_symm_high_noise.S)
 _plot_clone_scaling_over_time(ax_bottom_left, results, legend=False)
 
 # Top right panel
-results = clone_size_simulator.calculate_proliferative_over_time(
-    run_simulation_niche, config, parameters_asymm)
+results = clone_size_simulator.calculate_niche_over_time(
+    run_simulation, config, parameters_asymm)
 ax_top_right.set_title("Asymmetric ($\\alpha_n = 0.05$, $\\phi=0.05$)")
+print("Average clone size over time:", results.get_average_clone_size_over_time(), " Niche size:", parameters_asymm.S)
 _plot_clone_scaling_over_time(ax_top_right, results, legend=False)
 
 # Right bottom panel
-results = clone_size_simulator.calculate_proliferative_over_time(
-    run_simulation_niche, config, parameters_mixed)
+results = clone_size_simulator.calculate_niche_over_time(
+    run_simulation, config, parameters_mixed)
 ax_bottom_right.set_title("Mixed symmetric and asymmetric ($\\alpha_n = 0.05$, $\\phi=0.5$)")
+print("Average clone size over time:", results.get_average_clone_size_over_time(), " Niche size:", parameters_mixed.S)
 _plot_clone_scaling_over_time(ax_bottom_right, results, legend=False)
 
 plt.tight_layout()
