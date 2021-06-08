@@ -33,9 +33,6 @@ class CloneSizeDistribution:
 
     def add_clone_size(self, clone_size: int):
         """Add a single clone size to this distribution."""
-        if clone_size == 0:
-            return  # Happens when counting the number of proliferative clones. We ignore those, since they mess up
-                    # the averages and totals with how the class is currently written
         if clone_size in self._clone_sizes:
             self._clone_sizes[clone_size] += 1
         else:
@@ -86,26 +83,26 @@ class CloneSizeDistribution:
         return clone_size_count
 
     def indices(self) -> ndarray:
-        """Returns [1, 2, 3, ..., self.max()]."""
-        return numpy.arange(1, self.max() + 1, dtype=numpy.int)
+        """Returns [0, 1, 2, 3, ..., self.max()]."""
+        return numpy.arange(0, self.max() + 1, dtype=numpy.int)
 
     def to_height_array(self) -> List[int]:
         """Gets how often each clone size occurs, starting from clone size 1 (at position 0)."""
         return_values = list()
-        for i in range(1, self.max() + 1):
+        for i in range(0, self.max() + 1):
             return_values.append(self.get_clone_size_frequency(i))
         return return_values
 
     def get_average(self) -> float:
         """Gets the average clone size."""
         total_size = sum(clone_size * count for clone_size, count in self._clone_sizes.items())
-        total_count = sum(self._clone_sizes.values())
+        total_count = self.get_clone_count()
         return total_size / total_count
 
     def get_average_and_st_dev(self) -> Tuple[float, float]:
         """Gets both the average clone size and the standard deviation."""
         total_size = sum(clone_size * count for clone_size, count in self._clone_sizes.items())
-        total_count = sum(self._clone_sizes.values())
+        total_count = self.get_clone_count()
         average = total_size / total_count
 
         variance = 1 / (total_count - 1) * sum((clone_size ** 2) * count for clone_size, count in self._clone_sizes.items()) - (total_count / (total_count - 1)) * average ** 2
@@ -114,7 +111,7 @@ class CloneSizeDistribution:
 
     def get_clone_count(self) -> int:
         """Gets how many different clones there are."""
-        return sum(self._clone_sizes.values())
+        return sum((count for clone_size, count in self._clone_sizes.items() if clone_size > 0))
 
     def get_clone_size_frequencies(self, clone_sizes: Union[List[int], ndarray]) -> ndarray:
         """Looks up multiple clone size frequencies at once."""
