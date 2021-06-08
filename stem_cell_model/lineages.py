@@ -187,6 +187,30 @@ class Lineages:
         """Gets all tracks in the lineage. A track is a single vertical line in the lineage tree."""
         yield from self._tracks
 
+    def limit_nonproliferating_cells_in_compartment(self, random: numpy.random.Generator, t: int, cell_count: int,
+                                              *, old_compartment: int, new_compartment: int):
+        """The stem cell model doesn't track non-proliferating cells, so when throwing them out of a compartment it is
+        arbitrary which cell is thrown out. This method throws out non-proliferating cells of the given compartment
+        until the desired number has been reached. If there are already that amount (or less) non-proliferative cells
+        tracked by this instance, then this method does nothing."""
+        # Find all cells that can be moved
+        suitable_tracks = list()
+        for track in self.get_tracks():
+            if not track.exists_at_time(t):
+                continue
+            if track.compartment.get_compartment_at(t) != old_compartment:
+                continue
+            if track.is_proliferative:
+                continue
+
+            # Ok, we can pick this cell to move
+            suitable_tracks.append(track)
+
+        # Move!
+        while len(suitable_tracks) > cell_count:
+            random_number = 0 if len(suitable_tracks) == 1 else random.integers(len(suitable_tracks))
+            suitable_tracks[random_number].compartment.add_move(t, new_compartment)
+            del suitable_tracks[random_number]
 
 # Lineage drawing
 def _get_lineage_draw_data(track: LineageTrack, t_end: int):

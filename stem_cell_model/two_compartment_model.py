@@ -62,6 +62,9 @@ class Cell:
 
         self.time_to_division = self.age_div - age
 
+    def __repr__(self):
+        return f"Cell(cell_id={self.id}, compartment={self.comp}, age={self.age_div - self.time_to_division:.2f}, ...)"
+
 
 def get_next_dividing(cell_list: List[Cell]) -> Tuple[int, int]:
     """Gets the next dividing cell from the list, by scanning the entire list.
@@ -253,7 +256,11 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                 n[compartment] -= 1
                 # adjust number of non-dividing differentiated cells
                 u[compartment] += 2
-                
+
+            # implement cell division in saved lineages
+            if tracking_lineage:
+                lineages.divide_cell(mother_cell_id, daughter_cell_id_list, daughter_is_dividing_list, t)
+
             # remove old cell after division
             del dividing_cell_list[mother_cell_index]
     
@@ -279,16 +286,19 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                     # adjust number of non-dividing differentiated cells
                     u[0] -= 1
                     u[1] += 1
+
+                    # implement cell moving in saved lineages
+                    if tracking_lineage:
+                        # As we don't track non-dividing cells, it is not defined which
+                        # non-dividing cell in the niche is thrown out
+                        # So we need to throw out an arbitrary cell
+                        lineages.limit_nonproliferating_cells_in_compartment(random, t, u[0], old_compartment=0, new_compartment=1)
     
             # save number of dividing cells
             if config.track_n_vs_t:
                 n_vs_t.append( [t, n[0], n[1]] )
                 
                 u_vs_t.append( [t, u[0], u[1]] )
-
-            # implement cell division in saved lineages
-            if tracking_lineage:
-                lineages.divide_cell(mother_cell_id, daughter_cell_id_list, daughter_is_dividing_list, t)
 
             # check if lineage needs to start being tracked
             if track_lineage:
