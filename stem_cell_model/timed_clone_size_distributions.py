@@ -99,7 +99,7 @@ def get_niche_clone_size_distribution(lineages: Lineages, min_time: float, max_t
     while current_max_time <= max_time:
         distribution = CloneSizeDistribution()
         for track in lineages.get_tracks():
-            if track.exists_at_time(min_time):
+            if track.exists_at_time(min_time) and track.compartment.get_compartment_at(min_time) == 0:
                 distribution.add_clone_size(track.get_niche_clone_size(current_max_time))
         distributions.append(distribution)
         current_max_time += interval

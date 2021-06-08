@@ -187,8 +187,7 @@ class Lineages:
         """Gets all tracks in the lineage. A track is a single vertical line in the lineage tree."""
         yield from self._tracks
 
-    def limit_nonproliferating_cells_in_compartment(self, random: numpy.random.Generator, t: int, cell_count: int,
-                                              *, old_compartment: int, new_compartment: int):
+    def remove_nonproliferating_cell_from_compartment(self, t: int, *, old_compartment: int, new_compartment: int):
         """The stem cell model doesn't track non-proliferating cells, so when throwing them out of a compartment it is
         arbitrary which cell is thrown out. This method throws out non-proliferating cells of the given compartment
         until the desired number has been reached. If there are already that amount (or less) non-proliferative cells
@@ -207,10 +206,13 @@ class Lineages:
             suitable_tracks.append(track)
 
         # Move!
-        while len(suitable_tracks) > cell_count:
-            random_number = 0 if len(suitable_tracks) == 1 else random.integers(len(suitable_tracks))
-            suitable_tracks[random_number].compartment.add_move(t, new_compartment)
-            del suitable_tracks[random_number]
+        if len(suitable_tracks) == 0:
+            raise ValueError("No non-proliferating cell to remove, this is a bug!")
+        # Select an arbitrary cell
+        # Note: we can't simply ask the RNG of the simulation, as then then the state of the RNG, and therefore the
+        # outcome of the simulation, would depend on whether the lineage trees are being recorded
+        arbitrary_number = suitable_tracks[-1].track_id % len(suitable_tracks)
+        suitable_tracks[arbitrary_number].compartment.add_move(t, new_compartment)
 
 # Lineage drawing
 def _get_lineage_draw_data(track: LineageTrack, t_end: int):

@@ -93,6 +93,11 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
         age = params.T[0] * random.random()
         dividing_cell_list.append(Cell(cell_id, 1, age, division_timer))
         cell_id += 1
+    # initialize non-dividing cells in niche
+    for n in range(len(niche)):
+        if niche[n] == 0:
+            niche[n] = cell_id
+            cell_id += 1
 
     ### calculate p,q parameters for both compartment
 
@@ -282,6 +287,11 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
                     tracking_lineage=True
                     for cell in dividing_cell_list:
                         lineages.add_lineage(cell.id, config.track_lineage_time_interval[0], cell.comp, True)
+                    # Add all non-dividing cells in the niche too
+                    for cell_id in niche:
+                        if len([cell for cell in dividing_cell_list if cell.id == cell_id]) == 0:
+                            # Not in dividing cell list, so it's non-dividing
+                            lineages.add_lineage(cell_id, config.track_lineage_time_interval[0], 0, False)
 
             # check if lineage tracking should stop
             if tracking_lineage:

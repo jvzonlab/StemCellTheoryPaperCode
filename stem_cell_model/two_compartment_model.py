@@ -292,7 +292,7 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                         # As we don't track non-dividing cells, it is not defined which
                         # non-dividing cell in the niche is thrown out
                         # So we need to throw out an arbitrary cell
-                        lineages.limit_nonproliferating_cells_in_compartment(random, t, u[0], old_compartment=0, new_compartment=1)
+                        lineages.remove_nonproliferating_cell_from_compartment(t, old_compartment=0, new_compartment=1)
     
             # save number of dividing cells
             if config.track_n_vs_t:
@@ -306,6 +306,9 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                     tracking_lineage=True
                     for cell in dividing_cell_list:
                         lineages.add_lineage(cell.id, config.track_lineage_time_interval[0], cell.comp, True)
+                    for i in range(u[0]):
+                        # Also track lineages of non-proliferating cells in the niche (with an arbitrary cell id)
+                        lineages.add_lineage(-i, config.track_lineage_time_interval[0], 0, False)
 
             # check if lineage tracking should stop
             if tracking_lineage:
