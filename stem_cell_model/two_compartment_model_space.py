@@ -230,6 +230,10 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
                 # adjust number of non-dividing differentiated cells
                 u[compartment] += 2
 
+            # implement cell division in saved lineages
+            if tracking_lineage:
+                lineages.divide_cell(mother_cell_id,daughter_cell_id_list,daughter_is_dividing_list,t)
+
             # remove old cell after division
             del dividing_cell_list[mother_cell_index]
 
@@ -238,46 +242,39 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
                 # get position <x> in niche of mother cell
                 x = [x for (x,y) in enumerate(niche) if y == mother_cell_id][0]
                 # at that position insert two daughter cells
-                if daughter_is_dividing_list[0] == True:
-                    # put the id there in case it is a dividing cell
-                    niche[ x ] = daughter_cell_id_list[0]
-                else:
-                    # or just zero if non-dividing
-                    niche[ x ] = 0
-                if daughter_is_dividing_list[1] == True:
-                    # same for the other daughter
-                    niche = np.insert(niche,x+1,daughter_cell_id_list[1])
-                else:
-                    niche = np.insert(niche,x+1,0)
+                niche[x] = daughter_cell_id_list[0]
+                niche = np.insert(niche,x+1,daughter_cell_id_list[1])
                 # get id of cell moved to compartment 1, it is the last cell in the niche
                 cell_id_remove = niche[-1]
                 # remove it from the niche
                 niche = np.delete(niche,-1)
-                if cell_id_remove == 0:
-                    # adjust number of non-dividing differentiated cells
-                    u[0] -= 1
-                    u[1] += 1
-                else:
-                    # set compartment of removed cell to 1
-                    ind = [x for (x,y) in enumerate(dividing_cell_list) if y.id == cell_id_remove][0]
+
+                # set compartment of removed cell to 1
+                matching_dividing_cells = [x for (x,y) in enumerate(dividing_cell_list) if y.id == cell_id_remove]
+                if len(matching_dividing_cells) == 1:
+                    # Exactly one cell matched (if the removed cell is not a dividing cell, 0 cells will match)
+                    ind = matching_dividing_cells[0]
                     dividing_cell_list[ ind ].comp=1
-                    # implement cell moving in saved lineages
-                    if tracking_lineage:
-                        lineages.move_cell(dividing_cell_list[ ind ].id, t, dividing_cell_list[ ind ].comp)
 
                     # adjust number of dividing stem cells
                     n[0] -= 1
                     n[1] += 1
+                else:
+                    # Cell was not in dividing cell list
+                    u[0] -= 1
+                    u[1] += 1
+                    if len(matching_dividing_cells) > 1:
+                        raise ValueError("More cells matched; this is a bug")
+
+                # implement cell moving towards component 1 in saved lineages
+                if tracking_lineage:
+                    lineages.move_cell(cell_id_remove, t, 1)
 
             # save number of dividing cells
             if config.track_n_vs_t:
                 n_vs_t.append( [t, n[0], n[1]] )
 
                 u_vs_t.append( [t, u[0], u[1]] )
-
-            # implement cell division in saved lineages
-            if tracking_lineage:
-                lineages.divide_cell(mother_cell_id,daughter_cell_id_list,daughter_is_dividing_list,t)
 
             # check if lineage needs to start being tracked
             if track_lineage:

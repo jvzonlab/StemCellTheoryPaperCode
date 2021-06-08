@@ -290,7 +290,7 @@ class _CompartmentByTime:
         current_compartment = self._starting_compartment
 
         for switch_time, new_compartment in self._moves:
-            if switch_time > current_time:
+            if switch_time >= current_time:
                 yield [current_time, switch_time], current_compartment  # finish off current compartment
                 # and start new one
                 current_time = switch_time
