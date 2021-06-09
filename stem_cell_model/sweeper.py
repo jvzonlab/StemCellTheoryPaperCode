@@ -53,13 +53,17 @@ def sweep(simulator: Simulator, params_list: List[SimulationParameters], *,
 
     # Build a task list
     tasks_pending = multiprocessing.Queue()
+    task_count = 0
     for work_package in _split_list(params_list, size_of_sublist=100, output_folder=output_folder):
         tasks_pending.put(work_package)
+        task_count += 1
     # Put stoppers at the end, so that all worker processes will exit instead of waiting forever on a new task.
     # We need as many stoppers as there are worker processes so that ALL processes exit when there is no more
     # work left to be done.
     for c in range(worker_count):
         tasks_pending.put(_STOP_SIGNAL_VALUE)
+
+    print("Starting (or resuming) simulation, expecting", task_count, "files...")
 
     # Start all workers
     worker_processes = list()
