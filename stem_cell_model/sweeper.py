@@ -1,4 +1,5 @@
 """Used to simulate a long list of results."""
+import math
 import multiprocessing
 import os
 import pickle
@@ -46,15 +47,12 @@ def sweep(simulator: Simulator, params_list: List[SimulationParameters], *,
     worker_count = multiprocessing.cpu_count()
     os.makedirs(output_folder, exist_ok=True)
 
-    if len(params_list) < 100:
-        # Don't bother multithreading
-        _sweep_single_thread(simulator, params_list, t_sim, n_max, os.path.join(output_folder, "sweep_i0.p"))
-        return
+    size_of_sublist = math.ceil(min(100.0, len(params_list) / worker_count))
 
     # Build a task list
     tasks_pending = multiprocessing.Queue()
     task_count = 0
-    for work_package in _split_list(params_list, size_of_sublist=100, output_folder=output_folder):
+    for work_package in _split_list(params_list, size_of_sublist=size_of_sublist, output_folder=output_folder):
         tasks_pending.put(work_package)
         task_count += 1
     # Put stoppers at the end, so that all worker processes will exit instead of waiting forever on a new task.
@@ -121,7 +119,7 @@ def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParam
         random = numpy.random.Generator(numpy.random.MT19937(seed=seed))
 
         # print run information
-        print(f"{file_name}: {i + 1}/{len(params_list)}, a_n:{params.alpha[0]:.3f}, a_m:{params.alpha[1]:.3f}, phi:{params.phi[0]:.3f}, S:{params.S}, N0:{params.n0[0]}, M0:{params.n0[1]}, seed:{seed}")
+        print(f"{file_name}: {i + 1}/{len(params_list)}, alpha_n:{params.alpha[0]:.3f}, alpha_m:{params.alpha[1]:.3f}, phi:{params.phi[0]:.3f}, S:{params.S}, N0:{params.n0[0]}, M0:{params.n0[1]}, aT: {params.a * params.T[0]:.03f}, seed:{seed}")
 
         # some simulation will end before the total simulation time t_sim because
         # stem cells are fully lost. In that case, we rerun simulations with the same 
