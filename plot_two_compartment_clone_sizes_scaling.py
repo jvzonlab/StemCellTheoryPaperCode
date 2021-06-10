@@ -3,6 +3,7 @@ import numpy
 import matplotlib.cm
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.axis import Axis
 
 from stem_cell_model import clone_size_simulator
 from stem_cell_model.clone_size_simulator import TimedCloneSizeSimulationConfig
@@ -13,7 +14,7 @@ from stem_cell_model.two_compartment_model import run_simulation
 _COLORS = [matplotlib.cm.Blues(x) for x in [0.1, 0.4, 0.7, 1.0]]
 
 
-def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution, *, legend: bool = True):
+def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution, *, legend: bool = True, predicted_scaling: bool = False):
     clone_sizes = results.get_clone_sizes()
 
     durations = results.get_durations()
@@ -29,14 +30,15 @@ def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution,
         ax.scatter(x, y, label=f"{time/24:.0f} days", s=5, color=_COLORS[i])
 
     # Plot predicted scaling function [Lopez-Garcia2010]
-    x = numpy.arange(0, 5, 0.01)
-    F = (numpy.pi * x / 2) * numpy.exp(-numpy.pi * x ** 2 / 4)
-    ax.plot(x, F, label=f"Scaling", color="black")
+    if predicted_scaling:
+        x = numpy.arange(0, 5, 0.01)
+        F = (numpy.pi * x / 2) * numpy.exp(-numpy.pi * x ** 2 / 4)
+        ax.plot(x, F, label=f"Scaling", color="black")
 
     ax.set_xlabel("n/<n(t)>")
     ax.set_ylabel("<n(t)> P_n(t)")
     ax.set_xlim(0, 5)
-    ax.set_ylim(0, 6)
+    ax.set_ylim(0, 5)
 
     if legend:
         ax.legend()
@@ -45,48 +47,66 @@ def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution,
 D = 30
 T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
 
-parameters_symm_low_noise = SimulationParameters.for_D_alpha_and_phi(
+parameters_symm_high_growth = SimulationParameters.for_D_alpha_and_phi(
     D=D, alpha_n=0.95, alpha_m=-0.95, phi=0.95, T=T, a=1/T[0])
-parameters_symm_high_noise = SimulationParameters.for_D_alpha_and_phi(
+parameters_symm_mid_growth = SimulationParameters.for_D_alpha_and_phi(
+    D=D, alpha_n=0.5, alpha_m=-0.5, phi=0.95, T=T, a=1/T[0])
+parameters_symm_low_growth = SimulationParameters.for_D_alpha_and_phi(
     D=D, alpha_n=0.05, alpha_m=-0.05, phi=0.95, T=T, a=1/T[0])
-parameters_asymm = SimulationParameters.for_D_alpha_and_phi(
-    D=D, alpha_n=0.05, alpha_m=-0.05, phi=0.05, T=T, a=1/T[0])
-parameters_mixed = SimulationParameters.for_D_alpha_and_phi(
+parameters_mixed_mid_growth = SimulationParameters.for_D_alpha_and_phi(
+    D=D, alpha_n=0.5, alpha_m=-0.5, phi=0.5, T=T, a=1/T[0])
+parameters_mixed_low_growth = SimulationParameters.for_D_alpha_and_phi(
     D=D, alpha_n=0.05, alpha_m=-0.05, phi=0.5, T=T, a=1/T[0])
+parameters_asymm_low_growth = SimulationParameters.for_D_alpha_and_phi(
+    D=D, alpha_n=0.05, alpha_m=-0.05, phi=0.05, T=T, a=1/T[0])
+
 
 random = numpy.random.Generator(numpy.random.MT19937(seed=1))
 t_clone_size = 24 * 7 * 4
 t_interval = 24 * 7
-config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_interval, random=random, n_crypts=100)
+config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_interval, random=random, n_crypts=1000)
 
-fig, ((ax_top_left, ax_top_right), (ax_bottom_left, ax_bottom_right)) = plt.subplots(2, 2)
+fig, ((ax_top_left, ax_top_middle, ax_top_right), (ax_middle_left, ax_middle_middle, ax_middle_right), (ax_bottom_left, ax_bottom_middle, ax_bottom_right)) = plt.subplots(3, 3)
 
 # Top left panel
 results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation, config, parameters_symm_low_noise)
-ax_top_left.set_title("Symmetric low noise ($\\alpha_n = 0.95$, $\\phi=0.95$)")
-print("Average clone size over time:", results.get_average_clone_size_over_time(), " Niche size:", parameters_symm_low_noise.S)
-_plot_clone_scaling_over_time(ax_top_left, results)
+    run_simulation, config, parameters_symm_high_growth)
+ax_top_left.set_title("Symmetric high growth ($\\alpha_n = 0.95$, $\\phi=0.95$)")
+_plot_clone_scaling_over_time(ax_top_left, results, predicted_scaling=True)
 
-# Bottom left panel
+# Top middle panel
 results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation, config, parameters_symm_high_noise)
-ax_bottom_left.set_title("Symmetric high noise ($\\alpha_n = 0.05$, $\\phi=0.95$)")
-print("Average clone size over time:", results.get_average_clone_size_over_time(), " Niche size:", parameters_symm_high_noise.S)
-_plot_clone_scaling_over_time(ax_bottom_left, results, legend=False)
+    run_simulation, config, parameters_symm_mid_growth)
+ax_top_middle.set_title("Symmetric mid growth ($\\alpha_n = 0.5$, $\\phi=0.95$)")
+_plot_clone_scaling_over_time(ax_top_middle, results, legend=False)
 
 # Top right panel
 results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation, config, parameters_asymm)
-ax_top_right.set_title("Asymmetric ($\\alpha_n = 0.05$, $\\phi=0.05$)")
-print("Average clone size over time:", results.get_average_clone_size_over_time(), " Niche size:", parameters_asymm.S)
+    run_simulation, config, parameters_symm_low_growth)
+ax_top_right.set_title("Symmetric low growth ($\\alpha_n = 0.05$, $\\phi=0.95$)")
 _plot_clone_scaling_over_time(ax_top_right, results, legend=False)
 
-# Right bottom panel
+ax_middle_left.set_axis_off()
+
+# Middle middle panel
 results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation, config, parameters_mixed)
-ax_bottom_right.set_title("Mixed symmetric and asymmetric ($\\alpha_n = 0.05$, $\\phi=0.5$)")
-print("Average clone size over time:", results.get_average_clone_size_over_time(), " Niche size:", parameters_mixed.S)
+    run_simulation, config, parameters_mixed_mid_growth)
+ax_middle_middle.set_title("Mixed mid growth ($\\alpha_n = 0.5$, $\\phi=0.5$)")
+_plot_clone_scaling_over_time(ax_middle_middle, results, legend=False)
+
+# Middle right panel
+results = clone_size_simulator.calculate_niche_over_time(
+    run_simulation, config, parameters_mixed_low_growth)
+ax_middle_right.set_title("Mixed low growth ($\\alpha_n = 0.05$, $\\phi=0.5$)")
+_plot_clone_scaling_over_time(ax_middle_right, results, legend=False)
+
+ax_bottom_left.set_axis_off()
+ax_bottom_middle.set_axis_off()
+
+# Bottom right panel
+results = clone_size_simulator.calculate_niche_over_time(
+    run_simulation, config, parameters_asymm_low_growth)
+ax_bottom_right.set_title("Asymmetric low growth ($\\alpha_n = 0.05$, $\\phi=0.05$)")
 _plot_clone_scaling_over_time(ax_bottom_right, results, legend=False)
 
 plt.tight_layout()
