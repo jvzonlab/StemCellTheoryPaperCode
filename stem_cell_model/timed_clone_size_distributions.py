@@ -81,7 +81,7 @@ def get_proliferative_clone_size_distribution(lineages: Lineages, min_time: floa
     while current_max_time <= max_time:
         distribution = CloneSizeDistribution()
         for track in lineages.get_tracks():
-            if track.exists_at_time(min_time):
+            if track.exists_at_time(min_time) and track.is_proliferative:
                 distribution.add_clone_size(track.get_proliferative_clone_size(current_max_time))
         distributions.append(distribution)
         current_max_time += interval
