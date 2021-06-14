@@ -24,9 +24,9 @@ class TestLineages(TestCase):
         self.assertEqual(2, track.get_clone_size(19))
         self.assertEqual(4, track.get_clone_size(29))
 
-        self.assertEqual(1, track.get_proliferative_clone_size(9))
-        self.assertEqual(2, track.get_proliferative_clone_size(19))
-        self.assertEqual(0, track.get_proliferative_clone_size(29))
+        self.assertEqual(1, track.get_proliferative_niche_clone_size(9))
+        self.assertEqual(2, track.get_proliferative_niche_clone_size(19))
+        self.assertEqual(0, track.get_proliferative_niche_clone_size(29))
 
     def test_clone_size_niche(self):
         track = LineageTrack(track_id=1, track_start_time=0, compartment=0, is_proliferative=True)

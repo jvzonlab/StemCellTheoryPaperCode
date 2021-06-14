@@ -35,7 +35,7 @@ class TestCloneSizes(TestCase):
         lineages.divide_cell(id_mother=3, id_daughter_list=[6, 7], daughter_is_dividing_list=[False, False],
                              t_divide=20)
 
-        timed_distribution = timed_clone_size_distributions.get_proliferative_clone_size_distribution(lineages, 1, 25, interval=8)
+        timed_distribution = timed_clone_size_distributions.get_proliferative_niche_clone_size_distribution(lineages, 1, 25, interval=8)
 
         self.assertEqual(CloneSizeDistribution.of_clone_sizes(0), timed_distribution.last())
 

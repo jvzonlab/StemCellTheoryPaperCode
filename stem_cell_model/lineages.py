@@ -43,21 +43,26 @@ class LineageTrack:
         else:
             return 1
 
-    def get_proliferative_clone_size(self, max_time: float) -> int:
+    def get_proliferative_niche_clone_size(self, max_time: float) -> int:
         """Gets how many dividing cells this track will eventually produce. If this track divides into two dividing
         daughter cells, and one of those daughters divides into two dividing cells, then the clone size is three.
 
-        Returns 0 if this cell doesn't divide. Returns 1 if this track is proliferative, but hasn't divided yet."""
+        Returns 0 if this cell doesn't divide. Returns 1 if this track is proliferative and in the niche at max_time,
+        but hasn't divided yet."""
         if self.track_start_time > max_time:
             raise ValueError("Track started after max_time")
 
         if len(self.daughters) == 2:
             daughter1, daughter2 = self.daughters
-            if daughter1.track_start_time > max_time:
-                return 1 if self.is_proliferative else 0  # Don't include these daughters, the division happened after the time cutoff
-            return daughter1.get_proliferative_clone_size(max_time) + daughter2.get_proliferative_clone_size(max_time)
-        else:
-            return 1 if self.is_proliferative else 0
+            if daughter1.track_start_time <= max_time:
+                return daughter1.get_proliferative_niche_clone_size(max_time) + daughter2.get_proliferative_niche_clone_size(max_time)
+
+        # No division yet before max_time
+        if not self.is_proliferative:
+            return 0  # Non-dividing, don't include
+        if self.compartment.get_compartment_at(max_time) != 0:
+            return 0  # Out of niche, don't include
+        return 1
 
     def get_niche_clone_size(self, max_time: float) -> int:
         """Gets how many tracks in the niche compartment this track will eventually produce. Returns 0 if all cells

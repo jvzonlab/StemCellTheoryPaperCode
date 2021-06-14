@@ -41,25 +41,25 @@ config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_
 fig, ((ax_top_left, ax_top_right), (ax_bottom_left, ax_bottom_right)) = plt.subplots(2, 2)
 
 # Top left panel
-results = clone_size_simulator.calculate_proliferative_over_time(
+results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation_niche, config, parameters_symm_low_noise)
 ax_top_left.set_title("Symmetric low noise ($\\alpha_n = 0.95$, $\\phi=0.95$)")
 _plot_clone_sizes_over_time(ax_top_left, results)
 
 # Bottom left panel
-results = clone_size_simulator.calculate_proliferative_over_time(
+results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation_niche, config, parameters_symm_high_noise)
 ax_bottom_left.set_title("Symmetric high noise ($\\alpha_n = 0.05$, $\\phi=0.95$)")
 _plot_clone_sizes_over_time(ax_bottom_left, results, legend=False)
 
 # Top right panel
-results = clone_size_simulator.calculate_proliferative_over_time(
+results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation_niche, config, parameters_asymm)
 ax_top_right.set_title("Asymmetric ($\\alpha_n = 0.05$, $\\phi=0.05$)")
 _plot_clone_sizes_over_time(ax_top_right, results, legend=False)
 
 # Right bottom panel
-results = clone_size_simulator.calculate_proliferative_over_time(
+results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation_niche, config, parameters_mixed)
 ax_bottom_right.set_title("Mixed symmetric and asymmetric ($\\alpha_n = 0.05$, $\\phi=0.5$)")
 _plot_clone_sizes_over_time(ax_bottom_right, results, legend=False)

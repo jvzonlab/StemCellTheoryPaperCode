@@ -60,8 +60,8 @@ class TimedCloneSizeSimulationConfig:
             track_lineage_time_interval=(0, self.t_clone_size))
 
 
-def calculate_proliferative_over_time(simulator: Simulator, clone_size_config: TimedCloneSizeSimulationConfig, params: SimulationParameters
-              ) -> TimedCloneSizeDistribution:
+def calculate_proliferative_in_niche_over_time(simulator: Simulator, clone_size_config: TimedCloneSizeSimulationConfig,
+                                               params: SimulationParameters) -> TimedCloneSizeDistribution:
     """Calculates the resulting clone size distribution for the given parameters set over time. Note that only dividing
     cells are counted here.."""
     config = clone_size_config.to_niche_config()
@@ -71,7 +71,7 @@ def calculate_proliferative_over_time(simulator: Simulator, clone_size_config: T
         if i > 0 and i % 100 == 0:
             print(f"{i} crypts done...")
         results = simulator(config, params)
-        clone_size_distribution = timed_clone_size_distributions.get_proliferative_clone_size_distribution(
+        clone_size_distribution = timed_clone_size_distributions.get_proliferative_niche_clone_size_distribution(
                 results.lineages, 0, clone_size_config.t_clone_size,
                 clone_size_config.t_interval)
 

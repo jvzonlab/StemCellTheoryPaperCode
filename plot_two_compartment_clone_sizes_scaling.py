@@ -69,19 +69,19 @@ config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_
 fig, ((ax_top_left, ax_top_middle, ax_top_right), (ax_middle_left, ax_middle_middle, ax_middle_right), (ax_bottom_left, ax_bottom_middle, ax_bottom_right)) = plt.subplots(3, 3)
 
 # Top left panel
-results = clone_size_simulator.calculate_niche_over_time(
+results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation, config, parameters_symm_high_growth)
 ax_top_left.set_title("Symmetric high growth ($\\alpha_n = 0.95$, $\\phi=0.95$)")
 _plot_clone_scaling_over_time(ax_top_left, results, predicted_scaling=True)
 
 # Top middle panel
-results = clone_size_simulator.calculate_niche_over_time(
+results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation, config, parameters_symm_mid_growth)
 ax_top_middle.set_title("Symmetric mid growth ($\\alpha_n = 0.5$, $\\phi=0.95$)")
 _plot_clone_scaling_over_time(ax_top_middle, results, legend=False)
 
 # Top right panel
-results = clone_size_simulator.calculate_niche_over_time(
+results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation, config, parameters_symm_low_growth)
 ax_top_right.set_title("Symmetric low growth ($\\alpha_n = 0.05$, $\\phi=0.95$)")
 _plot_clone_scaling_over_time(ax_top_right, results, legend=False)
@@ -89,13 +89,13 @@ _plot_clone_scaling_over_time(ax_top_right, results, legend=False)
 ax_middle_left.set_axis_off()
 
 # Middle middle panel
-results = clone_size_simulator.calculate_niche_over_time(
+results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation, config, parameters_mixed_mid_growth)
 ax_middle_middle.set_title("Mixed mid growth ($\\alpha_n = 0.5$, $\\phi=0.5$)")
 _plot_clone_scaling_over_time(ax_middle_middle, results, legend=False)
 
 # Middle right panel
-results = clone_size_simulator.calculate_niche_over_time(
+results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation, config, parameters_mixed_low_growth)
 ax_middle_right.set_title("Mixed low growth ($\\alpha_n = 0.05$, $\\phi=0.5$)")
 _plot_clone_scaling_over_time(ax_middle_right, results, legend=False)
