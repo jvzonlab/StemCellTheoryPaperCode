@@ -3,7 +3,6 @@ import numpy
 import matplotlib.cm
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
-from matplotlib.axis import Axis
 
 from stem_cell_model import clone_size_simulator
 from stem_cell_model.clone_size_simulator import TimedCloneSizeSimulationConfig
@@ -35,14 +34,18 @@ def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution,
         F = (numpy.pi * x / 2) * numpy.exp(-numpy.pi * x ** 2 / 4)
         ax.plot(x, F, label=f"Scaling", color="black")
 
-    ax.set_xlabel("n/<n(t)>")
-    ax.set_ylabel("<n(t)> P_n(t)")
     ax.set_xlim(0, 5)
-    ax.set_ylim(0, 5)
+    ax.set_yscale("log")
+    ax.set_ylim(0.001, 10)
+    ax.set_yticks(0.01, 0.1, 1)
 
     if legend:
         ax.legend()
 
+def _add_title(ax: Axes, title: str):
+    """Adds a title to the plot. Currently this method puts the title in the top right corner of the axes."""
+    ax.text(0.96, 0.95, title, horizontalalignment='right',
+                          verticalalignment='top', transform=ax.transAxes)
 
 D = 30
 T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
@@ -66,48 +69,54 @@ t_clone_size = 24 * 7 * 4
 t_interval = 24 * 7
 config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_interval, random=random, n_crypts=1000)
 
-fig, ((ax_top_left, ax_top_middle, ax_top_right), (ax_middle_left, ax_middle_middle, ax_middle_right), (ax_bottom_left, ax_bottom_middle, ax_bottom_right)) = plt.subplots(3, 3)
+fig, ((ax_bottom_left, ax_bottom_middle, ax_bottom_right), (ax_middle_left, ax_middle_middle, ax_middle_right), (ax_top_left, ax_top_middle, ax_top_right)) = plt.subplots(3, 3, sharex="all", sharey="all")
 
 # Top left panel
 results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
-    run_simulation, config, parameters_symm_high_growth)
-ax_top_left.set_title("Symmetric high growth ($\\alpha_n = 0.95$, $\\phi=0.95$)")
-_plot_clone_scaling_over_time(ax_top_left, results, predicted_scaling=True)
+    run_simulation, config, parameters_symm_low_growth)
+_add_title(ax_top_left, "$\\alpha_n = 0.05$, $\\phi=0.95$")
+_plot_clone_scaling_over_time(ax_top_left, results, legend=False)
 
 # Top middle panel
 results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation, config, parameters_symm_mid_growth)
-ax_top_middle.set_title("Symmetric mid growth ($\\alpha_n = 0.5$, $\\phi=0.95$)")
+ax_top_middle.set_xlabel("n/<n(t)>")
+_add_title(ax_top_middle, "$\\alpha_n = 0.5$, $\\phi=0.95$")
 _plot_clone_scaling_over_time(ax_top_middle, results, legend=False)
 
 # Top right panel
 results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
-    run_simulation, config, parameters_symm_low_growth)
-ax_top_right.set_title("Symmetric low growth ($\\alpha_n = 0.05$, $\\phi=0.95$)")
-_plot_clone_scaling_over_time(ax_top_right, results, legend=False)
+    run_simulation, config, parameters_symm_high_growth)
+_add_title(ax_top_right, "$\\alpha_n = 0.95$, $\\phi=0.95$")
+_plot_clone_scaling_over_time(ax_top_right, results, predicted_scaling=True)
 
-ax_middle_left.set_axis_off()
+# Middle left panel
+results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
+    run_simulation, config, parameters_mixed_low_growth)
+_add_title(ax_middle_left, "$\\alpha_n = 0.05$, $\\phi=0.5$")
+ax_middle_left.set_ylabel("<n(t)> P_n(t)")
+_plot_clone_scaling_over_time(ax_middle_left, results, legend=False)
 
 # Middle middle panel
 results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
     run_simulation, config, parameters_mixed_mid_growth)
-ax_middle_middle.set_title("Mixed mid growth ($\\alpha_n = 0.5$, $\\phi=0.5$)")
+_add_title(ax_middle_middle, "$\\alpha_n = 0.5$, $\\phi=0.5$")
 _plot_clone_scaling_over_time(ax_middle_middle, results, legend=False)
 
 # Middle right panel
-results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
-    run_simulation, config, parameters_mixed_low_growth)
-ax_middle_right.set_title("Mixed low growth ($\\alpha_n = 0.05$, $\\phi=0.5$)")
-_plot_clone_scaling_over_time(ax_middle_right, results, legend=False)
+ax_middle_right.set_axis_off()
 
-ax_bottom_left.set_axis_off()
-ax_bottom_middle.set_axis_off()
-
-# Bottom right panel
+# Bottom left panel
 results = clone_size_simulator.calculate_niche_over_time(
     run_simulation, config, parameters_asymm_low_growth)
-ax_bottom_right.set_title("Asymmetric low growth ($\\alpha_n = 0.05$, $\\phi=0.05$)")
-_plot_clone_scaling_over_time(ax_bottom_right, results, legend=False)
+_add_title(ax_bottom_left, "$\\alpha_n = 0.05$, $\\phi=0.05$")
+_plot_clone_scaling_over_time(ax_bottom_left, results, legend=False)
+
+# Bottom middle panel (not visible)
+ax_bottom_middle.set_axis_off()
+
+# Bottom right panel (not visible)
+ax_bottom_right.set_axis_off()
 
 plt.tight_layout()
 plt.show()
