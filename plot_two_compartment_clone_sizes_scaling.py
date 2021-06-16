@@ -37,7 +37,7 @@ def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution,
     ax.set_xlim(0, 5)
     ax.set_yscale("log")
     ax.set_ylim(0.001, 10)
-    ax.set_yticks(0.01, 0.1, 1)
+    ax.set_yticks([0.01, 0.1, 1])
 
     if legend:
         ax.legend()
@@ -72,33 +72,33 @@ config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_
 fig, ((ax_bottom_left, ax_bottom_middle, ax_bottom_right), (ax_middle_left, ax_middle_middle, ax_middle_right), (ax_top_left, ax_top_middle, ax_top_right)) = plt.subplots(3, 3, sharex="all", sharey="all")
 
 # Top left panel
-results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
+results = clone_size_simulator.calculate_niche_over_time(
     run_simulation, config, parameters_symm_low_growth)
 _add_title(ax_top_left, "$\\alpha_n = 0.05$, $\\phi=0.95$")
 _plot_clone_scaling_over_time(ax_top_left, results, legend=False)
 
 # Top middle panel
-results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
+results = clone_size_simulator.calculate_niche_over_time(
     run_simulation, config, parameters_symm_mid_growth)
 ax_top_middle.set_xlabel("n/<n(t)>")
 _add_title(ax_top_middle, "$\\alpha_n = 0.5$, $\\phi=0.95$")
 _plot_clone_scaling_over_time(ax_top_middle, results, legend=False)
 
 # Top right panel
-results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
+results = clone_size_simulator.calculate_niche_over_time(
     run_simulation, config, parameters_symm_high_growth)
 _add_title(ax_top_right, "$\\alpha_n = 0.95$, $\\phi=0.95$")
 _plot_clone_scaling_over_time(ax_top_right, results, predicted_scaling=True)
 
 # Middle left panel
-results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
+results = clone_size_simulator.calculate_niche_over_time(
     run_simulation, config, parameters_mixed_low_growth)
 _add_title(ax_middle_left, "$\\alpha_n = 0.05$, $\\phi=0.5$")
 ax_middle_left.set_ylabel("<n(t)> P_n(t)")
 _plot_clone_scaling_over_time(ax_middle_left, results, legend=False)
 
 # Middle middle panel
-results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
+results = clone_size_simulator.calculate_niche_over_time(
     run_simulation, config, parameters_mixed_mid_growth)
 _add_title(ax_middle_middle, "$\\alpha_n = 0.5$, $\\phi=0.5$")
 _plot_clone_scaling_over_time(ax_middle_middle, results, legend=False)
