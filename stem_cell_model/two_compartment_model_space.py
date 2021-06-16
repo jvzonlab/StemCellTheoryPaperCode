@@ -71,33 +71,33 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
     niche = np.zeros(params.S, dtype=int)
 
     # initialize current cell id
-    cell_id=1
+    next_cell_id=1
     dividing_cell_list = []  # List of dividing cells
     # initialize dividing cells in stem cell compartment
     for n in range(0, params.n0[0]):
         # assign parameters
         age = params.T[0] * random.random()
         # add cell
-        dividing_cell_list.append(Cell(cell_id, 0, age, division_timer))
+        dividing_cell_list.append(Cell(next_cell_id, 0, age, division_timer))
         # place cell in niche
         inserted_cell=False
         while not inserted_cell:
             ind = int(random.random() * params.S)
             if niche[ind] == 0:
                 inserted_cell = True
-                niche[ind] = cell_id
+                niche[ind] = next_cell_id
         # increase id
-        cell_id += 1
+        next_cell_id += 1
     # initialize dividing cells outside compartment
     for n in range(0, params.n0[1]):
         age = params.T[0] * random.random()
-        dividing_cell_list.append(Cell(cell_id, 1, age, division_timer))
-        cell_id += 1
+        dividing_cell_list.append(Cell(next_cell_id, 1, age, division_timer))
+        next_cell_id += 1
     # initialize non-dividing cells in niche
     for n in range(len(niche)):
         if niche[n] == 0:
-            niche[n] = cell_id
-            cell_id += 1
+            niche[n] = next_cell_id
+            next_cell_id += 1
 
     ### calculate p,q parameters for both compartment
 
@@ -195,29 +195,29 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
                 # generate two new dividing cells to compartment <c>
                 for i in [0,1]:
                     # add new cells to cell list
-                    dividing_cell_list.append(Cell(cell_id, compartment, 0, division_timer))
+                    dividing_cell_list.append(Cell(next_cell_id, compartment, 0, division_timer))
                     # if needed, remember daughter cell id
-                    daughter_cell_id_list.append( cell_id )
+                    daughter_cell_id_list.append( next_cell_id )
                     daughter_is_dividing_list.append( True )
                     # adjust cell id
-                    cell_id += 1
+                    next_cell_id += 1
                 # adjust number of dividing cells
                 n[compartment] += 1
 
             elif div_type==1:
                 # div -> div + non-div
                 # add a single dividing cell to compartment <c>
-                dividing_cell_list.append(Cell(cell_id, compartment, 0, division_timer))
+                dividing_cell_list.append(Cell(next_cell_id, compartment, 0, division_timer))
                 # if tracking_lineage:
                 # rember id of this daughter, if tracking lineage
-                daughter_cell_id_list.append( cell_id )
+                daughter_cell_id_list.append( next_cell_id )
                 daughter_is_dividing_list.append( True )
-                cell_id += 1
+                next_cell_id += 1
                 # if tracking_lineage:
                 # and remember id of the non-dividing daughter
-                daughter_cell_id_list.append( cell_id )
+                daughter_cell_id_list.append( next_cell_id )
                 daughter_is_dividing_list.append( False )
-                cell_id += 1
+                next_cell_id += 1
                 # adjust number of non-dividing differentiated cells
                 u[compartment] += 1
 
@@ -226,10 +226,10 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
                 for i in [0,1]:
                     # if tracking_lineage:
                     # remember daughter cell ids
-                    daughter_cell_id_list.append( cell_id )
+                    daughter_cell_id_list.append( next_cell_id )
                     daughter_is_dividing_list.append( False )
                 # and increase cell id
-                    cell_id += 1
+                    next_cell_id += 1
                 # adjust number of dividing cells
                 n[compartment] -= 1
                 # adjust number of non-dividing differentiated cells
@@ -288,10 +288,10 @@ def run_simulation_niche(config: SimulationConfig, params: SimulationParameters)
                     for cell in dividing_cell_list:
                         lineages.add_lineage(cell.id, config.track_lineage_time_interval[0], cell.comp, True)
                     # Add all non-dividing cells in the niche too
-                    for cell_id in niche:
-                        if len([cell for cell in dividing_cell_list if cell.id == cell_id]) == 0:
+                    for some_cell_id in niche:
+                        if len([cell for cell in dividing_cell_list if cell.id == some_cell_id]) == 0:
                             # Not in dividing cell list, so it's non-dividing
-                            lineages.add_lineage(cell_id, config.track_lineage_time_interval[0], 0, False)
+                            lineages.add_lineage(some_cell_id, config.track_lineage_time_interval[0], 0, False)
 
             # check if lineage tracking should stop
             if tracking_lineage:
