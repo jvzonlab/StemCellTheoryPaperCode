@@ -29,7 +29,7 @@ def main(steps_along_axis: int = 40):
             params_list.append(params)
 
     # Go!
-    sweeper.sweep(run_simulation_niche, params_list, t_sim=t_sim, n_max=1000000, output_folder=output_folder)
+    sweeper.sweep(run_simulation_niche, params_list, t_sim=t_sim, output_folder=output_folder)
 
 
 if __name__ == '__main__':

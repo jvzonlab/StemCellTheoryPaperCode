@@ -342,7 +342,7 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                 n_vs_t.append([t_end, n[0], n[1]])
                 u_vs_t.append([t_end, u[0], u[1]])
         
-        if n[0] + n[1] >= config.n_max:
+        if n[0] + n[1] >= params.n_max:
             # if more than x dividing cells, stop simulation
             cont=False
             run_ended_early=False

@@ -18,7 +18,6 @@ def run_simulation(steps_along_axis: int = 40):
     T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
     t_sim = int(1e5)  # Total simulation time
     D = 30  # average number of dividing cells
-    n_max = 5 * D  # Maximum number of dividing cells
     output_folder = "two_comp_sweep_data_fixed_D_aT100"
 
     # Build all possible parameters
@@ -27,12 +26,12 @@ def run_simulation(steps_along_axis: int = 40):
         for phi in phi_values:
             for alpha_n in alpha_n_values:
                 params = SimulationParameters.for_D_alpha_and_phi(
-                    D=D, alpha_n=alpha_n, alpha_m=alpha_m, phi=phi, T=T, a=100/T[0])
+                    D=D, alpha_n=alpha_n, alpha_m=alpha_m, phi=phi, T=T, a=100/T[0], n_max=5 * D)
                 if params is not None:
                     params_list.append(params)
 
     # Go!
-    sweeper.sweep(run_simulation_niche, params_list, t_sim=t_sim, n_max=n_max, output_folder=output_folder)
+    sweeper.sweep(run_simulation_niche, params_list, t_sim=t_sim, output_folder=output_folder)
 
 
 if __name__ == '__main__':

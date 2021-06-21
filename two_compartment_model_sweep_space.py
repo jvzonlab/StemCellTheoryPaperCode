@@ -27,12 +27,12 @@ def run_simulation(steps_along_axis: int = 40):
         for phi in phi_values:
             for alpha_n in alpha_n_values:
                 params = SimulationParameters.for_D_alpha_and_phi(
-                    D=D, alpha_n=alpha_n, alpha_m=alpha_m, phi=phi, T=T, a=1/T[0])
+                    D=D, alpha_n=alpha_n, alpha_m=alpha_m, phi=phi, T=T, a=1/T[0], n_max=n_max)
                 if params is not None:
                     params_list.append(params)
 
     # Go!
-    sweeper.sweep(run_simulation_niche, params_list, t_sim=t_sim, n_max=n_max, output_folder=output_folder)
+    sweeper.sweep(run_simulation_niche, params_list, t_sim=t_sim, output_folder=output_folder)
 
 
 if __name__ == '__main__':

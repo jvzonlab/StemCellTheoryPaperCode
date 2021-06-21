@@ -5,15 +5,29 @@ import cProfile
 import numpy
 
 from stem_cell_model.parameters import SimulationParameters, SimulationConfig
-from stem_cell_model.two_compartment_model_space import run_sim_niche, run_simulation_niche
+from stem_cell_model.results import MultiRunStats
+from stem_cell_model.two_compartment_model import run_simulation
 
 
 def main():
     T = (16.153070175438597, 3.2357834505600382)
-    params = SimulationParameters.for_S_alpha_and_phi(S=252, alpha_n=0.1, alpha_m=-0.4, phi=0.675, T=T, a=100/T[0])
+    D = 20
+    phi = 0.05
+    params = SimulationParameters(n0=(D, 0), alpha=(0, 0), phi=(phi, phi), T=T, a=1/T[0], S=D)
     random = numpy.random.Generator(numpy.random.MT19937(seed=1))
-    config = SimulationConfig(t_sim=10000, n_max=5*30, random=random)
-    res = run_simulation_niche(config, params)
+
+    t_sim = 100000
+    output = MultiRunStats()
+
+    # run simulation
+    while output.t_tot < t_sim:
+        config = SimulationConfig(t_sim=t_sim - output.t_tot, random=random)
+        res = run_simulation(config, params)
+        output.add_results(res)
+
+    # print run statistics
+    output.print_run_statistics()
 
 
-cProfile.run('main()')
+main()
+#cProfile.run('main()')

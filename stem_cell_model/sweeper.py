@@ -30,18 +30,18 @@ class _WorkPackage:
         self.output_file = output_file
 
 
-def _worker(tasks_pending: multiprocessing.Queue, simulator: Simulator, t_sim: int, n_max: int):
+def _worker(tasks_pending: multiprocessing.Queue, simulator: Simulator, t_sim: int):
     """Worker that keeps on taking tasks from a task list, and calling _sweep_single_thread on them."""
     while True:
         task = tasks_pending.get()  # This method waits until a new task becomes available
         if task == _STOP_SIGNAL_VALUE:
             break  # Finished
         worker_package: _WorkPackage = task
-        _sweep_single_thread(simulator, worker_package.params_list, t_sim, n_max, worker_package.output_file)
+        _sweep_single_thread(simulator, worker_package.params_list, t_sim, worker_package.output_file)
 
 
 def sweep(simulator: Simulator, params_list: List[SimulationParameters], *,
-          t_sim: int, n_max: int, output_folder: str):
+          t_sim: int, output_folder: str):
     """Multiprocessing parameter sweep. Uses all CPU cores so that the simulation is done as
     fast as possible. Requires the script to be ran from an "if __name__ == '__main__':"-guard."""
     worker_count = multiprocessing.cpu_count()
@@ -67,7 +67,7 @@ def sweep(simulator: Simulator, params_list: List[SimulationParameters], *,
     worker_processes = list()
     for i in range(worker_count):
         # Run in 8 processes
-        worker_process = Process(target=_worker, args=(tasks_pending, simulator, t_sim, n_max))
+        worker_process = Process(target=_worker, args=(tasks_pending, simulator, t_sim))
         worker_process.name = f"worker-{i+1}"
         worker_processes.append(worker_process)
         worker_process.start()
@@ -104,12 +104,11 @@ def _split_list(params_list: List[SimulationParameters], *, size_of_sublist: int
         i += 1
 
 
-def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParameters], t_sim: int, n_max: int,
+def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParameters], t_sim: int,
                          output_file: str):
     if os.path.exists(output_file):
         return  # Nothing to do, this was done previously
 
-    # Fixed seed (based on file name) to ensure reproducibility
     file_name = os.path.basename(output_file)
 
     sim_data = list()
@@ -131,7 +130,7 @@ def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParam
         
         # run simulation
         while output.t_tot < t_sim:
-            config = SimulationConfig(t_sim=t_sim - output.t_tot, n_max=n_max, random=random)
+            config = SimulationConfig(t_sim=t_sim - output.t_tot, random=random)
             res = simulator(config, params)
             output.add_results(res)
         

@@ -83,7 +83,7 @@ for n in range(0,len(plot_run_ind_list)):
     clone_sizes = CloneSizeDistribution()
     clone_size_duration = 40
     min_clone_count_time, max_clone_count_time = t_lineage_range
-    config = SimulationConfig(t_sim=t_sim, n_max=100000, track_n_vs_t=True, track_lineage_time_interval=t_lineage_range, random=random)
+    config = SimulationConfig(t_sim=t_sim, track_n_vs_t=True, track_lineage_time_interval=t_lineage_range, random=random)
 
     for i in range(crypts):  # simulate a crypt 50 times, so that the uncertainty in the clone size is small
         res = two_compartment_model_space.run_simulation_niche(config, params)

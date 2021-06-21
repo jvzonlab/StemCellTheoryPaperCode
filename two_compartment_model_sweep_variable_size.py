@@ -13,7 +13,6 @@ def main(steps_along_alpha_and_phi_axis: int = 40, steps_along_S_axis: int = 60)
     alpha_n_values = numpy.linspace(0.025, 1, num=steps_along_alpha_and_phi_axis, endpoint=True)
     T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
     t_sim = int(1e5)  # Total simulation time
-    n_max = 1000000  # Maximum number of dividing cells, will never be reached with this value
     output_folder = "two_comp_sweep_data_variable_S"
 
     # Build all possible parameters
@@ -28,7 +27,7 @@ def main(steps_along_alpha_and_phi_axis: int = 40, steps_along_S_axis: int = 60)
 
     # Go!
     print("Running simulation for", len(params_list), "parameter sets...")
-    sweeper.sweep(run_simulation, params_list, t_sim=t_sim, n_max=n_max, output_folder=output_folder)
+    sweeper.sweep(run_simulation, params_list, t_sim=t_sim, output_folder=output_folder)
 
 
 if __name__ == '__main__':

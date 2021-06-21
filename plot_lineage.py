@@ -17,7 +17,7 @@ params = SimulationParameters.for_D_alpha_and_phi(
     D=D, alpha_n=0.05, alpha_m=-0.05, phi=0.95, T=T, a=1 / T[0])
 print("D", params.D, ",  S", params.S)
 t_sim = 100
-config = SimulationConfig(t_sim=t_sim, n_max=1000, random=random, track_lineage_time_interval=(0, t_sim), track_n_vs_t=True)
+config = SimulationConfig(t_sim=t_sim, random=random, track_lineage_time_interval=(0, t_sim), track_n_vs_t=True)
 
 results = run_simulation(config, params)
 

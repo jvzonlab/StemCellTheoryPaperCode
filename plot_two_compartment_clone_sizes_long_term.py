@@ -44,7 +44,7 @@ parameters_asymm_low_growth = SimulationParameters.for_D_alpha_and_phi(
 random = numpy.random.Generator(numpy.random.MT19937(seed=1))
 t_clone_size = 24 * 7 * 2
 t_interval = 24
-config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_interval, random=random, n_crypts=50)
+config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_interval, random=random, n_crypts=1000)
 
 fig, ((ax_bottom_left, ax_bottom_middle, ax_bottom_right), (ax_middle_left, ax_middle_middle, ax_middle_right), (ax_top_left, ax_top_middle, ax_top_right)) = plt.subplots(3, 3, sharex="all", sharey="all")
 
