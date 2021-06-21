@@ -24,7 +24,7 @@ def main(steps_along_axis: int = 40):
     params_list = list()
     for D in D_values:
         for phi in phi_values:
-            params = SimulationParameters(n0=(D, 0), alpha=(0, 0), phi=(phi, phi), T=T, a=1/T[0], S=D)
+            params = SimulationParameters(n0=(D, 0), alpha=(0, 0), phi=(phi, phi), T=T, a=1/T[0], S=D, n_max=5 * D)
             if params is not None:
                 params_list.append(params)
 

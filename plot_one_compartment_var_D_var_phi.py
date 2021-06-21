@@ -68,36 +68,65 @@ def plot_depletion_for_S_against_phi(min_log_S: float, max_log_S: float):
     return image
 
 
-fig, ((ax_a, ax_b), (ax_c, ax_d)) = plt.subplots(nrows=2,ncols=2,figsize=(6.498, 3.9),
-                  gridspec_kw={"height_ratios": [0.94, 0.06]})
+def plot_overgrowth_for_S_against_phi(min_log_S: float, max_log_S: float):
+    # Make S to y dict to support logarithmic plotting
+    S_to_image_y = _get_S_to_image_y_dict(min_log_S, max_log_S)
+
+    # Fill the image
+    image = numpy.full((IMAGE_HEIGHT, STEPS_ALONG_PHI_AXIS), numpy.nan, dtype=numpy.float64)
+    for params, multi_run_stats in sweeper.load_sweep_results("one_comp_sweep_data_var_D_var_phi"):
+        image_ys = S_to_image_y[params.S]
+        image_x = round(params.phi[0] * (STEPS_ALONG_PHI_AXIS - 1))
+        statistics = tools.get_single_parameter_set_statistics(multi_run_stats)
+        for image_y in image_ys:
+            image[image_y, image_x] = statistics.n_explosions
+
+    return image
+
+
+fig, ((ax_top_left, ax_top_middle, ax_top_right), (ax_bottom_left, ax_bottom_middle, ax_bottom_right)) = plt.subplots(nrows=2, ncols=3, figsize=(6.498, 3.9),
+                                                                                                                      gridspec_kw={"height_ratios": [0.94, 0.06]})
 min_log_S = 0
 max_log_S = 2
 
 image_cov = plot_coeff_of_variation_for_S_against_phi(min_log_S, max_log_S)
 image_cov_max = math.ceil(numpy.nanmax(image_cov) * 10) / 10
 
+image_overgrowth = plot_overgrowth_for_S_against_phi(min_log_S, max_log_S)
+image_overgrowth_max = math.ceil(numpy.nanmax(image_overgrowth) * 10) / 10
+
 image_depletion = plot_depletion_for_S_against_phi(min_log_S, max_log_S)
 image_depletion_max = math.ceil(numpy.nanmax(image_depletion) * 10) / 10
 
-# Draw the coefficient of variation image
-ax_a.set_title("Coefficient of variation in $D(t)$")
-ax_a.set_facecolor("#b2bec3")
-ax_a_image = ax_a.imshow(image_cov, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_cov_max)
-ax_a.set_xlabel("$\\phi$")
-ax_a.set_ylabel("$D$")
-ax_a.set_yticks(numpy.linspace(min_log_S, max_log_S, 3))
-ax_a.set_yticklabels([f"{10 ** log_S:.0f}" for log_S in numpy.linspace(min_log_S, max_log_S, 3)])
-
 # Draw the depletion image
-ax_b.set_title("Depletion rate / 1000h")
-ax_b.set_facecolor("#b2bec3")
-ax_b_image = ax_b.imshow(image_depletion, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_depletion_max)
-ax_b.set_xlabel("$\\phi$")
-ax_b.set_ylabel("$D$")
-ax_b.set_yticks(numpy.linspace(min_log_S, max_log_S, 3))
-ax_b.set_yticklabels([f"{10 ** log_S:.0f}" for log_S in numpy.linspace(min_log_S, max_log_S, 3)])
+ax_top_left.set_title("Depletion rate / 1000h")
+ax_top_left.set_facecolor("#b2bec3")
+ax_top_left_image = ax_top_left.imshow(image_depletion, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_depletion_max)
+ax_top_left.set_xlabel("$\\phi$")
+ax_top_left.set_ylabel("$D$")
+ax_top_left.set_yticks(numpy.linspace(min_log_S, max_log_S, 3))
+ax_top_left.set_yticklabels([f"{10 ** log_S:.0f}" for log_S in numpy.linspace(min_log_S, max_log_S, 3)])
 
-fig.colorbar(ax_a_image, cax=ax_c, orientation="horizontal")
-fig.colorbar(ax_b_image, cax=ax_d, orientation="horizontal")
+# Draw the overgrowth image
+ax_top_middle.set_title("Overgrowth rate / 1000h")
+ax_top_middle.set_facecolor("#000000")
+ax_top_middle_image = ax_top_middle.imshow(image_overgrowth, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_overgrowth_max)
+ax_top_middle.set_xlabel("$\\phi$")
+ax_top_middle.set_ylabel("$D$")
+ax_top_middle.set_yticks(numpy.linspace(min_log_S, max_log_S, 3))
+ax_top_middle.set_yticklabels([f"{10 ** log_S:.0f}" for log_S in numpy.linspace(min_log_S, max_log_S, 3)])
+
+# Draw the coefficient of variation image
+ax_top_right.set_title("Coefficient of variation in $D(t)$")
+ax_top_right.set_facecolor("#b2bec3")
+ax_top_right_image = ax_top_right.imshow(image_cov, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_cov_max)
+ax_top_right.set_xlabel("$\\phi$")
+ax_top_right.set_ylabel("$D$")
+ax_top_right.set_yticks(numpy.linspace(min_log_S, max_log_S, 3))
+ax_top_right.set_yticklabels([f"{10 ** log_S:.0f}" for log_S in numpy.linspace(min_log_S, max_log_S, 3)])
+
+fig.colorbar(ax_top_right_image, cax=ax_bottom_right, orientation="horizontal")
+fig.colorbar(ax_top_middle_image, cax=ax_bottom_middle, orientation="horizontal")
+fig.colorbar(ax_top_left_image, cax=ax_bottom_left, orientation="horizontal")
 fig.tight_layout()
 plt.show()
