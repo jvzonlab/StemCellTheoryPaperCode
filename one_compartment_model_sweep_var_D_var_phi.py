@@ -17,7 +17,7 @@ def main(steps_along_axis: int = 40):
     D_values = set((10 ** numpy.linspace(0, 2, num=steps_along_axis, endpoint=True)).astype(numpy.int32))
 
     T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
-    t_sim = 100000  # Total simulation time
+    t_sim = 1000000  # Total simulation time
     output_folder = "one_comp_sweep_data_var_D_var_phi"
 
     # Build all possible parameters
