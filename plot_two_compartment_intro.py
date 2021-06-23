@@ -1,6 +1,7 @@
 """Used to give a general overview of the two compartment model"""
 import math
-from typing import Dict, List
+from collections import OrderedDict
+from typing import Dict, List, Tuple
 
 import matplotlib
 import numpy
@@ -43,17 +44,52 @@ def plot_phi_against_opposite_alpha():
     return image
 
 
-def plot_along_matching_alpha_and_phi_1():
+def get_example_line_for_phi_1_opposite_alpha() -> Tuple[List[float], List[float]]:
+    """Line along the largest variation."""
+    values = dict()
+    for params, multi_run_stats in sweeper.load_sweep_results("two_comp_sweep_data_fixed_D"):
+        if params.alpha[0] == -params.alpha[1] and params.phi[0] == 1:
+            statistics = tools.get_single_parameter_set_statistics(multi_run_stats)
+            values[params.alpha[0]] = statistics.d_coeff_var
+
     x_values = list()
     y_values = list()
-    for params, multi_run_stats in sweeper.load_sweep_results("two_comp_sweep_data_fixed_D"):
-        if params.alpha[0] == -params.alpha[1] :
-            image_y = int(params.phi[0] * (STEPS_ALONG_AXIS - 1))
-            image_x = int(params.alpha[0] * (STEPS_ALONG_AXIS - 1))
-            statistics = tools.get_single_parameter_set_statistics(multi_run_stats)
-            image[image_y, image_x] = statistics.d_coeff_var
+    for key, value in sorted(values.items()):
+        x_values.append(key)
+        y_values.append(value)
+    return x_values, y_values
 
-    return image
+
+def get_example_line_for_opposite_alpha_and_matching_phi() -> Tuple[List[float], List[float]]:
+    """Line along the lowest phi for every alpha. This is the optimal line."""
+    values = dict()
+    for params, multi_run_stats in sweeper.load_sweep_results("two_comp_sweep_data_fixed_D"):
+        if params.alpha[0] == -params.alpha[1] and params.phi[0] == params.alpha[0]:
+            statistics = tools.get_single_parameter_set_statistics(multi_run_stats)
+            values[params.alpha[0]] = statistics.d_coeff_var
+
+    x_values = list()
+    y_values = list()
+    for key, value in sorted(values.items()):
+        x_values.append(key)
+        y_values.append(value)
+    return x_values, y_values
+
+
+def get_third_example_line() -> Tuple[List[float], List[float]]:
+    """The line for phi=1 and a_n = -a_m + 0.5."""
+    values = dict()
+    for params, multi_run_stats in sweeper.load_sweep_results("two_comp_sweep_data_fixed_D"):
+        if params.alpha[0] == -params.alpha[1] + 0.5 and params.phi[0] == 1:
+            statistics = tools.get_single_parameter_set_statistics(multi_run_stats)
+            values[params.alpha[0]] = statistics.d_coeff_var
+
+    x_values = list()
+    y_values = list()
+    for key, value in sorted(values.items()):
+        x_values.append(key)
+        y_values.append(value)
+    return x_values, y_values
 
 
 fig, (ax_a, ax_b, ax_c) = plt.subplots(nrows=3,figsize=(4.181, 6.498),
@@ -86,5 +122,21 @@ fig.tight_layout()
 plt.show()
 
 # Now draw examples
-fig, (ax_a, ax_b, ax_c) = plt.subplots(nrows=3,figsize=(4.181, 6.498))
+fig, (ax_a, ax_b, ax_c) = plt.subplots(nrows=3,figsize=(4.181, 6.498), sharex="col", sharey="col")
+ax_a.plot(*get_example_line_for_phi_1_opposite_alpha())
+ax_a.set_ylabel("Coeff var D")
+ax_a.set_xlabel("$\\alpha_n, -\\alpha_m$")
+
+ax_b.plot(*get_example_line_for_opposite_alpha_and_matching_phi())
+ax_b.set_ylabel("Coeff var D")
+ax_b.set_xlabel("$\\alpha_n, -\\alpha_m$ and matching $\\phi$")
+
+ax_c.plot(*get_third_example_line())
+ax_c.set_ylabel("Coeff var D")
+ax_c.set_xlabel("$\\alpha_n, -\\alpha_m$")
+
+ax_c.set_xlim(0, 1)
+ax_c.set_ylim(0, 1)
+
+plt.tight_layout()
 plt.show()
