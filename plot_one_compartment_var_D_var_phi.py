@@ -90,13 +90,13 @@ min_log_S = 0
 max_log_S = 2
 
 image_cov = plot_coeff_of_variation_for_S_against_phi(min_log_S, max_log_S)
-image_cov_max = math.ceil(numpy.nanmax(image_cov) * 10) / 10
+image_cov_max = math.ceil(numpy.nanmax(image_cov))
 
 image_overgrowth = plot_overgrowth_for_S_against_phi(min_log_S, max_log_S)
-image_overgrowth_max = math.ceil(numpy.nanmax(image_overgrowth) * 10) / 10
+image_overgrowth_max = math.ceil(numpy.nanmax(image_overgrowth))
 
 image_depletion = plot_depletion_for_S_against_phi(min_log_S, max_log_S)
-image_depletion_max = math.ceil(numpy.nanmax(image_depletion) * 10) / 10
+image_depletion_max = math.ceil(numpy.nanmax(image_depletion))
 
 # Draw the depletion image
 ax_top_left.set_title("Depletion rate / 1000h")
