@@ -1,6 +1,7 @@
 
 import numpy
 import matplotlib.cm
+import matplotlib.colors
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
@@ -10,7 +11,9 @@ from stem_cell_model.parameters import SimulationParameters, SimulationConfig
 from stem_cell_model.timed_clone_size_distributions import TimedCloneSizeDistribution
 from stem_cell_model.two_compartment_model import run_simulation
 
-_COLORS = [matplotlib.cm.Blues(x) for x in [0.1, 0.4, 0.7, 1.0]]
+_PROLIFERATIVE_ONLY = True  # Controls whether only proliferative cells are counted, or all cells
+_COLORS = [matplotlib.cm.Oranges(x) for x in [0.1, 0.4, 0.7, 1.0]]\
+    if _PROLIFERATIVE_ONLY else [matplotlib.cm.Blues(x) for x in [0.1, 0.4, 0.7, 1.0]]
 
 
 def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution, *, legend: bool = True, predicted_scaling: bool = False):
@@ -26,7 +29,7 @@ def _plot_clone_scaling_over_time(ax: Axes, results: TimedCloneSizeDistribution,
         x = clone_sizes / average_clone_size[i]
         size_fraction = results.get_distribution_at(i).get_clone_size_frequencies(clone_sizes) / clone_count[i]
         y = average_clone_size[i] * size_fraction
-        ax.scatter(x, y, label=f"{time/24:.0f} days", s=5, color=_COLORS[i])
+        ax.scatter(x, y, label=f"{time/24:.0f} days", s=5, color=_COLORS[i], marker="s" if _PROLIFERATIVE_ONLY else "o")
 
     # Plot predicted scaling function [Lopez-Garcia2010]
     if predicted_scaling:
@@ -68,37 +71,40 @@ random = numpy.random.Generator(numpy.random.MT19937(seed=1))
 t_clone_size = 24 * 7 * 4
 t_interval = 24 * 7
 config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_interval, random=random, n_crypts=1000)
+clone_size_calculator = clone_size_simulator.calculate_proliferative_in_niche_over_time\
+    if _PROLIFERATIVE_ONLY else clone_size_simulator.calculate_niche_over_time
+
 
 fig, ((ax_bottom_left, ax_bottom_middle, ax_bottom_right), (ax_middle_left, ax_middle_middle, ax_middle_right), (ax_top_left, ax_top_middle, ax_top_right)) = plt.subplots(3, 3, sharex="all", sharey="all")
 
 # Top left panel
-results = clone_size_simulator.calculate_niche_over_time(
+results = clone_size_calculator(
     run_simulation, config, parameters_symm_low_growth)
 _add_title(ax_top_left, "$\\alpha_n = 0.05$, $\\phi=0.95$")
 _plot_clone_scaling_over_time(ax_top_left, results, legend=False)
 
 # Top middle panel
-results = clone_size_simulator.calculate_niche_over_time(
+results = clone_size_calculator(
     run_simulation, config, parameters_symm_mid_growth)
 ax_top_middle.set_xlabel("n/<n(t)>")
 _add_title(ax_top_middle, "$\\alpha_n = 0.5$, $\\phi=0.95$")
 _plot_clone_scaling_over_time(ax_top_middle, results, legend=False)
 
 # Top right panel
-results = clone_size_simulator.calculate_niche_over_time(
+results = clone_size_calculator(
     run_simulation, config, parameters_symm_high_growth)
 _add_title(ax_top_right, "$\\alpha_n = 0.95$, $\\phi=0.95$")
 _plot_clone_scaling_over_time(ax_top_right, results, predicted_scaling=True)
 
 # Middle left panel
-results = clone_size_simulator.calculate_niche_over_time(
+results = clone_size_calculator(
     run_simulation, config, parameters_mixed_low_growth)
 _add_title(ax_middle_left, "$\\alpha_n = 0.05$, $\\phi=0.5$")
 ax_middle_left.set_ylabel("<n(t)> P_n(t)")
 _plot_clone_scaling_over_time(ax_middle_left, results, legend=False)
 
 # Middle middle panel
-results = clone_size_simulator.calculate_niche_over_time(
+results = clone_size_calculator(
     run_simulation, config, parameters_mixed_mid_growth)
 _add_title(ax_middle_middle, "$\\alpha_n = 0.5$, $\\phi=0.5$")
 _plot_clone_scaling_over_time(ax_middle_middle, results, legend=False)
