@@ -42,7 +42,7 @@ def plot_S_against_opposite_alpha_and_phi_at_1(min_log_S: float, max_log_S: floa
 
     # Fill the image
     image = numpy.full((IMAGE_HEIGHT, STEPS_ALONG_ALPHA_AND_PHI_AXIS), numpy.nan, dtype=numpy.float64)
-    for params, multi_run_stats in sweeper.load_sweep_results("two_comp_sweep_data_variable_S_aT1"):
+    for params, multi_run_stats in sweeper.load_sweep_results("two_comp_sweep_data_variable_S"):
         if params.phi[0] == 1 and params.alpha[0] == -params.alpha[1]:
             image_ys = S_to_image_y[params.S]
             image_x = int(params.alpha[0] * (STEPS_ALONG_ALPHA_AND_PHI_AXIS - 1))
@@ -60,7 +60,7 @@ def plot_S_against_opposite_alpha_along_phi_diagonal(min_log_S: float, max_log_S
 
     # Fill the image
     image = numpy.full((IMAGE_HEIGHT, STEPS_ALONG_ALPHA_AND_PHI_AXIS), numpy.nan, dtype=numpy.float64)
-    for params, multi_run_stats in sweeper.load_sweep_results("two_comp_sweep_data_variable_S_aT1"):
+    for params, multi_run_stats in sweeper.load_sweep_results("two_comp_sweep_data_variable_S"):
         if params.alpha[0] == params.phi[0] and params.alpha[0] == -params.alpha[1]:
             image_ys = S_to_image_y[params.S]
             image_x = int(params.alpha[0] * (STEPS_ALONG_ALPHA_AND_PHI_AXIS - 1))

@@ -3,7 +3,7 @@ import numpy
 
 from stem_cell_model import sweeper
 from stem_cell_model.parameters import SimulationParameters
-from stem_cell_model.two_compartment_model_space import run_simulation_niche
+from stem_cell_model.two_compartment_model import run_simulation
 
 
 def main(steps_along_alpha_and_phi_axis: int = 40, steps_along_S_axis: int = 60):
@@ -13,7 +13,7 @@ def main(steps_along_alpha_and_phi_axis: int = 40, steps_along_S_axis: int = 60)
     alpha_n_values = numpy.linspace(0.025, 1, num=steps_along_alpha_and_phi_axis, endpoint=True)
     T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
     t_sim = int(1e5)  # Total simulation time
-    output_folder = "two_comp_sweep_data_variable_S_aT1"
+    output_folder = "two_comp_sweep_data_variable_S"
 
     # Build all possible parameters
     params_list = list()
@@ -26,7 +26,7 @@ def main(steps_along_alpha_and_phi_axis: int = 40, steps_along_S_axis: int = 60)
                     params_list.append(params)
 
     # Go!
-    sweeper.sweep(run_simulation_niche, params_list, t_sim=t_sim, output_folder=output_folder)
+    sweeper.sweep(run_simulation, params_list, t_sim=t_sim, output_folder=output_folder)
 
 
 if __name__ == '__main__':
