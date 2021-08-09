@@ -63,7 +63,7 @@ class TimedCloneSizeSimulationConfig:
 def calculate_proliferative_in_niche_over_time(simulator: Simulator, clone_size_config: TimedCloneSizeSimulationConfig,
                                                params: SimulationParameters) -> TimedCloneSizeDistribution:
     """Calculates the resulting clone size distribution for the given parameters set over time. Note that only dividing
-    cells are counted here.."""
+    cells that are in the niche are counted here.."""
     config = clone_size_config.to_niche_config()
 
     total_clone_size_distribution = None
@@ -87,8 +87,8 @@ def calculate_proliferative_in_niche_over_time(simulator: Simulator, clone_size_
 
 def calculate_niche_over_time(simulator: Simulator, clone_size_config: TimedCloneSizeSimulationConfig,
                               params: SimulationParameters) -> TimedCloneSizeDistribution:
-    """Calculates the resulting clone size distribution for the given parameters set over time. Note that only dividing
-    cells are counted here.."""
+    """Calculates the resulting clone size distribution for the given parameters set over time. Note that only cells in
+    the niche counted here.."""
     config = clone_size_config.to_niche_config()
 
     total_clone_size_distribution = None
@@ -99,6 +99,29 @@ def calculate_niche_over_time(simulator: Simulator, clone_size_config: TimedClon
         clone_size_distribution = timed_clone_size_distributions.get_niche_clone_size_distribution(
                 results.lineages, 0, clone_size_config.t_clone_size,
                 clone_size_config.t_interval)
+
+        if total_clone_size_distribution is None:
+            total_clone_size_distribution = clone_size_distribution
+        else:
+            total_clone_size_distribution.merge(clone_size_distribution)
+
+    if total_clone_size_distribution is None:
+        raise ValueError("Simulated zero crypts. Check config.n_crypts")
+    return total_clone_size_distribution
+
+def calculate_over_time(simulator: Simulator, clone_size_config: TimedCloneSizeSimulationConfig,
+                        params: SimulationParameters) -> TimedCloneSizeDistribution:
+    """Calculates the resulting clone size distribution for the given parameters set over time."""
+    config = clone_size_config.to_niche_config()
+
+    total_clone_size_distribution = None
+    for i in range(clone_size_config.n_crypts):
+        if i > 0 and i % 100 == 0:
+            print(f"{i} crypts done...")
+        results = simulator(config, params)
+        clone_size_distribution = timed_clone_size_distributions.get_clone_size_distribution(
+            results.lineages, 0, clone_size_config.t_clone_size,
+            clone_size_config.t_interval)
 
         if total_clone_size_distribution is None:
             total_clone_size_distribution = clone_size_distribution

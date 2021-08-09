@@ -4,18 +4,16 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
 from stem_cell_model import clone_size_simulator
-from stem_cell_model.clone_size_simulator import CloneSizeSimulationConfig, TimedCloneSizeSimulationConfig
-from stem_cell_model.parameters import SimulationParameters, SimulationConfig
+from stem_cell_model.clone_size_simulator import TimedCloneSizeSimulationConfig
+from stem_cell_model.parameters import SimulationParameters
 from stem_cell_model.timed_clone_size_distributions import TimedCloneSizeDistribution
-from stem_cell_model.two_compartment_model_space import run_simulation_niche
+from stem_cell_model.two_compartment_model import run_simulation
 
 
 def _plot_clone_sizes_over_time(ax: Axes, results: TimedCloneSizeDistribution, *, legend: bool = False):
     durations = results.get_durations()
     ax.plot(durations, results.get_clone_size_frequency_over_time([4, 6, 8]), label="4,6,8", color="#00cec9")
     ax.plot(durations, results.get_clone_size_frequency_over_time([3, 5, 7]), label="3,5,7", color="#fdcb6e")
-    ax.plot(durations, results.get_clone_size_frequency_over_time(range(8, 100, 2)), label="Large even", color="#00b894")
-    ax.plot(durations, results.get_clone_size_frequency_over_time(range(9, 101, 2)), label="Large odd", color="#e17055")
     ax.set_xlabel("Time (h)")
     ax.set_ylabel("Number of clones")
 
@@ -53,34 +51,34 @@ config = TimedCloneSizeSimulationConfig(t_clone_size=t_clone_size, t_interval=t_
 fig, ((ax_top_left, ax_top_middle, ax_top_right), (ax_middle_left, ax_middle_middle, ax_middle_right), (ax_bottom_left, ax_bottom_middle, ax_bottom_right)) = plt.subplots(3, 3, sharex="all")
 
 # Top left panel
-results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
-    run_simulation_niche, config, parameters_symm_low_growth)
+results = clone_size_simulator.calculate_over_time(
+    run_simulation, config, parameters_symm_low_growth)
 _add_title(ax_top_left, "$\\alpha_n = 0.05$, $\\phi=0.95$")
 _plot_clone_sizes_over_time(ax_top_left, results)
 
 # Top middle panel
-results = clone_size_simulator.calculate_proliferative_in_niche_over_time(
-    run_simulation_niche, config, parameters_symm_mid_growth)
+results = clone_size_simulator.calculate_over_time(
+    run_simulation, config, parameters_symm_mid_growth)
 ax_top_middle.set_xlabel("n/<n(t)>")
 _add_title(ax_top_middle, "$\\alpha_n = 0.5$, $\\phi=0.95$")
 _plot_clone_sizes_over_time(ax_top_middle, results)
 
 # Top right panel
-results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation_niche, config, parameters_symm_high_growth)
+results = clone_size_simulator.calculate_over_time(
+    run_simulation, config, parameters_symm_high_growth)
 _add_title(ax_top_right, "$\\alpha_n = 0.95$, $\\phi=0.95$")
 _plot_clone_sizes_over_time(ax_top_right, results, legend=True)
 
 # Middle left panel
-results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation_niche, config, parameters_mixed_low_growth)
+results = clone_size_simulator.calculate_over_time(
+    run_simulation, config, parameters_mixed_low_growth)
 _add_title(ax_middle_left, "$\\alpha_n = 0.05$, $\\phi=0.5$")
 ax_middle_left.set_ylabel("<n(t)> P_n(t)")
 _plot_clone_sizes_over_time(ax_middle_left, results)
 
 # Middle middle panel
-results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation_niche, config, parameters_mixed_mid_growth)
+results = clone_size_simulator.calculate_over_time(
+    run_simulation, config, parameters_mixed_mid_growth)
 _add_title(ax_middle_middle, "$\\alpha_n = 0.5$, $\\phi=0.5$")
 _plot_clone_sizes_over_time(ax_middle_middle, results)
 
@@ -88,8 +86,8 @@ _plot_clone_sizes_over_time(ax_middle_middle, results)
 ax_middle_right.set_axis_off()
 
 # Bottom left panel
-results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation_niche, config, parameters_asymm_low_growth)
+results = clone_size_simulator.calculate_over_time(
+    run_simulation, config, parameters_asymm_low_growth)
 _add_title(ax_bottom_left, "$\\alpha_n = 0.05$, $\\phi=0.05$")
 _plot_clone_sizes_over_time(ax_bottom_left, results)
 

@@ -7,7 +7,7 @@ from stem_cell_model import clone_size_simulator
 from stem_cell_model.clone_size_simulator import TimedCloneSizeSimulationConfig
 from stem_cell_model.parameters import SimulationParameters
 from stem_cell_model.timed_clone_size_distributions import TimedCloneSizeDistribution
-from stem_cell_model.two_compartment_model_space import run_simulation_niche
+from stem_cell_model.two_compartment_model import run_simulation
 
 
 def _plot_clone_sizes_over_time(ax: Axes, results: TimedCloneSizeDistribution, params: SimulationParameters):
@@ -50,33 +50,33 @@ fig, ((ax_bottom_left, ax_bottom_middle, ax_bottom_right), (ax_middle_left, ax_m
 
 # Top left panel
 results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation_niche, config, parameters_symm_low_growth)
+    run_simulation, config, parameters_symm_low_growth)
 _add_title(ax_top_left, "$\\alpha_n = 0.05$, $\\phi=0.95$")
 _plot_clone_sizes_over_time(ax_top_left, results, parameters_symm_low_growth)
 
 # Top middle panel
 results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation_niche, config, parameters_symm_mid_growth)
+    run_simulation, config, parameters_symm_mid_growth)
 ax_top_middle.set_xlabel("n/<n(t)>")
 _add_title(ax_top_middle, "$\\alpha_n = 0.5$, $\\phi=0.95$")
 _plot_clone_sizes_over_time(ax_top_middle, results, parameters_symm_mid_growth)
 
 # Top right panel
 results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation_niche, config, parameters_symm_high_growth)
+    run_simulation, config, parameters_symm_high_growth)
 _add_title(ax_top_right, "$\\alpha_n = 0.95$, $\\phi=0.95$")
 _plot_clone_sizes_over_time(ax_top_right, results, parameters_symm_high_growth)
 
 # Middle left panel
 results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation_niche, config, parameters_mixed_low_growth)
+    run_simulation, config, parameters_mixed_low_growth)
 _add_title(ax_middle_left, "$\\alpha_n = 0.05$, $\\phi=0.5$")
 ax_middle_left.set_ylabel("<n(t)> P_n(t)")
 _plot_clone_sizes_over_time(ax_middle_left, results, parameters_mixed_low_growth)
 
 # Middle middle panel
 results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation_niche, config, parameters_mixed_mid_growth)
+    run_simulation, config, parameters_mixed_mid_growth)
 _add_title(ax_middle_middle, "$\\alpha_n = 0.5$, $\\phi=0.5$")
 _plot_clone_sizes_over_time(ax_middle_middle, results, parameters_mixed_mid_growth)
 
@@ -85,7 +85,7 @@ ax_middle_right.set_axis_off()
 
 # Bottom left panel
 results = clone_size_simulator.calculate_niche_over_time(
-    run_simulation_niche, config, parameters_asymm_low_growth)
+    run_simulation, config, parameters_asymm_low_growth)
 _add_title(ax_bottom_left, "$\\alpha_n = 0.05$, $\\phi=0.05$")
 _plot_clone_sizes_over_time(ax_bottom_left, results, parameters_asymm_low_growth)
 

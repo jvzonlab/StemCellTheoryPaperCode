@@ -105,7 +105,6 @@ images_max = math.ceil(images_max)
 ax_a.set_title("Coeff of var $D(t)$ at $\phi = 1$")
 ax_a.set_facecolor("#b2bec3")
 ax_a.imshow(image_phi1, extent=(0, -1, 1, 0), aspect=1, cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=images_max)
-ax_a.invert_xaxis()
 ax_a.set_xlabel("$\\alpha_m$")
 ax_a.set_ylabel("$\\alpha_n$")
 
