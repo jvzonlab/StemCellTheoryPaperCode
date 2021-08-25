@@ -2,10 +2,14 @@ import math
 from typing import Dict, List
 
 import numpy
+from matplotlib.axes import Axes
 from matplotlib.colorbar import Colorbar
 
-from stem_cell_model import sweeper, tools
+from stem_cell_model import sweeper, tools, two_compartment_model
 import matplotlib.pyplot as plt
+
+from stem_cell_model.parameters import SimulationConfig, SimulationParameters
+from stem_cell_model.results import SimulationResults
 
 STEPS_ALONG_PHI_AXIS = 40
 STEPS_ALONG_SIZE_AXIS = 40
@@ -129,4 +133,37 @@ fig.colorbar(ax_top_right_image, cax=ax_bottom_right, orientation="horizontal")
 fig.colorbar(ax_top_middle_image, cax=ax_bottom_middle, orientation="horizontal")
 fig.colorbar(ax_top_left_image, cax=ax_bottom_left, orientation="horizontal")
 fig.tight_layout()
+plt.show()
+
+
+# Draw the example lines
+ax_left: Axes
+fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, sharex="all", sharey="all")
+random = numpy.random.Generator(numpy.random.MT19937(seed=1))
+config = SimulationConfig(t_sim=260, random=random, track_n_vs_t=True)
+T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
+
+
+def _plot_line(ax: Axes, results: SimulationResults):
+    ax.plot(results.n_vs_t[:, 0], results.n_vs_t[:, 1] + results.n_vs_t[:, 2], color="black", alpha=0.5,
+                 linewidth=2)
+    if results.n_vs_t[-1, 1] + results.n_vs_t[-1, 2] == 0:  # Died
+        ax.plot(results.n_vs_t[-1, 0], 0, "X", color="red")
+
+
+# Left: small phi, small D
+for _ in range(6):
+    results = two_compartment_model.run_simulation(config, SimulationParameters.for_one_compartment(
+        D=15, phi=0.95, T=T))
+    _plot_line(ax_left, results)
+
+# Right: large phi, large D
+for _ in range(6):
+    results = two_compartment_model.run_simulation(config, SimulationParameters.for_one_compartment(
+        D=6, phi=0.05, T=T))
+    _plot_line(ax_right, results)
+
+ax_left.set_ylabel("Proliferating cells")
+ax_left.set_xlabel("Time (h)")
+
 plt.show()

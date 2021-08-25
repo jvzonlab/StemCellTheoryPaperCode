@@ -54,7 +54,10 @@ class SimulationParameters:
         # check if division probabilities exist for this alpha_n, alpha_m and phi combination
         if (p_n >= 0) and (q_n >= 0) and (p_m >= 0) and (q_m >= 0):
             # calculate compartment size S
-            S = D / numpy.log(1 + alpha_n) * alpha_m / (alpha_m - alpha_n)
+            if alpha_n == alpha_m == 0:
+                S = 10000  # Compartment size doesn't matter if both are equal
+            else:
+                S = D / numpy.log(1 + alpha_n) * alpha_m / (alpha_m - alpha_n)
             # calculate the average number of dividing cells in stem cell compartment
             N_avg = alpha_n * S
             # calculate the average number of dividing cells in transit amplifying compartment
@@ -93,6 +96,13 @@ class SimulationParameters:
             return SimulationParameters(S=int(numpy.round(S)), alpha=(alpha_n, alpha_m), phi=(phi, phi), T=T,
                                         n0=(int(numpy.round(N_avg)), int(numpy.round(M_avg))), a=a)
         return None
+
+    @staticmethod
+    def for_one_compartment(*, D: int, phi: float, T: Tuple[float, float], a: float = float("inf")
+                            ) -> "SimulationParameters":
+        """Creates a homeostatic parameter set for a one-compartment model."""
+        return SimulationParameters(S=D, alpha=(0, 0), phi=(phi, phi), T=T, n0=(D, 0), a=a)
+
 
     S: int
     alpha: Tuple[float, float]
@@ -147,7 +157,7 @@ class SimulationConfig:
     track_lineage_time_interval: Optional[Tuple[int, int]]  # Time points to track lineages
     track_n_vs_t: bool  # Whether the number of dividing cells over time should be stored
 
-    def __init__(self, *, t_sim: float, random: Generator, track_lineage_time_interval: Optional[Tuple[int, int]] = None, track_n_vs_t: bool = False, n_max: int=0):
+    def __init__(self, *, t_sim: float, random: Generator, track_lineage_time_interval: Optional[Tuple[int, int]] = None, track_n_vs_t: bool = False):
         self.t_sim = t_sim
         self.random = random
         self.track_lineage_time_interval = track_lineage_time_interval

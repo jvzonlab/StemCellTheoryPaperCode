@@ -5,10 +5,14 @@ from typing import Dict, List, Tuple
 
 import matplotlib
 import numpy
+from matplotlib.axes import Axes
 from matplotlib.colorbar import Colorbar
 
-from stem_cell_model import sweeper, tools
+from stem_cell_model import sweeper, tools, two_compartment_model
 import matplotlib.pyplot as plt
+
+from stem_cell_model.parameters import SimulationConfig, SimulationParameters
+from stem_cell_model.results import SimulationResults
 
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['svg.fonttype'] = 'none'
@@ -120,7 +124,7 @@ colorbar: Colorbar = fig.colorbar(ax_b_image, cax=ax_c, orientation="horizontal"
 fig.tight_layout()
 plt.show()
 
-# Now draw examples
+# Now draw values along lines
 fig, (ax_a, ax_b, ax_c) = plt.subplots(nrows=3,figsize=(4.181, 6.498), sharex="col", sharey="col")
 ax_a.plot(*get_example_line_for_phi_1_opposite_alpha())
 ax_a.set_ylabel("Coeff var D")
@@ -138,4 +142,36 @@ ax_c.set_xlim(0, 1)
 ax_c.set_ylim(0, 1)
 
 plt.tight_layout()
+plt.show()
+
+
+# Now draw examples
+_, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, sharex="all", sharey="all")
+random = numpy.random.Generator(numpy.random.MT19937(seed=1))
+config = SimulationConfig(t_sim=750, random=random, track_n_vs_t=True)
+T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
+
+
+def _plot_line(ax: Axes, results: SimulationResults):
+    ax.plot(results.n_vs_t[:, 0], results.n_vs_t[:, 1] + results.n_vs_t[:, 2], color="black", alpha=0.5,
+                 linewidth=2)
+    if results.n_vs_t[-1, 1] + results.n_vs_t[-1, 2] == 0:  # Died
+        ax.plot(results.n_vs_t[-1, 0], 0, "X", color="red")
+
+
+# Left: low phi, low alpha
+for _ in range(6):
+    results = two_compartment_model.run_simulation(config, SimulationParameters.for_D_alpha_and_phi(
+        D=30, phi=0.05, T=T, alpha_n=0, alpha_m=0))
+    _plot_line(ax_left, results)
+
+# Right: large phi, large alpha
+for _ in range(6):
+    results = two_compartment_model.run_simulation(config, SimulationParameters.for_D_alpha_and_phi(
+        D=30, phi=0.95, T=T, alpha_n=0.95, alpha_m=-0.95))
+    _plot_line(ax_right, results)
+
+ax_left.set_ylabel("Proliferating cells")
+ax_left.set_xlabel("Time (h)")
+
 plt.show()
