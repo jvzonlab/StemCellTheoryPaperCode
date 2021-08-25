@@ -14,6 +14,8 @@ def _plot_clone_sizes_over_time(ax: Axes, results: TimedCloneSizeDistribution, *
     durations = results.get_durations()
     ax.plot(durations, results.get_clone_size_frequency_over_time([4, 6, 8]), label="4,6,8", color="#00cec9")
     ax.plot(durations, results.get_clone_size_frequency_over_time([3, 5, 7]), label="3,5,7", color="#fdcb6e")
+    ax.plot(durations, results.get_clone_size_frequency_over_time([10, 12, 14]), label="10,12,14", color="#00cec9", linestyle="dashed")
+    ax.plot(durations, results.get_clone_size_frequency_over_time([9, 11, 13]), label="9,11,13", color="#fdcb6e", linestyle="dashed")
     ax.set_xlabel("Time (h)")
     ax.set_ylabel("Number of clones")
 
