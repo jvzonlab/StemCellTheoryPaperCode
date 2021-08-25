@@ -56,7 +56,7 @@ class TimedCloneSizeSimulationConfig:
     def to_niche_config(self) -> SimulationConfig:
         return SimulationConfig(
             t_sim=self.t_clone_size,
-            n_max=10000, random=self.random,
+            random=self.random,
             track_lineage_time_interval=(0, self.t_clone_size))
 
 
