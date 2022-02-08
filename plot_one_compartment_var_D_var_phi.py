@@ -94,18 +94,18 @@ min_log_S = 0
 max_log_S = 2
 
 image_cov = plot_coeff_of_variation_for_S_against_phi(min_log_S, max_log_S)
-image_cov_max = math.ceil(numpy.nanmax(image_cov))
+image_cov_vmax = math.floor(numpy.nanmax(image_cov))
 
 image_overgrowth = plot_overgrowth_for_S_against_phi(min_log_S, max_log_S)
-image_overgrowth_max = math.ceil(numpy.nanmax(image_overgrowth))
+image_overgrowth_vmax = 3  # Was: math.ceil(numpy.nanmax(image_overgrowth))
 
 image_depletion = plot_depletion_for_S_against_phi(min_log_S, max_log_S)
-image_depletion_max = math.ceil(numpy.nanmax(image_depletion))
+image_depletion_vmax = 10  # Was: math.ceil(numpy.nanmax(image_depletion))
 
 # Draw the depletion image
 ax_top_left.set_title("Depletion rate / 1000h")
 ax_top_left.set_facecolor("#b2bec3")
-ax_top_left_image = ax_top_left.imshow(image_depletion, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_depletion_max)
+ax_top_left_image = ax_top_left.imshow(image_depletion, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_depletion_vmax)
 ax_top_left.set_xlabel("$\\phi$")
 ax_top_left.set_ylabel("$D$")
 ax_top_left.set_yticks(numpy.linspace(min_log_S, max_log_S, 3))
@@ -114,7 +114,7 @@ ax_top_left.set_yticklabels([f"{10 ** log_S:.0f}" for log_S in numpy.linspace(mi
 # Draw the overgrowth image
 ax_top_middle.set_title("Overgrowth rate / 1000h")
 ax_top_middle.set_facecolor("#000000")
-ax_top_middle_image = ax_top_middle.imshow(image_overgrowth, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_overgrowth_max)
+ax_top_middle_image = ax_top_middle.imshow(image_overgrowth, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_overgrowth_vmax)
 ax_top_middle.set_xlabel("$\\phi$")
 ax_top_middle.set_ylabel("$D$")
 ax_top_middle.set_yticks(numpy.linspace(min_log_S, max_log_S, 3))
@@ -123,7 +123,7 @@ ax_top_middle.set_yticklabels([f"{10 ** log_S:.0f}" for log_S in numpy.linspace(
 # Draw the coefficient of variation image
 ax_top_right.set_title("Coefficient of variation in $D(t)$")
 ax_top_right.set_facecolor("#b2bec3")
-ax_top_right_image = ax_top_right.imshow(image_cov, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_cov_max)
+ax_top_right_image = ax_top_right.imshow(image_cov, extent=(0, 1, max_log_S, min_log_S), aspect="auto", cmap=COLOR_MAP, interpolation="nearest", vmin=0, vmax=image_cov_vmax)
 ax_top_right.set_xlabel("$\\phi$")
 ax_top_right.set_ylabel("$D$")
 ax_top_right.set_yticks(numpy.linspace(min_log_S, max_log_S, 3))
@@ -151,16 +151,16 @@ def _plot_line(ax: Axes, results: SimulationResults):
         ax.plot(results.n_vs_t[-1, 0], 0, "X", color="red")
 
 
-# Left: small phi, small D
+# Left: small phi
 for _ in range(6):
     results = two_compartment_model.run_simulation(config, SimulationParameters.for_one_compartment(
         D=15, phi=0.95, T=T))
     _plot_line(ax_left, results)
 
-# Right: large phi, large D
+# Right: large phi
 for _ in range(6):
     results = two_compartment_model.run_simulation(config, SimulationParameters.for_one_compartment(
-        D=6, phi=0.05, T=T))
+        D=15, phi=0.05, T=T))
     _plot_line(ax_right, results)
 
 ax_left.set_ylabel("Proliferating cells")
