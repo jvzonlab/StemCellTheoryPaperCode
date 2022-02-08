@@ -86,7 +86,7 @@ class MultiRunStats:
     """Accumulates statistics of multiple runs."""
 
     nm_mean: ndarray  # Sum of all means, divide by t_tot for the actual average. Two values, one for each compartment.
-    nm_sq: ndarray  # Sum of sq values. Two values, one for each compartment.
+    nm_sq: ndarray  # Sum of sq values. Two values, one for each compartment
     nm_prod: int = 0  # Sum of products
     t_tot: float = 0
     n_runs_ended_early: int = 0
