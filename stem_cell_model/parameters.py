@@ -104,6 +104,12 @@ class SimulationParameters:
         return SimulationParameters(S=D, alpha=(0, 0), phi=(phi, phi), T=T, n0=(D, 0), a=a)
 
 
+    @staticmethod
+    def for_neutral_drift(*, S: int, T: Tuple[float, float], a: float = float("inf")):
+        """Creates a homeostatic parameter set for the neutral drift model."""
+        return SimulationParameters(S=S, alpha=(1, -1), phi=(1, 1), T=T, n0=(S, 0), a=a)
+
+
     S: int
     alpha: Tuple[float, float]
     phi: Tuple[float, float]

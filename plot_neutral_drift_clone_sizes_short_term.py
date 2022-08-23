@@ -1,4 +1,6 @@
 """Plots an ordinary clone-size distribution on the short term of cells in the niche."""
+import itertools
+
 import numpy
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
@@ -8,6 +10,7 @@ from stem_cell_model.clone_size_distributions import CloneSizeDistribution
 from stem_cell_model.clone_size_simulator import CloneSizeSimulationConfig
 from stem_cell_model.parameters import SimulationParameters
 from stem_cell_model.two_compartment_model import run_simulation
+from stem_cell_model.two_compartment_model_neutral_drift import run_simulation_neutral_drift
 
 
 def _plot_final_clone_size(ax: Axes, clone_size_distribution: CloneSizeDistribution):
@@ -20,7 +23,6 @@ def _plot_final_clone_size(ax: Axes, clone_size_distribution: CloneSizeDistribut
 
     ax.bar(indices, heights)
     ax.set_xticks([2, 4, 6, 8, 10, 12])
-    ax.set_yticks([])
     ax.set_xlabel("Clone size")
     ax.set_ylabel("Number of clones")
 
@@ -30,41 +32,22 @@ def _add_title(ax: Axes, title: str):
     ax.text(0.96, 0.95, title, horizontalalignment='right',
                           verticalalignment='top', transform=ax.transAxes)
 
-D = 30
-T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
 
-parameters_symm_high_growth = SimulationParameters.for_D_alpha_and_phi(
-    D=D, alpha_n=0.95, alpha_m=-0.95, phi=0.95, T=T, a=1/T[0])
-parameters_mixed_mid_growth = SimulationParameters.for_D_alpha_and_phi(
-    D=D, alpha_n=0.5, alpha_m=-0.5, phi=0.5, T=T, a=1/T[0])
-parameters_asymm_low_growth = SimulationParameters.for_D_alpha_and_phi(
-    D=D, alpha_n=0.05, alpha_m=-0.05, phi=0.05, T=T, a=1/T[0])
+T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
 
 
 random = numpy.random.Generator(numpy.random.MT19937(seed=1))
 t_clone_size = 48
 config = CloneSizeSimulationConfig(t_clone_size=t_clone_size, random=random, n_crypts=1000)
 
-fig, (ax_left, ax_middle, ax_right) = plt.subplots(1, 3, sharex="all")
+fig, axes = plt.subplots(2, 3, sharex="all")
+axes = list(itertools.chain(*axes))  # This flattens the axes list
 
-# Left panel
-results = clone_size_simulator.calculate(
-    run_simulation, config, parameters_symm_high_growth)
-_add_title(ax_left, "$\\alpha_n = 0.95$, $\\phi=0.95$")
-_plot_final_clone_size(ax_left, results)
-
-# Middle panel
-results = clone_size_simulator.calculate(
-    run_simulation, config, parameters_mixed_mid_growth)
-_add_title(ax_middle, "$\\alpha_n = 0.5$, $\\phi=0.5$")
-_plot_final_clone_size(ax_middle, results)
-
-
-# Right panel
-results = clone_size_simulator.calculate(
-    run_simulation, config, parameters_asymm_low_growth)
-_add_title(ax_right, "$\\alpha_n = 0.05$, $\\phi=0.05$")
-_plot_final_clone_size(ax_right, results)
+for ax, S in zip(axes, [1, 2, 5, 10, 20, 30]):
+    results = clone_size_simulator.calculate(
+        run_simulation_neutral_drift, config, SimulationParameters.for_neutral_drift(S=S, T=T))
+    _add_title(ax, f"S={S}")
+    _plot_final_clone_size(ax, results)
 
 
 plt.tight_layout()

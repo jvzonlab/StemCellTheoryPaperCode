@@ -28,7 +28,7 @@ def calculate(simulator: Simulator, clone_size_config: CloneSizeSimulationConfig
     """Calculates the resulting clone size distribution for the given parameters set."""
     config = SimulationConfig(
         t_sim=clone_size_config.t_wait + clone_size_config.t_clone_size,
-        n_max=10000, random=clone_size_config.random,
+        random=clone_size_config.random,
         track_lineage_time_interval=(clone_size_config.t_wait, clone_size_config.t_wait + clone_size_config.t_clone_size))
 
     clone_size_distribution = CloneSizeDistribution()
