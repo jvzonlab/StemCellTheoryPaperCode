@@ -9,7 +9,6 @@ from stem_cell_model import clone_size_simulator
 from stem_cell_model.clone_size_distributions import CloneSizeDistribution
 from stem_cell_model.clone_size_simulator import CloneSizeSimulationConfig
 from stem_cell_model.parameters import SimulationParameters
-from stem_cell_model.two_compartment_model import run_simulation
 from stem_cell_model.two_compartment_model_neutral_drift import run_simulation_neutral_drift
 
 
@@ -43,7 +42,7 @@ config = CloneSizeSimulationConfig(t_clone_size=t_clone_size, random=random, n_c
 fig, axes = plt.subplots(2, 3, sharex="all")
 axes = list(itertools.chain(*axes))  # This flattens the axes list
 
-for ax, S in zip(axes, [1, 2, 5, 10, 20, 30]):
+for ax, S in zip(axes, [1, 2, 5, 10, 30, 60]):
     results = clone_size_simulator.calculate(
         run_simulation_neutral_drift, config, SimulationParameters.for_neutral_drift(S=S, T=T))
     _add_title(ax, f"S={S}")

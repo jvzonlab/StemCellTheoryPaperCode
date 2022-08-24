@@ -164,11 +164,18 @@ class Lineages:
         return cell_id in self._id_to_track
 
     def move_cell(self, cell_id: int, t: int, towards_component: int):
-        # moves the cell at the given time point to the given compartment
+        """moves the cell at the given time point to the given compartment"""
         track = self._id_to_track.get(cell_id)
         if track is None:
             return
         track.compartment.add_move(t, towards_component)
+
+    def set_proliferativeness(self, cell_id: int, proliferative: bool):
+        """Changes the proliferativeness of a cell. """
+        track = self._id_to_track.get(cell_id)
+        if track is None:
+            return
+        track.is_proliferative = proliferative
 
     def count_divisions(self) -> DivisionCounts:
         counter = DivisionCounts()
@@ -194,9 +201,8 @@ class Lineages:
 
     def remove_nonproliferating_cell_from_compartment(self, t: int, *, old_compartment: int, new_compartment: int):
         """The stem cell model doesn't track non-proliferating cells, so when throwing them out of a compartment it is
-        arbitrary which cell is thrown out. This method throws out non-proliferating cells of the given compartment
-        until the desired number has been reached. If there are already that amount (or less) non-proliferative cells
-        tracked by this instance, then this method does nothing."""
+        arbitrary which cell is thrown out. This method throws out one non-proliferating cells of the given compartmen.
+        """
         # Find all cells that can be moved
         suitable_tracks = list()
         for track in self.get_tracks():

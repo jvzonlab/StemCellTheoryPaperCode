@@ -213,6 +213,7 @@ def run_simulation_neutral_drift(config: SimulationConfig, params: SimulationPar
             # implement cell moving in saved lineages
             if tracking_lineage:
                 lineages.move_cell(random_cell.id, t, random_cell.comp)
+                lineages.set_proliferativeness(random_cell.id, False)
             # immediately make cell non-dividing
             del dividing_cell_list[n_move]
             # adjust number of dividing stem cells and non-dividing cells
