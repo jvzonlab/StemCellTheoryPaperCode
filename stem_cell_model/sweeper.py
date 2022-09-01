@@ -1,4 +1,5 @@
 """Used to simulate a long list of results."""
+import math
 import multiprocessing
 import os
 import pickle
@@ -29,43 +30,44 @@ class _WorkPackage:
         self.output_file = output_file
 
 
-def _worker(tasks_pending: multiprocessing.Queue, simulator: Simulator, t_sim: int, n_max: int):
+def _worker(tasks_pending: multiprocessing.Queue, simulator: Simulator, t_sim: int):
     """Worker that keeps on taking tasks from a task list, and calling _sweep_single_thread on them."""
     while True:
         task = tasks_pending.get()  # This method waits until a new task becomes available
         if task == _STOP_SIGNAL_VALUE:
             break  # Finished
         worker_package: _WorkPackage = task
-        _sweep_single_thread(simulator, worker_package.params_list, t_sim, n_max, worker_package.output_file)
+        _sweep_single_thread(simulator, worker_package.params_list, t_sim, worker_package.output_file)
 
 
 def sweep(simulator: Simulator, params_list: List[SimulationParameters], *,
-          t_sim: int, n_max: int, output_folder: str):
+          t_sim: int, output_folder: str):
     """Multiprocessing parameter sweep. Uses all CPU cores so that the simulation is done as
     fast as possible. Requires the script to be ran from an "if __name__ == '__main__':"-guard."""
     worker_count = multiprocessing.cpu_count()
     os.makedirs(output_folder, exist_ok=True)
 
-    if len(params_list) < 100:
-        # Don't bother multithreading
-        _sweep_single_thread(simulator, params_list, t_sim, n_max, os.path.join(output_folder, "sweep_i0.p"))
-        return
+    size_of_sublist = math.ceil(min(100.0, len(params_list) / worker_count))
 
     # Build a task list
     tasks_pending = multiprocessing.Queue()
-    for work_package in _split_list(params_list, size_of_sublist=100, output_folder=output_folder):
+    task_count = 0
+    for work_package in _split_list(params_list, size_of_sublist=size_of_sublist, output_folder=output_folder):
         tasks_pending.put(work_package)
+        task_count += 1
     # Put stoppers at the end, so that all worker processes will exit instead of waiting forever on a new task.
     # We need as many stoppers as there are worker processes so that ALL processes exit when there is no more
     # work left to be done.
     for c in range(worker_count):
         tasks_pending.put(_STOP_SIGNAL_VALUE)
 
+    print("Starting (or resuming) simulation, expecting", task_count, "files...")
+
     # Start all workers
     worker_processes = list()
     for i in range(worker_count):
         # Run in 8 processes
-        worker_process = Process(target=_worker, args=(tasks_pending, simulator, t_sim, n_max))
+        worker_process = Process(target=_worker, args=(tasks_pending, simulator, t_sim))
         worker_process.name = f"worker-{i+1}"
         worker_processes.append(worker_process)
         worker_process.start()
@@ -102,12 +104,11 @@ def _split_list(params_list: List[SimulationParameters], *, size_of_sublist: int
         i += 1
 
 
-def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParameters], t_sim: int, n_max: int,
+def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParameters], t_sim: int,
                          output_file: str):
     if os.path.exists(output_file):
         return  # Nothing to do, this was done previously
 
-    # Fixed seed (based on file name) to ensure reproducibility
     file_name = os.path.basename(output_file)
 
     sim_data = list()
@@ -117,7 +118,7 @@ def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParam
         random = numpy.random.Generator(numpy.random.MT19937(seed=seed))
 
         # print run information
-        print(f"{file_name}: {i + 1}/{len(params_list)}, a_n:{params.alpha[0]:.3f}, a_m:{params.alpha[1]:.3f}, phi:{params.phi[0]:.3f}, S:{params.S}, N0:{params.n0[0]}, M0:{params.n0[1]}, seed:{seed}")
+        print(f"{file_name}: {i + 1}/{len(params_list)}, alpha_n:{params.alpha[0]:.3f}, alpha_m:{params.alpha[1]:.3f}, phi:{params.phi[0]:.3f}, S:{params.S}, N0:{params.n0[0]}, M0:{params.n0[1]}, aT: {params.a * params.T[0]:.03f}, seed:{seed}")
 
         # some simulation will end before the total simulation time t_sim because
         # stem cells are fully lost. In that case, we rerun simulations with the same 
@@ -129,7 +130,7 @@ def _sweep_single_thread(simulator: Simulator, params_list: List[SimulationParam
         
         # run simulation
         while output.t_tot < t_sim:
-            config = SimulationConfig(t_sim=t_sim - output.t_tot, n_max=n_max, random=random)
+            config = SimulationConfig(t_sim=t_sim - output.t_tot, random=random)
             res = simulator(config, params)
             output.add_results(res)
         

@@ -43,21 +43,42 @@ class LineageTrack:
         else:
             return 1
 
-    def get_proliferative_clone_size(self, max_time: float) -> int:
+    def get_proliferative_niche_clone_size(self, max_time: float) -> int:
         """Gets how many dividing cells this track will eventually produce. If this track divides into two dividing
         daughter cells, and one of those daughters divides into two dividing cells, then the clone size is three.
 
-        Returns 0 if this cell doesn't divide. Returns 1 if this track is proliferative, but hasn't divided yet."""
+        Returns 0 if this cell doesn't divide. Returns 1 if this track is proliferative and in the niche at max_time,
+        but hasn't divided yet."""
         if self.track_start_time > max_time:
             raise ValueError("Track started after max_time")
 
         if len(self.daughters) == 2:
             daughter1, daughter2 = self.daughters
-            if daughter1.track_start_time > max_time:
-                return 1 if self.is_proliferative else 0  # Don't include these daughters, the division happened after the time cutoff
-            return daughter1.get_proliferative_clone_size(max_time) + daughter2.get_proliferative_clone_size(max_time)
-        else:
-            return 1 if self.is_proliferative else 0
+            if daughter1.track_start_time <= max_time:
+                return daughter1.get_proliferative_niche_clone_size(max_time) + daughter2.get_proliferative_niche_clone_size(max_time)
+
+        # No division yet before max_time
+        if not self.is_proliferative:
+            return 0  # Non-dividing, don't include
+        if self.compartment.get_compartment_at(max_time) != 0:
+            return 0  # Out of niche, don't include
+        return 1
+
+    def get_niche_clone_size(self, max_time: float) -> int:
+        """Gets how many tracks in the niche compartment this track will eventually produce. Returns 0 if all cells
+        leave the niche."""
+        if self.track_start_time > max_time:
+            raise ValueError("Track started after max_time")
+
+        if len(self.daughters) == 2:
+            daughter1, daughter2 = self.daughters
+            if daughter1.track_start_time <= max_time:
+                return daughter1.get_niche_clone_size(max_time) + daughter2.get_niche_clone_size(max_time)
+
+        # Assume no division
+        if self.compartment.get_compartment_at(max_time) == 0:
+            return 1
+        return 0  # Cell didn't survive in the niche compartment
 
     def exists_at_time(self, time: float) -> bool:
         """Cells exist from start_time to (but not including) daughter.start_time. This function returns
@@ -127,7 +148,7 @@ class Lineages:
         self._id_to_track[track_daughter_1.track_id] = track_daughter_1
         self._id_to_track[track_daughter_2.track_id] = track_daughter_2
 
-    def draw_lineages(self, ax: Axes, t_end: int, x_offset, show_cell_id=False, col_comp_0='r', col_default='k'):
+    def draw_lineages(self, ax: Axes, t_end: int, x_offset: int = 0, show_cell_id=False, col_comp_0='r', col_default='k'):
         """Draws the lineage tree of all lineages."""
         for track in self._lineage_starts:
             diagram_width = _draw_single_lineage(ax, track, t_end, x_offset, show_cell_id, col_comp_0, col_default)
@@ -143,11 +164,18 @@ class Lineages:
         return cell_id in self._id_to_track
 
     def move_cell(self, cell_id: int, t: int, towards_component: int):
-        # moves the cell at the given time point to the given compartment
+        """moves the cell at the given time point to the given compartment"""
         track = self._id_to_track.get(cell_id)
         if track is None:
             return
         track.compartment.add_move(t, towards_component)
+
+    def set_proliferativeness(self, cell_id: int, proliferative: bool):
+        """Changes the proliferativeness of a cell. """
+        track = self._id_to_track.get(cell_id)
+        if track is None:
+            return
+        track.is_proliferative = proliferative
 
     def count_divisions(self) -> DivisionCounts:
         counter = DivisionCounts()
@@ -171,6 +199,31 @@ class Lineages:
         """Gets all tracks in the lineage. A track is a single vertical line in the lineage tree."""
         yield from self._tracks
 
+    def remove_nonproliferating_cell_from_compartment(self, t: int, *, old_compartment: int, new_compartment: int):
+        """The stem cell model doesn't track non-proliferating cells, so when throwing them out of a compartment it is
+        arbitrary which cell is thrown out. This method throws out one non-proliferating cells of the given compartmen.
+        """
+        # Find all cells that can be moved
+        suitable_tracks = list()
+        for track in self.get_tracks():
+            if not track.exists_at_time(t):
+                continue
+            if track.compartment.get_compartment_at(t) != old_compartment:
+                continue
+            if track.is_proliferative:
+                continue
+
+            # Ok, we can pick this cell to move
+            suitable_tracks.append(track)
+
+        # Move!
+        if len(suitable_tracks) == 0:
+            raise ValueError("No non-proliferating cell to remove, this is a bug!")
+        # Select an arbitrary cell
+        # Note: we can't simply ask the RNG of the simulation, as then then the state of the RNG, and therefore the
+        # outcome of the simulation, would depend on whether the lineage trees are being recorded
+        arbitrary_number = suitable_tracks[-1].track_id % len(suitable_tracks)
+        suitable_tracks[arbitrary_number].compartment.add_move(t, new_compartment)
 
 # Lineage drawing
 def _get_lineage_draw_data(track: LineageTrack, t_end: int):
@@ -179,8 +232,8 @@ def _get_lineage_draw_data(track: LineageTrack, t_end: int):
 
 def _get_sublineage_draw_data(track: LineageTrack, t_end: int, x_curr_branch: float, x_end_branch: float, line_list):
     # if current branch doesn't have daughters
-    if len(track.daughters) == 0:
-        # then it has no sublineage, so we plot an end branch
+    if len(track.daughters) == 0 or track.daughters[0].track_start_time >= t_end:
+        # then it has no sublineage (at least not within the displayed time), so we plot an end branch
         # set x position of current branch to that of the next end branch
         x_curr_branch=x_end_branch
         # plot line from time of birth to end time of lineage tree
@@ -274,7 +327,7 @@ class _CompartmentByTime:
         current_compartment = self._starting_compartment
 
         for switch_time, new_compartment in self._moves:
-            if switch_time > current_time:
+            if switch_time >= current_time:
                 yield [current_time, switch_time], current_compartment  # finish off current compartment
                 # and start new one
                 current_time = switch_time
@@ -299,6 +352,18 @@ class _CompartmentByTime:
         if len(self._moves) > 0:
             return f"<_CompartmentByTime({self._starting_compartment}) with moves>"
         return f"_CompartmentByTime({self._starting_compartment})"
+
+    def get_compartment_at(self, time: float) -> int:
+        if len(self._moves) == 0:
+            return self._starting_compartment
+
+        previous_compartment = self._starting_compartment
+        for move_time, move_compartment in self._moves:
+            if time < move_time:
+                return previous_compartment
+            previous_compartment = move_compartment
+        return self.last_compartment()
+
 
 
 def _is_single_number(value):

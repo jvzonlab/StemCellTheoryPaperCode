@@ -1,3 +1,6 @@
+"""In this model, cells in the niche always divide, cells outside never. As such, mothers don't control daughter
+proliferation, and there is no symmetry fraction of growth rate parameter."""
+
 from typing import List, Tuple, Union
 
 import numpy as np
@@ -80,23 +83,10 @@ def get_next_dividing(cell_list: List[Cell]) -> Tuple[int, int]:
 
 
 # simulation function without niche, i.e. well-stirred cells
+def run_simulation_neutral_drift(config: SimulationConfig, params: SimulationParameters) -> SimulationResults:
+    """Runs a single simulation of a well-mixed compartment. All cells in the niche proliferate, all cells outside
+    don't.. The "a", "phi", "alpha" and "n" parameters are all ignored."""
 
-# t_sim - total simulation time
-# params - list containing cell cycle time <T>, stem cell compartment size <S>,
-#       degrees of symmetry <phi_i> and growth rate <alpha_i> for compartment <i>
-# n0_i - initial number of stem cells in compartment <i>
-# track_lineage_time_interval - list [t_start, t_end] during which lineage information 
-#        should be recorded. If empty, no lineage recorderd
-# track_n_vs_t - track cell number versus time. If <false> only calculate moments
-def run_sim( t_sim,n_max, params, n0=[0,0], track_lineage_time_interval=[], track_n_vs_t=False):
-    """Old simulation method - kept for compatibility with old code. Directly forwards to the new one."""
-    return run_simulation(*parameters.from_old_format(
-        t_sim, n_max, params, n0, track_lineage_time_interval, track_n_vs_t)).to_dict()
-
-
-def run_simulation(config: SimulationConfig, params: SimulationParameters) -> SimulationResults:
-    """Runs a single simulation of a well-mixed compartment.
-    Therefore, the "a" parameter is not used."""
     random = config.random
     division_timer = DivisionTimer(config.random)
 
@@ -113,18 +103,13 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
     cell_id=1
     dividing_cell_list=[]  # List of dividing cells
     # initialize dividing cells in stem cell compartment
-    for n in range(0, params.n0[0]):
+    for n in range(0, params.S):
         age = params.T[0] * random.random()
         dividing_cell_list.append(Cell(cell_id, 0, age, division_timer))
         cell_id += 1
-    # initialize dividing cells outside compartment
-    for n in range(0, params.n0[1]):
-        age = params.T[0] * random.random()
-        dividing_cell_list.append(Cell(cell_id, 1, age, division_timer))
-        cell_id += 1
 
     ### calculate p,q parameters for both compartment
-    
+
     p=[]
     q=[]
     for compartment in [0,1]:
@@ -192,17 +177,7 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
             
             ### get type of division
             
-            # draw random number in (0,1)
-            r = random.random()
-            if r<=p[compartment]:
-                # if r in (0,p), then div -> div + div
-                div_type=0
-            elif r<=(p[compartment]+q[compartment]):
-                # if r in (p,p+q), then div -> non-div + non-div
-                div_type=2
-            else:
-                # else, div -> div + non-div
-                div_type=1
+            div_type=0
             
             if tracking_lineage:
                 # if tracking lineage, get ids for mother and daughters
@@ -211,89 +186,40 @@ def run_simulation(config: SimulationConfig, params: SimulationParameters) -> Si
                 mother_cell_id = dividing_cell_list[mother_cell_index].id
     
             ### execute division
-            if div_type==0:
-                # div -> div + div
-                # generate two new dividing cells to compartment <c>
-                for i in [0,1]:
-                    # add new cells to cell list
-                    dividing_cell_list.append(Cell(cell_id, compartment, 0, division_timer))
-                    if tracking_lineage:
-                        # if needed, remember daughter cell id
-                        daughter_cell_id_list.append( cell_id )
-                        daughter_is_dividing_list.append( True )
-                    # adjust cell id
-                    cell_id += 1
-                # adjust number of dividing cells   
-                n[compartment] += 1
-                    
-            elif div_type==1:
-                # div -> div + non-div
-                # add a single dividing cell to compartment <c>
+            # generate two new dividing cells to compartment <c>
+            for i in [0,1]:
+                # add new cells to cell list
                 dividing_cell_list.append(Cell(cell_id, compartment, 0, division_timer))
                 if tracking_lineage:
-                    # rember id of this daughter, if tracking lineage
+                    # if needed, remember daughter cell id
                     daughter_cell_id_list.append( cell_id )
                     daughter_is_dividing_list.append( True )
-                cell_id += 1  
-                if tracking_lineage:
-                    # and remember id of the non-dividing daughter
-                    daughter_cell_id_list.append( cell_id )
-                    daughter_is_dividing_list.append( False )
+                # adjust cell id
                 cell_id += 1
-                # adjust number of non-dividing differentiated cells
-                u[compartment] += 1
-                
-            elif div_type==2:
-                # div -> non-div + non-div
-                for i in [0,1]:
-                    if tracking_lineage:
-                        # remember daughter cell ids
-                        daughter_cell_id_list.append( cell_id )
-                        daughter_is_dividing_list.append( False )
-                    # and increase cell id
-                    cell_id += 1  
-                # adjust number of dividing cells   
-                n[compartment] -= 1
-                # adjust number of non-dividing differentiated cells
-                u[compartment] += 2
-
+            # adjust number of dividing cells
+            n[compartment] += 1
             # implement cell division in saved lineages
             if tracking_lineage:
                 lineages.divide_cell(mother_cell_id, daughter_cell_id_list, daughter_is_dividing_list, t)
-
             # remove old cell after division
             del dividing_cell_list[mother_cell_index]
-    
-            # if division was in compartment 0
-            if compartment==0:
-                # get list of cells in current compartment    
-                comp_cell_list = [x for x in dividing_cell_list if x.comp==0]
-                # draw random cell in compartment
-                n_move = int((params.S + 1) * random.random())
-                # if cell is a dividing cell
-                if n_move<len(comp_cell_list):
-                    random_cell = comp_cell_list[n_move]
-                    # move it to the next compartment
-                    random_cell.comp = 1
-                    # implement cell moving in saved lineages
-                    if tracking_lineage:
-                        lineages.move_cell(random_cell.id, t, random_cell.comp)
-                    # adjust number of dividing stem cells
-                    n[0] -= 1
-                    n[1] += 1
-                    
-                else:
-                    # adjust number of non-dividing differentiated cells
-                    u[0] -= 1
-                    u[1] += 1
 
-                    # implement cell moving in saved lineages
-                    if tracking_lineage:
-                        # As we don't track non-dividing cells, it is not defined which
-                        # non-dividing cell in the niche is thrown out
-                        # So we need to throw out an arbitrary cell
-                        lineages.remove_nonproliferating_cell_from_compartment(t, old_compartment=0, new_compartment=1)
-    
+            ### kick one cell out of the niche (which may be one of the newly-born daughters)
+            # draw random cell in compartment
+            n_move = int((params.S + 1) * random.random())
+            random_cell = dividing_cell_list[n_move]
+            # move it to the next compartment
+            random_cell.comp = 1
+            # implement cell moving in saved lineages
+            if tracking_lineage:
+                lineages.move_cell(random_cell.id, t, random_cell.comp)
+                lineages.set_proliferativeness(random_cell.id, False)
+            # immediately make cell non-dividing
+            del dividing_cell_list[n_move]
+            # adjust number of dividing stem cells and non-dividing cells
+            n[0] -= 1
+            u[1] += 1
+
             # save number of dividing cells
             if config.track_n_vs_t:
                 n_vs_t.append( [t, n[0], n[1]] )
