@@ -11,8 +11,8 @@ from stem_cell_model import tools
 
 def load_data():
     sim_data = []
-    for i in range(0,72):
-        filename = f"two_comp_sweep_data_fixed_D_aT1/sweep_fixed_D30_Np40_aT1_i{i}.p"
+    for i in range(0,221):
+        filename = f"two_comp_sweep_data_fixed_D_aT1/sweep_i{i}.p"
         sim_data.extend(pickle.load( open( filename, "rb" ) ))
     return sim_data
 sim_data = load_data()

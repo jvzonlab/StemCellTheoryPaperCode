@@ -29,5 +29,4 @@ def main():
     output.print_run_statistics()
 
 
-main()
-#cProfile.run('main()')
+cProfile.run('main()')
