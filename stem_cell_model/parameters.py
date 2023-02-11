@@ -44,12 +44,19 @@ class SimulationParameters:
                             a: float = float("inf"), n_max: int = 100000) -> Optional["SimulationParameters"]:
         """Finds the other parameters belonging to the given ones. Returns None if the requested
          type of divisions do not exist."""
+        return SimulationParameters.for_D_alpha_and_phi_ext(D=D, alpha_n=alpha_n, alpha_m=alpha_m, phi_n=phi, phi_m=phi,
+                                                            T=T, a=a, n_max=n_max)
 
+    @staticmethod
+    def for_D_alpha_and_phi_ext(*, D: int, alpha_n: float, alpha_m: float, phi_n: float, phi_m: float, T: Tuple[float, float],
+                            a: float = float("inf"), n_max: int = 100000) -> Optional["SimulationParameters"]:
+        """Finds the other parameters belonging to the given ones. Returns None if the requested
+         type of divisions do not exist."""
         # calculate division probabilities p_i and q_i in compartment i=n,m
-        p_n = (phi + alpha_n) / 2
-        q_n = (phi - alpha_n) / 2
-        p_m = (phi + alpha_m) / 2
-        q_m = (phi - alpha_m) / 2
+        p_n = (phi_n + alpha_n) / 2
+        q_n = (phi_n - alpha_n) / 2
+        p_m = (phi_m + alpha_m) / 2
+        q_m = (phi_m - alpha_m) / 2
 
         # check if division probabilities exist for this alpha_n, alpha_m and phi combination
         if (p_n >= 0) and (q_n >= 0) and (p_m >= 0) and (q_m >= 0):
@@ -64,7 +71,7 @@ class SimulationParameters:
             M_avg = D - N_avg
 
             # save parameters
-            return SimulationParameters(S=int(numpy.round(S)), alpha=(alpha_n, alpha_m), phi=(phi, phi), T=T,
+            return SimulationParameters(S=int(numpy.round(S)), alpha=(alpha_n, alpha_m), phi=(phi_n, phi_m), T=T,
                                         n0=(int(numpy.round(N_avg)), int(numpy.round(M_avg))), a=a, n_max=n_max)
         return None
 
