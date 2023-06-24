@@ -138,7 +138,8 @@ plt.show()
 
 # Draw the example lines
 ax_left: Axes
-fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, sharex="all", sharey="all")
+fig, (ax_left, ax_left_histogram, ax_right, ax_right_histogram) = plt.subplots(nrows=1, ncols=4, sharey="all",
+                                                                             gridspec_kw={'width_ratios': [3, 1, 3, 1]})
 random = numpy.random.Generator(numpy.random.MT19937(seed=1))
 config = SimulationConfig(t_sim=260, random=random, track_n_vs_t=True)
 T = (16.153070175438597, 3.2357834505600382)  # Based on measured values
@@ -150,18 +151,32 @@ def _plot_line(ax: Axes, results: SimulationResults):
     if results.n_vs_t[-1, 1] + results.n_vs_t[-1, 2] == 0:  # Died
         ax.plot(results.n_vs_t[-1, 0], 0, "X", color="red")
 
+def _plot_histogram(ax: Axes, config: SimulationConfig, params: SimulationParameters):
+    bins = numpy.arange(0, 60, 1)
+    counts = list()
+
+    for i in range(2000):
+        if i % 100 == 0:
+            print(i)
+        results = two_compartment_model.run_simulation(config, params)
+        last_count = results.n_vs_t[-1, 1] + results.n_vs_t[-1, 2]
+        counts.append(last_count)
+    ax.hist(counts, orientation="horizontal", bins=bins, color="black")
+    ax.axis("off")
 
 # Left: small phi
+params = SimulationParameters.for_one_compartment(D=15, phi=0.95, T=T)
 for _ in range(6):
-    results = two_compartment_model.run_simulation(config, SimulationParameters.for_one_compartment(
-        D=15, phi=0.95, T=T))
+    results = two_compartment_model.run_simulation(config, params)
     _plot_line(ax_left, results)
+_plot_histogram(ax_left_histogram, config, params)
 
 # Right: large phi
+params = SimulationParameters.for_one_compartment(D=15, phi=0.05, T=T)
 for _ in range(6):
-    results = two_compartment_model.run_simulation(config, SimulationParameters.for_one_compartment(
-        D=15, phi=0.05, T=T))
+    results = two_compartment_model.run_simulation(config, params)
     _plot_line(ax_right, results)
+_plot_histogram(ax_right_histogram, config, params)
 
 ax_left.set_ylabel("Proliferating cells")
 ax_left.set_xlabel("Time (h)")
