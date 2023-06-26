@@ -8,7 +8,6 @@ from numpy import ndarray
 from stem_cell_model import tools, sweeper
 from stem_cell_model.parameters import SimulationParameters
 from stem_cell_model.results import MultiRunStats
-from stem_cell_model.tools import SingleParameterSetStatistics
 
 
 class _SimulationForPoint:
@@ -18,13 +17,15 @@ class _SimulationForPoint:
     phi_n: ndarray  # Linearly increasing phi_n
     phi_m: ndarray  # Linearly increasing phi_m
     cov_of_variation_d: ndarray  # Indexed as phi_n, phi_m
-    f_collapse: ndarray
+    d_mean: ndarray  # Indexed as phi_h, phi_m
+    f_collapse: ndarray  # Indexed as phi_h, phi_m
 
     def __init__(self, *, alpha_n: float, alpha_m: float, steps_along_axis: int = 40):
         self.phi_n = numpy.linspace(25, 1000, steps_along_axis) * 0.001
         self.phi_m = numpy.linspace(25, 1000, steps_along_axis) * 0.001
         self.cov_of_variation_d = numpy.full((self.phi_n.shape[0], self.phi_m.shape[0]), numpy.nan)
         self.f_collapse = numpy.copy(self.cov_of_variation_d)
+        self.d_mean = numpy.copy(self.cov_of_variation_d)
 
         self.alpha_n = alpha_n
         self.alpha_m = alpha_m
@@ -40,6 +41,7 @@ class _SimulationForPoint:
         phi_m_index = numpy.argmin(numpy.abs(self.phi_m - params.phi[1]))
         self.cov_of_variation_d[phi_n_index, phi_m_index] = stats.d_coeff_var
         self.f_collapse[phi_n_index, phi_m_index] = stats.f_collapse
+        self.d_mean[phi_n_index, phi_m_index] = stats.d_mean
 
     def __repr__(self):
         return f"_SimulationsForPoint(alpha_n={self.alpha_n}, alpha_m={self.alpha_m})"
@@ -58,9 +60,32 @@ def main():
         for point in points:
             point.offer_data_point(params, multi_run_stats)
 
+    _plot_d_mean(points)
+    _plot_cov_of_variation_d(points)
+
+
+def _plot_d_mean(points: List[_SimulationForPoint]):
     fig = plt.figure()
-    axes = numpy.array(fig.subplots(nrows=2, ncols=2, sharex="all", sharey="all")).flatten()
-    for ax, point in zip(axes, points):
+    axes = fig.subplots(nrows=2, ncols=2, sharex="all", sharey="all")
+    for ax, point in zip(numpy.array(axes).flatten(), points):
+        ax: Axes
+        mappable = ax.imshow(point.d_mean, interpolation="nearest",
+                             cmap="gnuplot", vmin=15, vmax=35,
+                             extent=(point.phi_m[0], point.phi_m[-1], point.phi_n[-1], point.phi_n[0]))
+        if point.alpha_n > 0.9:
+            ax.set_xlabel("phi_m")  # We're on the last row
+        ax.set_ylabel("phi_n")
+        ax.set_title(f"a_n={point.alpha_n}, a_m={point.alpha_m}")
+        ax.invert_yaxis()
+    plt.suptitle("<D(t)>")
+    plt.colorbar(mappable, ax=axes[:, 1], shrink=0.6)
+    plt.show()
+
+
+def _plot_cov_of_variation_d(points: List[_SimulationForPoint]):
+    fig = plt.figure()
+    axes = fig.subplots(nrows=2, ncols=2, sharex="all", sharey="all")
+    for ax, point in zip(numpy.array(axes).flatten(), points):
         ax: Axes
         mappable = ax.imshow(point.cov_of_variation_d, interpolation="nearest",
                              cmap="gnuplot", vmin=0, vmax=0.7,
@@ -71,7 +96,7 @@ def main():
         ax.set_title(f"a_n={point.alpha_n}, a_m={point.alpha_m}")
         ax.invert_yaxis()
     plt.suptitle("Coefficient of variation")
-    plt.colorbar(mappable)
+    plt.colorbar(mappable, ax=axes[:, 1], shrink=0.6)
     plt.show()
 
 
