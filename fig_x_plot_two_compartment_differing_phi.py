@@ -70,7 +70,7 @@ def _plot_d_mean(points: List[_SimulationForPoint]):
     for ax, point in zip(numpy.array(axes).flatten(), points):
         ax: Axes
         mappable = ax.imshow(point.d_mean, interpolation="nearest",
-                             cmap="gnuplot", vmin=15, vmax=35,
+                             cmap="gnuplot", vmin=20, vmax=50,
                              extent=(point.phi_m[0], point.phi_m[-1], point.phi_n[-1], point.phi_n[0]))
         if point.alpha_n > 0.9:
             ax.set_xlabel("phi_m")  # We're on the last row

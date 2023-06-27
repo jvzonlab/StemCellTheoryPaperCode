@@ -1,9 +1,8 @@
 """Like two_compartment_model_sweep, but with space and aT = 1."""
 import numpy
 
-from stem_cell_model import sweeper
+from stem_cell_model import sweeper, two_compartment_model
 from stem_cell_model.parameters import SimulationParameters
-from stem_cell_model.two_compartment_model_space import run_simulation_niche
 
 
 def run_simulation(steps_along_axis: int = 40):
@@ -32,12 +31,12 @@ def run_simulation(steps_along_axis: int = 40):
         for phi_n in phi_n_values:
             for phi_m in phi_m_values:
                 params = SimulationParameters.for_D_alpha_and_phi_ext(
-                    D=D, alpha_n=alpha_n, alpha_m=alpha_m, phi_n=phi_n, phi_m=phi_m, T=T, a=1/T[0], n_max=n_max)
+                    D=D, alpha_n=alpha_n, alpha_m=alpha_m, phi_n=phi_n, phi_m=phi_m, T=T, n_max=n_max)
                 if params is not None:
                     params_list.append(params)
 
     # Go!
-    sweeper.sweep(run_simulation_niche, params_list, t_sim=t_sim, output_folder=output_folder)
+    sweeper.sweep(two_compartment_model.run_simulation, params_list, t_sim=t_sim, output_folder=output_folder)
 
 
 if __name__ == '__main__':
