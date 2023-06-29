@@ -88,7 +88,7 @@ def _plot_cov_of_variation_d(points: List[_SimulationForPoint]):
     for ax, point in zip(numpy.array(axes).flatten(), points):
         ax: Axes
         mappable = ax.imshow(point.cov_of_variation_d, interpolation="nearest",
-                             cmap="gnuplot", vmin=0, vmax=0.7,
+                             cmap="gnuplot", vmin=0, vmax=0.6,
                              extent=(point.phi_m[0], point.phi_m[-1], point.phi_n[-1], point.phi_n[0]))
         if point.alpha_n > 0.9:
             ax.set_xlabel("phi_m")  # We're on the last row
