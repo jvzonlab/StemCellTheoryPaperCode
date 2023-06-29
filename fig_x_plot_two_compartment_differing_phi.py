@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Iterable
 
 import numpy
 from matplotlib import pyplot as plt
@@ -47,6 +47,13 @@ class _SimulationForPoint:
         return f"_SimulationsForPoint(alpha_n={self.alpha_n}, alpha_m={self.alpha_m})"
 
 
+def _find_point(points: Iterable[_SimulationForPoint], alpha_n: float, alpha_m: float) -> _SimulationForPoint:
+    for point in points:
+        if point.alpha_n == alpha_n and point.alpha_m == alpha_m:
+            return point
+    raise ValueError(f"Point with alpha_n={alpha_n} and alpha_m={alpha_m} not found")
+
+
 def main():
     points = [
         # alpha_n, alpha_m
@@ -60,7 +67,7 @@ def main():
         for point in points:
             point.offer_data_point(params, multi_run_stats)
 
-    _plot_d_mean(points)
+    #_plot_d_mean(points)
     _plot_cov_of_variation_d(points)
 
 
@@ -84,8 +91,8 @@ def _plot_d_mean(points: List[_SimulationForPoint]):
 
 def _plot_cov_of_variation_d(points: List[_SimulationForPoint]):
     fig = plt.figure()
-    axes = fig.subplots(nrows=2, ncols=2, sharex="all", sharey="all")
-    for ax, point in zip(numpy.array(axes).flatten(), points):
+    axes = fig.subplots(nrows=3, ncols=2, sharex="all")
+    for ax, point in zip(numpy.array(axes).flatten()[0:4], points):
         ax: Axes
         mappable = ax.imshow(point.cov_of_variation_d, interpolation="nearest",
                              cmap="gnuplot", vmin=0, vmax=0.6,
@@ -95,6 +102,18 @@ def _plot_cov_of_variation_d(points: List[_SimulationForPoint]):
         ax.set_ylabel("phi_n")
         ax.set_title(f"a_n={point.alpha_n}, a_m={point.alpha_m}")
         ax.invert_yaxis()
+
+    ax_bottom_left = axes[2, 0]
+    ax_bottom_left.axis("off")
+
+    ax_bottom_right: Axes = axes[2, 1]
+    point = _find_point(points, alpha_n=0.2, alpha_m=-0.2)
+    ax_bottom_right.plot(point.phi_m, point.cov_of_variation_d[numpy.searchsorted(point.phi_n, 0.25)])
+    ax_bottom_right.plot(point.phi_m, point.cov_of_variation_d[numpy.searchsorted(point.phi_n, 0.95)])
+    ax_bottom_right.set_ylim(0, 0.6)
+    ax_bottom_right.set_aspect("equal")
+    ax_bottom_right.set_ylabel("CoV in D")
+
     plt.suptitle("Coefficient of variation")
     plt.colorbar(mappable, ax=axes[:, 1], shrink=0.6)
     plt.show()
