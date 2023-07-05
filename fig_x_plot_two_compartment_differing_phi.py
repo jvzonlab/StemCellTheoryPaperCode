@@ -108,11 +108,16 @@ def _plot_cov_of_variation_d(points: List[_SimulationForPoint]):
 
     ax_bottom_right: Axes = axes[2, 1]
     point = _find_point(points, alpha_n=0.2, alpha_m=-0.2)
-    ax_bottom_right.plot(point.phi_m, point.cov_of_variation_d[numpy.searchsorted(point.phi_n, 0.25)])
-    ax_bottom_right.plot(point.phi_m, point.cov_of_variation_d[numpy.searchsorted(point.phi_n, 0.95)])
+    ax_bottom_right.plot(point.phi_m, point.cov_of_variation_d[numpy.searchsorted(point.phi_n, 0.25)], label="alpha_n=0.2, alpha_m=-0.2, phi_n=0.25")
+    ax_bottom_right.plot(point.phi_m, point.cov_of_variation_d[numpy.searchsorted(point.phi_n, 0.95)], label="alpha_n=0.2, alpha_m=-0.2, phi_n=0.95")
+
+    point = _find_point(points, alpha_n=0.95, alpha_m=-0.7)
+    ax_bottom_right.plot(point.phi_m, point.cov_of_variation_d[numpy.searchsorted(point.phi_n, 0.95)], label="alpha_n=0.95, alpha_m=-0.7, phi_n=0.95")
+
     ax_bottom_right.set_ylim(0, 0.6)
     ax_bottom_right.set_aspect("equal")
     ax_bottom_right.set_ylabel("CoV in D")
+    ax_bottom_right.legend()
 
     plt.suptitle("Coefficient of variation")
     plt.colorbar(mappable, ax=axes[:, 1], shrink=0.6)
