@@ -121,7 +121,6 @@ image_varphi = plot_phi_against_opposite_alpha()
 images_max = max(numpy.nanmax(image_varphi), numpy.nanmax(image_phi1))  # To keep the color scale of both images the same
 images_max = math.ceil(images_max)
 
-
 # Draw the image for phi =1
 ax_a.set_title("Mean of $D(t)$ at $\phi = 1$")
 ax_a.set_facecolor("#b2bec3")
