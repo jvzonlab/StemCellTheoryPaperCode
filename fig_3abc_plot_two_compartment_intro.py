@@ -180,7 +180,7 @@ def _plot_histogram(ax: Axes, config: SimulationConfig, params: SimulationParame
     bins = numpy.arange(0, 60, 1)
     counts = list()
 
-    for i in range(200):
+    for i in range(2000):
         if i % 100 == 0:
             print(i)
         results = two_compartment_model.run_simulation(config, params)
