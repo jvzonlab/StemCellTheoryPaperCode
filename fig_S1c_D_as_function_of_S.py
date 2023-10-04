@@ -37,10 +37,9 @@ class _AlphaAndPhi(NamedTuple):
 def main():
     # Plot <D> als functie van S gegeven alpha_n en alpha_m
     low_alpha_high_phi = _AlphaAndPhi(alpha_n=0.2, alpha_m=-0.2, phi_n=0.95, phi_m=0.95)
-    low_alpha_low_phi = _AlphaAndPhi(alpha_n=0.2, alpha_m=-0.2, phi_n=0.2, phi_m=0.2)
     high_alpha_n_and_m = _AlphaAndPhi(alpha_n=0.95, alpha_m=-0.95, phi_n=0.95, phi_m=0.95)
 
-    keys = [low_alpha_high_phi, low_alpha_low_phi, high_alpha_n_and_m]
+    keys = [low_alpha_high_phi, high_alpha_n_and_m]
     D_values = defaultdict(list)
     D_values_stdev = defaultdict(list)
     S_values = defaultdict(list)
@@ -73,7 +72,6 @@ def main():
     ax.set_xlim(0, 300)
     ax.set_ylim(0, 420)
     _plot_D_by_S(ax, low_alpha_high_phi, D_values, D_values_stdev, S_values, color="#f2bb00")
-    _plot_D_by_S(ax, low_alpha_low_phi, D_values, D_values_stdev, S_values, color="#7803fb")
     _plot_D_by_S(ax, high_alpha_n_and_m, D_values, D_values_stdev, S_values, color="#2ca02c")
     ax.legend()
     plt.show()
@@ -81,10 +79,11 @@ def main():
 
 def _plot_D_by_S(ax: Axes, alpha_phi: _AlphaAndPhi, D_values: Dict[_AlphaAndPhi, ndarray],
                  D_values_stdev: Dict[_AlphaAndPhi, ndarray], S_values: Dict[_AlphaAndPhi, ndarray], color: str):
-    ax.plot(S_values[alpha_phi], D_values[alpha_phi], marker=".", color=color,
-            label=f"$\\alpha_n=${alpha_phi.alpha_n}, $\\alpha_m=${alpha_phi.alpha_m}, $\\phi=${alpha_phi.phi_n}")
-    ax.fill_between(S_values[alpha_phi], D_values[alpha_phi] - D_values_stdev[alpha_phi],
-                    D_values[alpha_phi] + D_values_stdev[alpha_phi], alpha=0.3, color=color)
+    D_predicted = numpy.log(1 + alpha_phi.alpha_n) * S_values[alpha_phi] * (alpha_phi.alpha_m - alpha_phi.alpha_n) / alpha_phi.alpha_m
+    ax.plot(S_values[alpha_phi], D_predicted, color=color, linewidth=1)
+    ax.errorbar(S_values[alpha_phi], D_values[alpha_phi], yerr=D_values_stdev[alpha_phi], marker="o", markersize=5,
+                color=color, linewidth=0, elinewidth=1,
+                label=f"$\\alpha_n=${alpha_phi.alpha_n}, $\\alpha_m=${alpha_phi.alpha_m}, $\\phi=${alpha_phi.phi_n}")
 
 
 def _sort(D_values: Dict[_AlphaAndPhi, List[float]], D_values_stdev: Dict[_AlphaAndPhi, List[float]], S_values: Dict[_AlphaAndPhi, List[float]]):

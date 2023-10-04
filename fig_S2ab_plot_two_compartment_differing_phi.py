@@ -104,7 +104,18 @@ def _plot_cov_of_variation_d(points: List[_SimulationForPoint]):
         ax.invert_yaxis()
 
     ax_bottom_left = axes[2, 0]
-    ax_bottom_left.axis("off")
+    point = _find_point(points, alpha_n=0.2, alpha_m=-0.2)
+    ax_bottom_left.plot(point.phi_n, point.cov_of_variation_d[:, numpy.searchsorted(point.phi_m, 0.25)],
+                        label="alpha_n=0.2, alpha_m=-0.2, phi_m=0.25")
+    ax_bottom_left.plot(point.phi_n, point.cov_of_variation_d[:, numpy.searchsorted(point.phi_m, 0.95)],
+                        label="alpha_n=0.2, alpha_m=-0.2, phi_m=0.95")
+    point = _find_point(points, alpha_n=0.95, alpha_m=-0.7)
+    ax_bottom_left.plot(point.phi_n, point.cov_of_variation_d[:, numpy.searchsorted(point.phi_m, 0.95)],
+                         label="alpha_n=0.95, alpha_m=-0.7, phi_m=0.95")
+
+    ax_bottom_left.set_ylim(0, 0.6)
+    ax_bottom_left.set_aspect("equal")
+    ax_bottom_left.set_ylabel("CoV in D")
 
     ax_bottom_right: Axes = axes[2, 1]
     point = _find_point(points, alpha_n=0.2, alpha_m=-0.2)
