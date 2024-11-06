@@ -1,8 +1,9 @@
 # Code for "Minimizing cell number fluctuations in self-renewing tissues with a stem cell niche"
-Rutger Kok, Sander Tans, Jeroen van Zon
+Rutger Kok, Sander Tans, Jeroen van Zon  
+[Phys. Rev. E 108, 064403](https://doi.org/10.1103/PhysRevE.108.064403)
 
 This repository contains the code to reproduce the results of the above paper, as well as instructions for running your
-own simulations. The paper and formatted figures themselves can be found at https://github.com/jvzonlab/Stem-cell-theory-paper
+own simulations.
 
 ## Workflow for reproducing results
 
